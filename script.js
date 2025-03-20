@@ -100,12 +100,11 @@ function manageNotification() {
 
 document.addEventListener('DOMContentLoaded', function() {
     const fab = document.getElementById('fab');
-    const fabOptions = document.getElementById('fabOptions');
-
+    const fabOptionsContainer = document.querySelector('.fabOptions');
 
     fab.addEventListener('click', function(event) {
-        event.stopPropagation(); 
-        fabOptions.classList.toggle('hidden');
+        event.stopPropagation();
+        fabOptionsContainer.classList.toggle('hidden');
     });
 
 
