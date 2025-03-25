@@ -1,4 +1,4 @@
-// script.js
+// تنظیمات اولیه
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // کلید API TMDb
 const language = 'fa'; // زبان پارسی
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // آدرس پایه تصاویر TMDb
@@ -10,21 +10,21 @@ const apiUrls = {
     tv_trending: `https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}&language=${language}`
 };
 
-// شیء کش برای ذخیره تصاویر
+// شیء کش برای ذخیره تصاویر در حافظه
 const imageCache = {};
 
-// تابع برای دریافت یا ذخیره تصویر از/در کش
+// **تابع کشینگ تصاویر در `localStorage`**
 function getCachedImage(id, fetchFunction) {
-    if (imageCache[id] && imageCache[id] !== defaultPoster) {
-        console.log(`تصویر کش‌شده برای شناسه ${id} بارگذاری شد`);
-        return Promise.resolve(imageCache[id]);
+    const cachedData = localStorage.getItem(`poster_${id}`);
+    if (cachedData) {
+        console.log(`📌 بارگذاری از کش محلی: ${id}`);
+        return Promise.resolve(cachedData);
     }
+
     return fetchFunction().then(poster => {
         if (poster !== defaultPoster) {
-            imageCache[id] = poster;
-            console.log(`تصویر برای شناسه ${id} در کش ذخیره شد`);
-        } else {
-            console.log(`تصویر پیش‌فرض ${defaultPoster} کش نشد`);
+            localStorage.setItem(`poster_${id}`, poster);
+            console.log(`✅ ذخیره در کش محلی: ${id}`);
         }
         return poster;
     });
@@ -34,24 +34,15 @@ let apiKeySwitcher;
 
 async function initializeSwitcher() {
     apiKeySwitcher = await loadApiKeys();
-    console.log('سوئیچر کلید API مقداردهی شد');
+    console.log('🔄 سوئیچر کلید API مقداردهی شد');
 }
 
-// توابع مدیریت نوار پیشرفت
+// **توابع مدیریت نوار پیشرفت**
 function startLoadingBar() {
     const loadingBar = document.getElementById('loading-bar');
     if (loadingBar) {
         loadingBar.style.width = '0';
-        setTimeout(() => {
-            loadingBar.style.width = '30%';
-        }, 100);
-    }
-}
-
-function updateLoadingBar(percentage) {
-    const loadingBar = document.getElementById('loading-bar');
-    if (loadingBar) {
-        loadingBar.style.width = percentage + '%';
+        setTimeout(() => loadingBar.style.width = '30%', 100);
     }
 }
 
@@ -59,155 +50,130 @@ function finishLoadingBar() {
     const loadingBar = document.getElementById('loading-bar');
     if (loadingBar) {
         loadingBar.style.width = '100%';
-        setTimeout(() => {
-            loadingBar.style.width = '0';
-        }, 300);
+        setTimeout(() => loadingBar.style.width = '0', 300);
     }
 }
 
+// **دریافت پوستر از OMDB با استفاده از کش**
+async function fetchPoster(imdbId) {
+    return getCachedImage(imdbId, async () => {
+        const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
+            key => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
+        );
+        return (omdbData.Poster && omdbData.Poster !== 'N/A') ? omdbData.Poster : defaultPoster;
+    });
+}
+
+// **دریافت پوستر برای یک مورد (فیلم یا سریال)**
+async function getPosterForItem(item, type) {
+    let poster = defaultPoster;
+    const detailsUrl = type === 'movie'
+        ? `https://api.themoviedb.org/3/movie/${item.id}/external_ids?api_key=${apiKey}`
+        : `https://api.themoviedb.org/3/tv/${item.id}/external_ids?api_key=${apiKey}`;
+    try {
+        const detailsRes = await fetch(detailsUrl);
+        if (!detailsRes.ok) throw new Error(`خطای سرور (جزئیات ${type}): ${detailsRes.status}`);
+        const detailsData = await detailsRes.json();
+        const imdbId = detailsData.imdb_id || '';
+
+        if (imdbId) {
+            poster = await fetchPoster(imdbId);
+        } else if (item.poster_path) {
+            poster = `${baseImageUrl}${item.poster_path}`;
+        }
+    } catch (error) {
+        console.warn(`⚠️ خطا در دریافت پوستر ${type} ${item.id}: ${error.message}`);
+        if (item.poster_path) {
+            poster = `${baseImageUrl}${item.poster_path}`;
+        }
+    }
+    return poster;
+}
+
+// **دریافت و نمایش داده‌ها**
 async function fetchAndDisplayContent() {
     const movieContainer = document.getElementById('new-movies');
     const tvContainer = document.getElementById('trending-tv');
 
-    const skeletonHTML = `
-        <div class="skeleton w-full"></div>
-        <div class="skeleton w-full"></div>
-        <div class="skeleton w-full"></div>
-        <div class="skeleton w-full"></div>
-    `;
+    // **نمایش حالت اسکلتی هنگام بارگیری**
+    const skeletonHTML = `<div class="skeleton w-full h-64 bg-gray-200 rounded-lg animate-pulse"></div>`.repeat(4);
     movieContainer.innerHTML = skeletonHTML;
     tvContainer.innerHTML = skeletonHTML;
 
     try {
         startLoadingBar(); // شروع نوار پیشرفت
 
-        // دریافت داده‌های فیلم‌ها
-        const movieRes = await fetch(apiUrls.now_playing);
-        if (!movieRes.ok) throw new Error(`خطای سرور (فیلم‌ها): ${movieRes.status}`);
-        const movieData = await movieRes.json();
-        const movies = movieData.results || [];
+        // **دریافت همزمان داده‌ها از TMDb**
+        const [movieRes, tvRes] = await Promise.all([
+            fetch(apiUrls.now_playing),
+            fetch(apiUrls.tv_trending)
+        ]);
 
-        // دریافت داده‌های سریال‌ها
-        const tvRes = await fetch(apiUrls.tv_trending);
-        if (!tvRes.ok) throw new Error(`خطای سرور (سریال‌ها): ${tvRes.status}`);
-        const tvData = await tvRes.json();
+        if (!movieRes.ok || !tvRes.ok) {
+            throw new Error(`⚠️ خطای دریافت داده: ${movieRes.status}, ${tvRes.status}`);
+        }
+
+        const [movieData, tvData] = await Promise.all([
+            movieRes.json(),
+            tvRes.json()
+        ]);
+
+        const movies = movieData.results || [];
         const tvSeries = tvData.results || [];
 
-        // پاکسازی اولیه کانتینرها
-        movieContainer.innerHTML = '';
-        tvContainer.innerHTML = '';
-
-        // مجموعه‌ای برای جلوگیری از تکرار
         const seenIds = new Set();
 
-        // پردازش و نمایش فیلم‌ها
-        if (movies.length > 0) {
-            for (const movie of movies) {
-                if (seenIds.has(movie.id)) {
-                    console.warn(`فیلم تکراری با شناسه ${movie.id} حذف شد`);
-                    continue;
-                }
-                seenIds.add(movie.id);
+        // **تابع تولید HTML کارت برای هر مورد**
+        const createCardHTML = async (item, type) => {
+            if (seenIds.has(item.id)) return '';
+            seenIds.add(item.id);
 
-                let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
+            // دریافت پوستر از OMDB یا TMDb
+            const poster = await getPosterForItem(item, type);
+            const title = item.title || item.name || 'نامشخص';
+            const overview = item.overview ? item.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست';
 
-                const movieDetailsUrl = `https://api.themoviedb.org/3/movie/${movie.id}/external_ids?api_key=${apiKey}`;
-                try {
-                    const detailsRes = await fetch(movieDetailsUrl);
-                    if (!detailsRes.ok) throw new Error(`خطای سرور (جزئیات فیلم): ${detailsRes.status}`);
-                    const detailsData = await detailsRes.json();
-                    const imdbId = detailsData.imdb_id || '';
-                    if (imdbId) {
-                        poster = await getCachedImage(imdbId, async () => {
-                            const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                                (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
-                            );
-                            return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
-                        });
-                    }
-                } catch (fetchError) {
-                    console.warn(`خطا در دریافت پوستر فیلم ${movie.id} از OMDB:`, fetchError.message);
-                }
-
-                const posterUrl = poster.replace(/300(?=\.jpg$)/i, '');
-                const title = movie.title || 'نامشخص';
-                const overview = movie.overview ? movie.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست';
-
-                movieContainer.innerHTML += `
-                    <div class="group relative">
-                        <img src="${posterUrl}" alt="${title}" class="w-full h-auto rounded-lg shadow-lg">
-                        <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-                            <h3 class="text-lg font-bold text-white">${title}</h3>
-                            <p class="text-sm text-gray-200">${overview}</p>
-                            <a href="/freemovie/movie/index.html?id=${movie.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
-                        </div>
+            return `
+                <div class="group relative">
+                    <img src="${poster}" alt="${title}" class="w-full h-full rounded-lg shadow-lg" loading="lazy">
+                    <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
+                        <h3 class="text-lg font-bold text-white">${title}</h3>
+                        <p class="text-sm text-gray-200">${overview}</p>
+                        <a href="/freemovie/${type === 'movie' ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                     </div>
-                `;
-            }
-        } else {
-            movieContainer.innerHTML = '<p class="text-center text-red-500">فیلمی یافت نشد!</p>';
-        }
+                </div>
+            `;
+        };
 
-        // پردازش و نمایش سریال‌ها
-        if (tvSeries.length > 0) {
-            for (const tv of tvSeries) {
-                if (seenIds.has(tv.id)) {
-                    console.warn(`سریال تکراری با شناسه ${tv.id} حذف شد`);
-                    continue;
-                }
-                seenIds.add(tv.id);
+        // **دریافت پوستر و تولید HTML همزمان**
+        const [movieCards, tvCards] = await Promise.all([
+            Promise.all(movies.map(movie => createCardHTML(movie, 'movie'))),
+            Promise.all(tvSeries.map(tv => createCardHTML(tv, 'tv')))
+        ]);
 
-                let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
-                const tvDetailsUrl = `https://api.themoviedb.org/3/tv/${tv.id}/external_ids?api_key=${apiKey}`;
-                try {
-                    const detailsRes = await fetch(tvDetailsUrl);
-                    if (!detailsRes.ok) throw new Error(`خطای سرور (جزئیات سریال): ${detailsRes.status}`);
-                    const detailsData = await detailsRes.json();
-                    const imdbId = detailsData.imdb_id || '';
-                    if (imdbId) {
-                        poster = await getCachedImage(imdbId, async () => {
-                            const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                                (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
-                            );
-                            return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
-                        });
-                    }
-                } catch (fetchError) {
-                    console.warn(`خطا در دریافت پوستر سریال ${tv.id} از OMDB:`, fetchError.message);
-                }
+        // **افزودن تمامی کارت‌ها به DOM به صورت یکجا**
+        movieContainer.innerHTML = movieCards.join('') || '<p class="text-center text-red-500">فیلمی یافت نشد!</p>';
+        tvContainer.innerHTML = tvCards.join('') || '<p class="text-center text-red-500">سریالی یافت نشد!</p>';
 
-                const posterUrl = poster.replace(/300(?=\.jpg$)/i, '');
-                const title = tv.name || 'نامشخص';
-                const overview = tv.overview ? tv.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست';
-
-                tvContainer.innerHTML += `
-                    <div class="group relative">
-                        <img src="${posterUrl}" alt="${title}" class="w-full h-auto rounded-lg shadow-lg">
-                        <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-                            <h3 class="text-lg font-bold text-white">${title}</h3>
-                            <p class="text-sm text-gray-200">${overview}</p>
-                            <a href="/freemovie/series/index.html?id=${tv.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
-                        </div>
-                    </div>
-                `;
-            }
-        } else {
-            tvContainer.innerHTML = '<p class="text-center text-red-500">سریالی یافت نشد!</p>';
-        }
-
-        // اگر هیچ داده‌ای موجود نبود
-        if (seenIds.size === 0) {
-            movieContainer.innerHTML = '<p class="text-center text-red-500">داده‌ای یافت نشد!</p>';
-            tvContainer.innerHTML = '<p class="text-center text-red-500">داده‌ای یافت نشد!</p>';
-        }
     } catch (error) {
-        console.error('خطا در دریافت داده‌ها:', error);
+        console.error('⚠️ خطا در دریافت داده‌ها:', error);
         movieContainer.innerHTML = '<p class="text-center text-red-500">خطایی رخ داد! لطفاً دوباره تلاش کنید.</p>';
         tvContainer.innerHTML = '<p class="text-center text-red-500">خطایی رخ داد! لطفاً دوباره تلاش کنید.</p>';
     } finally {
         finishLoadingBar(); // پایان نوار پیشرفت
     }
 }
+
+// **اجرای توابع پس از بارگذاری صفحه**
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await initializeSwitcher();
+        await fetchAndDisplayContent();
+    } catch (error) {
+        console.error('⚠️ خطا در بارگذاری اولیه:', error);
+    }
+});
+
 
 function manageNotification() {
     const notification = document.getElementById('notification');
