@@ -1,13 +1,15 @@
 class ApiKeySwitcher {
-    constructor(keys) {
-        this.keys = keys || [];
+    constructor(keys = []) {
+        if (!Array.isArray(keys) || keys.length === 0) {
+            console.warn('هیچ کلید API در دسترس نیست، استفاده از کلید پیش‌فرض.');
+            this.keys = ['38fa39d5'];
+        } else {
+            this.keys = keys;
+        }
         this.currentIndex = 0;
     }
 
     getCurrentKey() {
-        if (this.keys.length === 0) {
-            throw new Error('هیچ کلید API در دسترس نیست.');
-        }
         return this.keys[this.currentIndex];
     }
 
@@ -16,9 +18,13 @@ class ApiKeySwitcher {
         console.log(`تعویض به کلید API جدید: ${this.getCurrentKey()}`);
     }
 
-    async fetchWithKeySwitch(urlTemplate, maxRetriesPerKey = 3) {
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async fetchWithKeySwitch(urlTemplate, maxRetriesPerKey = 3, delayMs = 1000) {
         let attempts = 0;
-        const totalAttemptsLimit = this.keys.length * maxRetriesPerKey; // حداکثر کل تلاش‌ها
+        const totalAttemptsLimit = this.keys.length * maxRetriesPerKey;
 
         while (attempts < totalAttemptsLimit) {
             const url = urlTemplate(this.getCurrentKey());
@@ -27,34 +33,30 @@ class ApiKeySwitcher {
                 if (!response.ok) {
                     if (response.status === 429) {
                         console.warn('محدودیت نرخ OMDB API - تلاش مجدد با همین کلید...');
-                        await new Promise(resolve => setTimeout(resolve, 1000)); // تاخیر ۱ ثانیه
+                        await this.sleep(delayMs);
                         attempts++;
-                        continue; // دوباره با همون کلید تلاش کن
+                        continue;
                     }
                     throw new Error(`خطای سرور (OMDB): ${response.status}`);
                 }
-                // اگه درخواست موفق بود، داده رو برگردون و حلقه رو بشکن
                 return await response.json();
             } catch (error) {
                 console.warn(`خطا در درخواست با کلید ${this.getCurrentKey()}: ${error.message}`);
                 attempts++;
-                // اگه تعداد تلاش‌ها با این کلید به حد مجاز رسید، کلید رو عوض کن
                 if (attempts % maxRetriesPerKey === 0) {
                     this.switchToNextKey();
                 }
-                await new Promise(resolve => setTimeout(resolve, 1000)); // تاخیر ۱ ثانیه قبل از تلاش بعدی
-                if (attempts >= totalAttemptsLimit) {
-                    throw new Error('تمام کلیدهای API امتحان شدند و خطا ادامه دارد.');
-                }
+                await this.sleep(delayMs);
             }
         }
+        throw new Error('تمام کلیدهای API امتحان شدند و خطا ادامه دارد.');
     }
 }
 
 async function loadApiKeys() {
     const possiblePaths = [
-        '/freemovie/omdbKeys.json',        // مسیر روت پروژه
-        '/freemovie/../omdbKeys.json'      // یک فولدر قبل‌تر (به روت برمی‌گرده)
+        '/freemovie/omdbKeys.json',
+        '/freemovie/../omdbKeys.json'
     ];
 
     for (const path of possiblePaths) {
@@ -62,7 +64,7 @@ async function loadApiKeys() {
             const response = await fetch(path);
             if (!response.ok) {
                 console.warn(`خطا در بارگذاری از ${path}: ${response.status}`);
-                continue; // اگه مسیر کار نکرد، بعدی رو تست کن
+                continue;
             }
             const keys = await response.json();
             console.log(`فایل کلیدها از ${path} با موفقیت بارگذاری شد.`);
@@ -72,14 +74,6 @@ async function loadApiKeys() {
         }
     }
 
-    console.error('هیچ فایل کلید API پیدا نشد.');
-    return new ApiKeySwitcher(['38fa39d5']); // کلید پیش‌فرض
+    console.error('هیچ فایل کلید API پیدا نشد، استفاده از کلید پیش‌فرض.');
+    return new ApiKeySwitcher(['38fa39d5']);
 }
-
-/* // استفاده از کد (اختیاری - برای تست)
-(async () => {
-    const apiSwitcher = await loadApiKeys();
-    const urlTemplate = (key) => `http://www.omdbapi.com/?apikey=${key}&t=Matrix`;
-    const data = await apiSwitcher.fetchWithKeySwitch(urlTemplate);
-    console.log(data);
-})(); */
