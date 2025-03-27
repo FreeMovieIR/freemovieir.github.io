@@ -164,17 +164,6 @@ async function fetchAndDisplayContent() {
     }
 }
 
-// **اجرای توابع پس از بارگذاری صفحه**
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        await initializeSwitcher();
-        await fetchAndDisplayContent();
-    } catch (error) {
-        console.error('⚠️ خطا در بارگذاری اولیه:', error);
-    }
-});
-
-
 function manageNotification() {
     const notification = document.getElementById('notification');
     const closeButton = document.getElementById('close-notification');
