@@ -102,7 +102,7 @@ async function fetchContent(containerId, url, page, isInitial = false) {
                         <h3 class="text-lg font-bold text-white">${title}</h3>
                         <p class="text-sm text-gray-200">تاریخ انتشار: ${releaseDate || 'نامشخص'}</p>
                         <p class="text-sm text-gray-200">${overview}</p>
-                        <a href="/freemovie/${containerId.includes('movie') ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+                        <a href="/${containerId.includes('movie') ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                     </div>
                 </div>
             `;

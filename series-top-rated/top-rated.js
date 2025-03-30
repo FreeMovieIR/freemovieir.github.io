@@ -86,7 +86,7 @@ async function fetchTopRated(pageNum, isInitial = false) {
                         <h3 class="text-lg font-bold text-white">${title}</h3>
                         <p class="text-sm text-gray-200">امتیاز: ${rating}</p>
                         <p class="text-sm text-gray-200">${overview}</p>
-                        <a href="/freemovie/series/index.html?id=${serie.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+                        <a href="/series/index.html?id=${serie.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                     </div>
                 </div>
             `;

@@ -120,7 +120,7 @@ async function fetchAndDisplayContent() {
                         <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
                             <h3 class="text-lg font-bold text-white">${item.title || item.name || 'نامشخص'}</h3>
                             <p class="text-sm text-gray-200">${item.overview ? item.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست'}</p>
-                            <a href="/freemovie/${type === 'movie' ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+                            <a href="/${type === 'movie' ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                         </div>
                     </div>
                 `;

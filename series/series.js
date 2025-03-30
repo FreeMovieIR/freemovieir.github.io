@@ -232,7 +232,7 @@ async function fetchRelatedSeries(seriesId) {
             poster = poster.replace(/300(?=\.jpg$)/i, '');
 
             relatedHtml += `
-                <a href="/freemovie/series/index.html?id=${serie.id}" class="related-series-card">
+                <a href="/series/index.html?id=${serie.id}" class="related-series-card">
                     <img src="${poster}" alt="${title}" loading="lazy">
                     <div class="p-2">
                         <h3 class="text-sm font-bold">${title}</h3>

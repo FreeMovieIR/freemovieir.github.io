@@ -33,7 +33,7 @@ async function fetchGenres() {
 
         genres.forEach(genre => {
             container.innerHTML += `
-                <a href="/freemovie/movies-by-genre.html?genreId=${genre.id}&genreName=${encodeURIComponent(genre.name)}" class="genre-item">
+                <a href="/movies-by-genre.html?genreId=${genre.id}&genreName=${encodeURIComponent(genre.name)}" class="genre-item">
                     <h3 class="text-lg font-bold">${genre.name}</h3>
                 </a>
             `;
