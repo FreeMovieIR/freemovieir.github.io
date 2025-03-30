@@ -237,14 +237,14 @@ function manageSupportPopup() {
 
     if (downloadTwitterButton) {
         downloadTwitterButton.addEventListener('click', () => {
-            const twitterImageUrl = 'https://github.com/m4tinbeigi-official/freemovie/images/story.png';
+            const twitterImageUrl = 'https://freemovieir.github.io/images/story.png';
             downloadImage(twitterImageUrl, 'freemovie-twitter-support.jpg');
         });
     }
 
     if (downloadInstagramButton) {
         downloadInstagramButton.addEventListener('click', () => {
-            const instagramImageUrl = 'https://github.com/m4tinbeigi-official/freemovie/images/tweet.png';
+            const instagramImageUrl = 'https://freemovieir.github.io/images/tweet.png';
             downloadImage(instagramImageUrl, 'freemovie-instagram-support.jpg');
         });
     }

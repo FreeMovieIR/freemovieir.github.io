@@ -101,14 +101,14 @@ function manageSupportPopup() {
     const downloadTwitterButton = document.getElementById('download-twitter');
     if (downloadTwitterButton) {
         downloadTwitterButton.addEventListener('click', () => {
-            downloadImage('https://github.com/m4tinbeigi-official/freemovie/images/story.png', 'freemovie-twitter-support.jpg');
+            downloadImage('https://freemovieir.github.io/images/story.png', 'freemovie-twitter-support.jpg');
         });
     }
 
     const downloadInstagramButton = document.getElementById('download-instagram');
     if (downloadInstagramButton) {
         downloadInstagramButton.addEventListener('click', () => {
-            downloadImage('https://github.com/m4tinbeigi-official/freemovie/images/tweet.png', 'freemovie-instagram-support.jpg');
+            downloadImage('https://freemovieir.github.io/images/tweet.png', 'freemovie-instagram-support.jpg');
         });
     }
 
