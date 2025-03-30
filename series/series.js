@@ -1,8 +1,8 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
 const baseImageUrl = 'https://image.tmdb.org/t/p/';
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
-const defaultBackdrop = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const defaultBackdrop = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 const seriesId = new URLSearchParams(window.location.search).get('id');
 
 let apiKeySwitcher;

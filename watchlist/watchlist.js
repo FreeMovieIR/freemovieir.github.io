@@ -2,7 +2,7 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // TMDb API key
 const language = 'fa-IR'; // Language set to Persian (Iran)
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // TMDb base image URL for posters
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie.png'; // Default poster fallback
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png'; // Default poster fallback
 
 let apiKeySwitcher;
 

@@ -4,7 +4,7 @@ const userTmdbToken = localStorage.getItem('userTmdbToken'); // توکن کار�
 const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن کاربر
 const language = 'fa';
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
 // آدرس‌های API TMDb
 const apiUrls = {
