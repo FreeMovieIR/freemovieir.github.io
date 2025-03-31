@@ -131,15 +131,18 @@ async function getMovieDetails() {
         };
         document.getElementById('movie-schema').textContent = JSON.stringify(schema);
 
-        // Generate download links with TMDb year and imdb_id
-        const imdbShort = imdbID ? imdbID.replace('tt', '') : '';
-        const downloadLinks = `
-            <a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" rel="nofollow">دانلود فیلم (لینک اصلی)</a>
-            <a href="https://tokyo.saymyname.website/Movies/${year}/${imdbShort}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" rel="nofollow">دانلود فیلم (لینک کمکی)</a>
-            <a href="https://nairobi.saymyname.website/Movies/${year}/${imdbShort}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" rel="nofollow">دانلود فیلم (لینک کمکی)</a>
-            <button id="add-to-watchlist" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">افزودن به واچ لیست</button>
-        `;
-        document.getElementById('download-links').innerHTML = downloadLinks;
+       // Generate download links with TMDb year and imdb_id, plus subtitle link
+		const imdbShort = imdbID ? imdbID.replace('tt', '') : '';
+		const encodedTitle = encodeURIComponent(title); // کد کردن نام فیلم برای URL
+		const subtitleLink = `http://subtitlestar.com/go-to.php?imdb-id=${imdbID}&movie-name=${encodedTitle}`;
+		const downloadLinks = `
+			<a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" rel="nofollow">دانلود فیلم (لینک اصلی)</a>
+			<a href="https://tokyo.saymyname.website/Movies/${year}/${imdbShort}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" rel="nofollow">دانلود فیلم (لینک کمکی)</a>
+			<a href="https://nairobi.saymyname.website/Movies/${year}/${imdbShort}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" rel="nofollow">دانلود فیلم (لینک کمکی)</a>
+			<a href="${subtitleLink}" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600" rel="nofollow" target="_blank">دانلود زیرنویس</a>
+			<button id="add-to-watchlist" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">افزودن به واچ لیست</button>
+		`;
+		document.getElementById('download-links').innerHTML = downloadLinks;
 
         // Add to watchlist functionality
         document.getElementById('add-to-watchlist').addEventListener('click', () => {
