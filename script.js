@@ -4,7 +4,7 @@ const userTmdbToken = localStorage.getItem('userTmdbToken'); // توکن کار�
 const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن کاربر
 const language = 'fa';
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
 // آدرس‌های API TMDb
 const apiUrls = {
@@ -120,7 +120,7 @@ async function fetchAndDisplayContent() {
                         <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
                             <h3 class="text-lg font-bold text-white">${item.title || item.name || 'نامشخص'}</h3>
                             <p class="text-sm text-gray-200">${item.overview ? item.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست'}</p>
-                            <a href="/freemovie/${type === 'movie' ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+                            <a href="/${type === 'movie' ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                         </div>
                     </div>
                 `;
@@ -237,14 +237,14 @@ function manageSupportPopup() {
 
     if (downloadTwitterButton) {
         downloadTwitterButton.addEventListener('click', () => {
-            const twitterImageUrl = 'https://github.com/m4tinbeigi-official/freemovie/images/story.png';
+            const twitterImageUrl = 'https://freemovieir.github.io/images/story.png';
             downloadImage(twitterImageUrl, 'freemovie-twitter-support.jpg');
         });
     }
 
     if (downloadInstagramButton) {
         downloadInstagramButton.addEventListener('click', () => {
-            const instagramImageUrl = 'https://github.com/m4tinbeigi-official/freemovie/images/tweet.png';
+            const instagramImageUrl = 'https://freemovieir.github.io/images/tweet.png';
             downloadImage(instagramImageUrl, 'freemovie-instagram-support.jpg');
         });
     }

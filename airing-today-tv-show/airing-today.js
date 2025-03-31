@@ -1,5 +1,5 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 let apiKeySwitcher;
 
 let page = 1;
@@ -84,7 +84,7 @@ async function fetchAiringToday(pageNum, isInitial = false) {
                     <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
                         <h3 class="text-lg font-bold text-white">${title}</h3>
                         <p class="text-sm text-gray-200">${overview}</p>
-                        <a href="/freemovie/series/index.html?id=${serie.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+                        <a href="/series/index.html?id=${serie.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                     </div>
                 </div>
             `;

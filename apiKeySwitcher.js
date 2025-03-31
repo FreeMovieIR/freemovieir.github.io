@@ -60,8 +60,8 @@ class ApiKeySwitcher {
 
 async function loadApiKeys() {
     const possiblePaths = [
-        '/freemovie/omdbKeys.json',
-        '/freemovie/../omdbKeys.json'
+        '/omdbKeys.json',
+        '/../omdbKeys.json'
     ];
 
     for (const path of possiblePaths) {

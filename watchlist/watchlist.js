@@ -2,7 +2,7 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // TMDb API key
 const language = 'fa-IR'; // Language set to Persian (Iran)
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // TMDb base image URL for posters
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie.png'; // Default poster fallback
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png'; // Default poster fallback
 
 let apiKeySwitcher;
 
@@ -116,7 +116,7 @@ async function fetchAndDisplayItem(itemId, type, container) {
                 <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
                     <h3 class="text-lg font-bold text-white">${item.title}</h3>
                     <p class="text-sm text-gray-200">${item.overview.slice(0, 100)}${item.overview.length > 100 ? '...' : ''}</p>
-                    <a href="/freemovie/${type}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+                    <a href="/${type}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
                     <button class="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" onclick="removeFromWatchlist('${item.id}', '${type}')">حذف از واچ‌لیست</button>
                 </div>
             </div>

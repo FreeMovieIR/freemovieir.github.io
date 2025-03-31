@@ -1,8 +1,8 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
 const baseImageUrl = 'https://image.tmdb.org/t/p/';
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
-const defaultBackdrop = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie-300.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const defaultBackdrop = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 const seriesId = new URLSearchParams(window.location.search).get('id');
 
 let apiKeySwitcher;
@@ -232,7 +232,7 @@ async function fetchRelatedSeries(seriesId) {
             poster = poster.replace(/300(?=\.jpg$)/i, '');
 
             relatedHtml += `
-                <a href="/freemovie/series/index.html?id=${serie.id}" class="related-series-card">
+                <a href="/series/index.html?id=${serie.id}" class="related-series-card">
                     <img src="${poster}" alt="${title}" loading="lazy">
                     <div class="p-2">
                         <h3 class="text-sm font-bold">${title}</h3>

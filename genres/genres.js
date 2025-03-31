@@ -33,7 +33,7 @@ async function fetchGenres() {
 
         genres.forEach(genre => {
             container.innerHTML += `
-                <a href="/freemovie/movies-by-genre.html?genreId=${genre.id}&genreName=${encodeURIComponent(genre.name)}" class="genre-item">
+                <a href="/movies-by-genre.html?genreId=${genre.id}&genreName=${encodeURIComponent(genre.name)}" class="genre-item">
                     <h3 class="text-lg font-bold">${genre.name}</h3>
                 </a>
             `;
@@ -101,14 +101,14 @@ function manageSupportPopup() {
     const downloadTwitterButton = document.getElementById('download-twitter');
     if (downloadTwitterButton) {
         downloadTwitterButton.addEventListener('click', () => {
-            downloadImage('https://github.com/m4tinbeigi-official/freemovie/images/story.png', 'freemovie-twitter-support.jpg');
+            downloadImage('https://freemovieir.github.io/images/story.png', 'freemovie-twitter-support.jpg');
         });
     }
 
     const downloadInstagramButton = document.getElementById('download-instagram');
     if (downloadInstagramButton) {
         downloadInstagramButton.addEventListener('click', () => {
-            downloadImage('https://github.com/m4tinbeigi-official/freemovie/images/tweet.png', 'freemovie-instagram-support.jpg');
+            downloadImage('https://freemovieir.github.io/images/tweet.png', 'freemovie-instagram-support.jpg');
         });
     }
 

@@ -4,7 +4,7 @@
 const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // TMDb API key
 const language = 'fa-IR';
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // Base URL for TMDb images ( fallback if OMDB fails )
-const defaultPoster = 'https://m4tinbeigi-official.github.io/freemovie/images/default-freemovie.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png';
 const minQueryLength = 3;
 
 // --- Globals ---
