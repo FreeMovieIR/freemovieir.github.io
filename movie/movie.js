@@ -143,7 +143,6 @@ async function getMovieDetails() {
 			<button id="add-to-watchlist" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">افزودن به واچ لیست</button>
 		`;
 		document.getElementById('download-links').innerHTML = downloadLinks;
-
         // Add to watchlist functionality
         document.getElementById('add-to-watchlist').addEventListener('click', () => {
             let watchlist = JSON.parse(localStorage.getItem('watchlist')) || { movies: [], series: [] };
