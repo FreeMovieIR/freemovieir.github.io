@@ -94,11 +94,13 @@
         </div>
     </header>
 
+    <div id="general-error-message" class="container mx-auto my-4 p-4 bg-red-800 text-white rounded shadow-lg text-center hidden">
+    </div>
     <!-- محتوای اصلی -->
-    <main class="container mx-auto flex-1 py-8 bg-poster" id="movie-bg">
+    <main class="container mx-auto flex-1 py-8 bg-poster" id="main-content-sections">
         <article class="bg-gray-900 bg-opacity-75 p-8 rounded-lg">
             <div class="flex flex-col md:flex-row">
-                <img id="poster" src="https://via.placeholder.com/500" alt="پوستر فیلم" class="w-full md:w-1/3 rounded-lg shadow-lg" loading="lazy">
+                <img id="poster" src="https://freemovieir.github.io/images/default-freemovie-300.png" alt="پوستر فیلم" class="w-full md:w-1/3 rounded-lg shadow-lg" loading="lazy">
                 <div class="md:mr-8 mt-4 md:mt-0">
                     <h1 id="title" class="text-3xl font-bold text-center">عنوان فیلم</h1>
                     <div id="imdb-link" class="mt-2 text-center"></div> <!-- محل قرارگیری لینک IMDb -->
@@ -116,8 +118,7 @@
                     <div id="download-links" class="mt-4 flex flex-col md:flex-row gap-2">
                         <!-- لینک‌های دانلود -->
                     </div>
-                    <div class="mt-4">
-                        <iframe id="trailer" width="100%" height="315" src="" frameborder="0" allowfullscreen loading="lazy" title="تریلر فیلم"></iframe>
+                    <div id="trailer-container" class="mt-4">
                     </div>
                 </div>
             </div>
