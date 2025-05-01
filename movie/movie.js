@@ -64,11 +64,11 @@ async function fetchOmdbPoster(imdbId) {
  * @param {object} videosData - Data from TMDB videos endpoint.
  * @param {string} finalPosterUrl - The determined poster URL (OMDb or default).
  */
-function updateDomWithMovieDetails(movieData, externalIdsData, videosData, finalPosterUrl) {
+function updateDomWithMovieDetails(movieData, movieDataEnglish, externalIdsData, videosData, finalPosterUrl) {
     const title = movieData.title || 'نامشخص';
+    const titleEnglish = movieDataEnglish.title || title; 
     const year = movieData.release_date ? movieData.release_date.substring(0, 4) : 'نامشخص';
     const runTime = movieData.runtime ? `${movieData.runtime} دقیقه` : 'نامشخص';
-    // Use TMDB backdrop, fallback to poster if needed, higher resolution
     const backdropPath = movieData.backdrop_path || movieData.poster_path;
     const backdropUrl = backdropPath ? `${baseImageUrl}w1280${backdropPath}` : defaultBackdrop;
     const overview = movieData.overview || 'خلاصه‌ای در دسترس نیست.';
@@ -79,26 +79,51 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
     const director = movieData.credits?.crew?.find(crew => crew.job === 'Director');
     const directorName = director?.name || 'کارگردان مشخص نیست';
     const productionCountries = movieData.production_countries?.map(c => c.name).join(', ') || 'نامشخص';
-    const spokenLanguages = movieData.spoken_languages?.map(lang => lang.english_name).join(', ') || 'نامشخص'; // Using english_name for consistency
+    const spokenLanguages = movieData.spoken_languages?.map(lang => lang.english_name).join(', ') || 'نامشخص';
     const imdbId = externalIdsData?.imdb_id || '';
 
-    // Find the official trailer (YouTube)
-    let trailerVideo = null;
+    // Find the official trailer (TMDb first)
+    let trailerEmbedUrl = null;
     if (videosData?.results?.length > 0) {
-        trailerVideo = videosData.results.find(video =>
+        const trailerVideo = videosData.results.find(video =>
             video.site?.toLowerCase() === 'youtube' &&
             video.type?.toLowerCase() === 'trailer' &&
-            video.official === true // Prefer official trailers
+            video.official === true
+        ) || videosData.results.find(video =>
+            video.site?.toLowerCase() === 'youtube' &&
+            video.type?.toLowerCase() === 'trailer'
         );
-        // Fallback to any YouTube trailer if no official one exists
-        if (!trailerVideo) {
-            trailerVideo = videosData.results.find(video =>
-                video.site?.toLowerCase() === 'youtube' &&
-                video.type?.toLowerCase() === 'trailer'
-            );
+        if (trailerVideo) {
+            trailerEmbedUrl = `https://www.youtube.com/embed/${trailerVideo.key}`;
         }
     }
-    const trailerEmbedUrl = trailerVideo?.key ? `https://www.youtube.com/embed/${trailerVideo.key}` : null;
+
+    // Update Trailer Iframe or Link
+    const trailerContainer = document.getElementById('trailer-container');
+    if (trailerContainer) {
+        if (trailerEmbedUrl) {
+            // اگر تریلر از TMDb پیدا شد، مستقیماً نمایش داده می‌شود
+            trailerContainer.innerHTML = `
+                <iframe 
+                    src="${trailerEmbedUrl}" 
+                    title="تریلر فیلم ${title}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen 
+                    class="w-full aspect-video max-w-3xl mx-auto rounded shadow-lg"
+                ></iframe>
+            `;
+            console.log(`Trailer embedded from TMDb: ${trailerEmbedUrl}`);
+        } else {
+            // اگر تریلری در TMDb نبود، یک لینک به جستجوی YouTube نمایش داده می‌شود
+            const searchQuery = encodeURIComponent(`${titleEnglish} ${year} official trailer`);
+            const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+            trailerContainer.innerHTML = `
+                <p class="text-yellow-500 text-center">تریلر رسمی در دسترس نیست. برای مشاهده تریلرهای احتمالی، <a href="${youtubeSearchUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">اینجا کلیک کنید</a>.</p>
+            `;
+            console.log(`No TMDb trailer found for ${title}. Provided link to YouTube search: ${youtubeSearchUrl}`);
+        }
+    }
 
     // Update Text Content
     document.getElementById('title').textContent = `${title} (${year})`;
@@ -112,7 +137,6 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
     document.getElementById('productionCountries').innerHTML = `<strong>محصول کشور:</strong> ${productionCountries}`;
     document.getElementById('director').innerHTML = `<strong>کارگردان:</strong> ${directorName}`;
 
-    // Update IMDb Link
     const imdbLinkElement = document.getElementById('imdb-link');
     if (imdbLinkElement) {
         const imdbLinkHref = imdbId ? `https://www.imdb.com/title/${imdbId}/` : '#';
@@ -127,11 +151,10 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
         }
     }
 
-    // Update Poster (with preloading)
     const posterElement = document.getElementById('poster');
     if (posterElement) {
         posterElement.alt = `پوستر فیلم ${title}`;
-        posterElement.src = defaultPoster; // Set default first
+        posterElement.src = defaultPoster;
         if (finalPosterUrl && finalPosterUrl !== defaultPoster) {
             const tempImage = new Image();
             tempImage.onload = () => { posterElement.src = finalPosterUrl; };
@@ -140,27 +163,12 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
         }
     }
 
-    // Update Background Image (using backdrop)
-    // Add a default background color via CSS to #movie-bg for better UX
     const movieBgElement = document.getElementById('main-content-sections');
     if (movieBgElement) {
-        movieBgElement.style.backgroundImage = `url('${finalPosterUrl}')`;
+        movieBgElement.style.backgroundImage = `url('${backdropUrl}')`;
     }
 
-    // Update Trailer Iframe
-    const trailerContainer = document.getElementById('trailer-container'); // Assuming a container div now
-    if (trailerContainer) {
-        if (trailerEmbedUrl) {
-            trailerContainer.innerHTML = `<iframe src="${trailerEmbedUrl}" title="تریلر فیلم ${title}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full aspect-video max-w-3xl mx-auto rounded shadow-lg"></iframe>`;
-            console.log(`Trailer embedded: ${trailerEmbedUrl}`);
-        } else {
-            trailerContainer.innerHTML = '<p class="text-yellow-500 text-center">تریلر رسمی در دسترس نیست</p>';
-            console.log("No trailer available to embed.");
-        }
-    }
-
-    // Update Meta Tags & Title
-    document.title = `${title} (${year}) - فیری مووی`; // Update document title
+    document.title = `${title} (${year}) - فیری مووی`;
     const metaDesc = overview.substring(0, 160) + (overview.length > 160 ? '...' : '') || `جزئیات و دانلود فیلم ${title}`;
     document.querySelector('meta[name="description"]')?.setAttribute('content', metaDesc);
     document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${title} - فیری مووی`);
@@ -170,7 +178,6 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
     document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', metaDesc);
     document.querySelector('meta[name="twitter:image"]')?.setAttribute('content', finalPosterUrl);
 
-    // Update Structured Data (JSON-LD)
     const schemaElement = document.getElementById('movie-schema');
     if (schemaElement) {
         const schema = {
@@ -180,9 +187,9 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
             'description': overview,
             'genre': genres !== 'نامشخص' ? genres.split(', ') : undefined,
             'image': finalPosterUrl,
-            'datePublished': movieData.release_date || undefined, // Use full date if available
+            'datePublished': movieData.release_date || undefined,
             'director': director ? { '@type': 'Person', 'name': directorName } : undefined,
-            'duration': movieData.runtime ? `PT${movieData.runtime}M` : undefined, // ISO 8601 duration
+            'duration': movieData.runtime ? `PT${movieData.runtime}M` : undefined,
             'countryOfOrigin': productionCountries !== 'نامشخص' ? productionCountries.split(', ') : undefined,
             'aggregateRating': (rating !== 'بدون امتیاز' && voteCount !== '0') ? {
                 '@type': 'AggregateRating',
@@ -200,10 +207,8 @@ function updateDomWithMovieDetails(movieData, externalIdsData, videosData, final
             } : undefined,
             'url': window.location.href
         };
-        // Clean up undefined fields
         Object.keys(schema).forEach(key => schema[key] === undefined && delete schema[key]);
         if (schema.director && !schema.director.name) delete schema.director;
-
         schemaElement.textContent = JSON.stringify(schema, null, 2);
         console.log("Schema.org JSON-LD updated.");
     }
@@ -361,55 +366,49 @@ async function getMovieDetails() {
     }
     showLoading();
     const generalErrorContainer = document.getElementById('general-error-message');
-    if(generalErrorContainer) generalErrorContainer.style.display = 'none';
+    if (generalErrorContainer) generalErrorContainer.style.display = 'none';
 
     try {
-        // 1. Define TMDB API URLs
-        // Append credits and videos directly for fewer requests
+        // Define TMDB API URLs for Persian and English
         const movieDetailsUrl = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=${language}&append_to_response=credits,videos`;
+        const movieDetailsEnglishUrl = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US`;
         const externalIdsUrl = `https://api.themoviedb.org/3/movie/${movieId}/external_ids?api_key=${apiKey}`;
 
-        // 2. Fetch TMDB data concurrently (Details+Credits+Videos, External IDs)
         console.log("Fetching TMDB data concurrently...");
         console.time("TMDB Concurrent Fetch");
-        const [detailsRes, externalIdsRes] = await Promise.all([
+        const [detailsRes, detailsEnglishRes, externalIdsRes] = await Promise.all([
             fetch(movieDetailsUrl),
+            fetch(movieDetailsEnglishUrl),
             fetch(externalIdsUrl)
         ]);
         console.timeEnd("TMDB Concurrent Fetch");
 
-        // Check responses immediately
         if (!detailsRes.ok) throw new Error(`خطای TMDB (جزئیات/عوامل/ویدیو): ${detailsRes.status} ${detailsRes.statusText}`);
+        if (!detailsEnglishRes.ok) throw new Error(`خطای TMDB (جزئیات انگلیسی): ${detailsEnglishRes.status} ${detailsEnglishRes.statusText}`);
         if (!externalIdsRes.ok) throw new Error(`خطای TMDB (شناسه‌های خارجی): ${externalIdsRes.status} ${externalIdsRes.statusText}`);
 
-        // 3. Parse TMDB JSON data
         console.time("Parse TMDB JSON");
-        const [movieData, externalIdsData] = await Promise.all([
+        const [movieData, movieDataEnglish, externalIdsData] = await Promise.all([
             detailsRes.json(),
+            detailsEnglishRes.json(),
             externalIdsRes.json()
         ]);
         console.timeEnd("Parse TMDB JSON");
 
-        // Extract IMDb ID
         const imdbId = externalIdsData?.imdb_id || '';
-        const title = movieData.title || 'فیلم بدون نام'; // Get title early for logging/messages
+        const title = movieData.title || 'فیلم بدون نام';
         const year = movieData.release_date ? movieData.release_date.substring(0, 4) : 'نامشخص';
 
-
-        // 4. Fetch OMDb poster (depends on IMDb ID)
-        console.log(`Workspaceing OMDb poster for ${imdbId || 'N/A'}...`);
+        console.log(`Fetching OMDb poster for ${imdbId || 'N/A'}...`);
         console.time("OMDb Poster Fetch");
-        const finalPosterUrl = await fetchOmdbPoster(imdbId); // Uses the function defined earlier
+        const finalPosterUrl = await fetchOmdbPoster(imdbId);
         console.timeEnd("OMDb Poster Fetch");
 
-
-        // 5. Update DOM with all collected data
         console.log("All data fetched. Updating DOM...");
         console.time("DOM Update");
-        // Pass movieData (which includes credits & videos), externalIdsData, and the final poster URL
-        updateDomWithMovieDetails(movieData, externalIdsData, movieData.videos, finalPosterUrl); // Pass movieData.videos directly
+        updateDomWithMovieDetails(movieData, movieDataEnglish, externalIdsData, movieData.videos, finalPosterUrl);
         updateDownloadLinks(imdbId, year, title);
-        setupWatchlistButton(movieId, title); // Setup listener AFTER download links HTML is set
+        setupWatchlistButton(movieId, title);
         console.timeEnd("DOM Update");
 
     } catch (error) {
@@ -420,10 +419,8 @@ async function getMovieDetails() {
         } else {
             alert(`خطا: ${error.message}`);
         }
-        // Optionally hide main content sections on error
         document.getElementById('main-content-sections')?.classList.add('hidden');
-        document.getElementById('download-links').innerHTML = `<p class="text-red-500 text-center">به دلیل خطا، لینک‌های دانلود بارگذاری نشدند.</p>`; // Clear links on error
-
+        document.getElementById('download-links').innerHTML = `<p class="text-red-500 text-center">به دلیل خطا، لینک‌های دانلود بارگذاری نشدند.</p>`;
     } finally {
         hideLoading();
         console.log("getMovieDetails processing finished.");
