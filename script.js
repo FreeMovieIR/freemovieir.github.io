@@ -1,18 +1,63 @@
-// script.js
+// script.js (نسخه با سویچ به Worker در صورت فیلتر)
 const defaultApiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // کلید پیش‌فرض TMDb
 const userTmdbToken = localStorage.getItem('userTmdbToken'); // توکن کاربر
 const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن کاربر
 const language = 'fa';
-const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
+const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // فرض بر عدم فیلتر بودن
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+
+// آدرس‌های اصلی و پروکسی
+const mainApiBaseUrl = 'https://api.themoviedb.org';
+const proxyUrl = 'https://themoviedb.m4tinbeigi.workers.dev';
+const omdbApiBaseUrl = 'https://www.omdbapi.com';
 
 // آدرس‌های API TMDb
 const apiUrls = {
-    now_playing: `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=${language}`,
-    tv_trending: `https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}&language=${language}`
+    now_playing: `${mainApiBaseUrl}/3/trending/movie/week?api_key=${apiKey}&language=${language}`,
+    tv_trending: `${mainApiBaseUrl}/3/trending/tv/week?api_key=${apiKey}&language=${language}`
 };
+
 // شیء کش برای ذخیره تصاویر
 const imageCache = {};
+
+// تایم‌اوت برای تشخیص فیلتر بودن (5 ثانیه)
+const FETCH_TIMEOUT = 5000;
+
+// تابع fetch با سویچ به پروکسی در صورت خطا
+async function fetchWithFallback(url, options = {}) {
+    // تابع کمکی برای fetch با تایم‌اوت
+    async function fetchWithTimeout(resource, timeout = FETCH_TIMEOUT) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(resource, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(id);
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            throw error;
+        }
+    }
+
+    try {
+        // ابتدا تلاش برای درخواست به آدرس اصلی
+        console.log(`تلاش برای درخواست به: ${url}`);
+        const response = await fetchWithTimeout(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response;
+    } catch (error) {
+        console.warn(`خطا در درخواست به آدرس اصلی: ${error.message}, سویچ به پروکسی...`);
+        // سویچ به آدرس پروکسی
+        const proxyUrlTransformed = url.replace(mainApiBaseUrl, `${proxyUrl}/api.themoviedb.org`);
+        console.log(`تلاش برای درخواست به پروکسی: ${proxyUrlTransformed}`);
+        const response = await fetchWithTimeout(proxyUrlTransformed);
+        if (!response.ok) throw new Error(`خطا در پروکسی! status: ${response.status}`);
+        return response;
+    }
+}
 
 // تابع برای دریافت یا ذخیره تصویر از/در کش
 function getCachedImage(id, fetchFunction) {
@@ -77,8 +122,8 @@ async function fetchAndDisplayContent() {
         startLoadingBar();
 
         const [movieRes, tvRes] = await Promise.all([
-            fetch(apiUrls.now_playing),
-            fetch(apiUrls.tv_trending)
+            fetchWithFallback(apiUrls.now_playing),
+            fetchWithFallback(apiUrls.tv_trending)
         ]);
 
         if (!movieRes.ok || !tvRes.ok) throw new Error('خطا در دریافت داده‌ها');
@@ -94,17 +139,17 @@ async function fetchAndDisplayContent() {
                 seenIds.add(item.id);
 
                 let poster = defaultPoster;
-                const detailsUrl = `https://api.themoviedb.org/3/${type}/${item.id}/external_ids?api_key=${apiKey}`;
+                const detailsUrl = `${mainApiBaseUrl}/3/${type}/${item.id}/external_ids?api_key=${apiKey}`;
 
                 try {
-                    const detailsRes = await fetch(detailsUrl);
+                    const detailsRes = await fetchWithFallback(detailsUrl);
                     if (detailsRes.ok) {
                         const detailsData = await detailsRes.json();
                         const imdbId = detailsData.imdb_id || '';
                         if (imdbId) {
                             poster = await getCachedImage(imdbId, async () => {
                                 const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                                    key => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
+                                    key => `${omdbApiBaseUrl}/?i=${imdbId}&apikey=${key}`
                                 );
                                 return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
                             });
