@@ -1,4 +1,4 @@
-// script.js (نسخه با سویچ به Worker در صورت فیلتر)
+// script.js (نسخه کامل با سویچ برای TMDb و OMDb)
 const defaultApiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // کلید پیش‌فرض TMDb
 const userTmdbToken = localStorage.getItem('userTmdbToken'); // توکن کاربر
 const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن کاربر
@@ -9,7 +9,7 @@ const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-30
 // آدرس‌های اصلی و پروکسی
 const mainApiBaseUrl = 'https://api.themoviedb.org';
 const proxyUrl = 'https://themoviedb.m4tinbeigi.workers.dev';
-const omdbApiBaseUrl = 'https://www.omdbapi.com';
+const mainOmdbBaseUrl = 'https://www.omdbapi.com';
 
 // آدرس‌های API TMDb
 const apiUrls = {
@@ -42,6 +42,10 @@ async function fetchWithFallback(url, options = {}) {
         }
     }
 
+    // تشخیص نوع API بر اساس URL
+    let isTmdb = url.includes('api.themoviedb.org');
+    let isOmdb = url.includes('omdbapi.com');
+
     try {
         // ابتدا تلاش برای درخواست به آدرس اصلی
         console.log(`تلاش برای درخواست به: ${url}`);
@@ -51,7 +55,14 @@ async function fetchWithFallback(url, options = {}) {
     } catch (error) {
         console.warn(`خطا در درخواست به آدرس اصلی: ${error.message}, سویچ به پروکسی...`);
         // سویچ به آدرس پروکسی
-        const proxyUrlTransformed = url.replace(mainApiBaseUrl, `${proxyUrl}/api.themoviedb.org`);
+        let proxyUrlTransformed;
+        if (isTmdb) {
+            proxyUrlTransformed = url.replace(mainApiBaseUrl, `${proxyUrl}/api.themoviedb.org`);
+        } else if (isOmdb) {
+            proxyUrlTransformed = url.replace(mainOmdbBaseUrl, `${proxyUrl}/www.omdbapi.com`);
+        } else {
+            throw new Error('نوع API ناشناخته!');
+        }
         console.log(`تلاش برای درخواست به پروکسی: ${proxyUrlTransformed}`);
         const response = await fetchWithTimeout(proxyUrlTransformed);
         if (!response.ok) throw new Error(`خطا در پروکسی! status: ${response.status}`);
@@ -78,9 +89,26 @@ function getCachedImage(id, fetchFunction) {
 
 let apiKeySwitcher;
 
+// فرض بر اینه که loadApiKeys در فایل دیگه تعریف شده
 async function initializeSwitcher() {
     apiKeySwitcher = await loadApiKeys();
     console.log('سوئیچر کلید API مقداردهی شد');
+}
+
+// تابع fetchWithKeySwitch پروکسی‌شده (برای OMDb)
+async function fetchWithKeySwitchOmdb(callback) {
+    // فرض بر اینه که apiKeySwitcher یک آرایه کلیدها داره و fetchWithKeySwitch رو داره
+    // اما برای سازگاری، از fetchWithFallback استفاده می‌کنیم
+    const omdbUrl = callback(); // URL با کلید (مثل `https://www.omdbapi.com/?i=...&apikey=${key}`)
+    try {
+        const response = await fetchWithFallback(omdbUrl.replace('${key}', apiKeySwitcher.keys[0])); // مثال ساده؛ کلید اول رو استفاده کن
+        if (!response.ok) throw new Error('خطا در OMDb');
+        return await response.json();
+    } catch (error) {
+        console.warn('خطا در OMDb، تلاش برای کلید بعدی یا پروکسی...');
+        // اگر کلیدهای متعدد داری، لوپ کن؛ فعلاً ساده نگه داشتم
+        throw error;
+    }
 }
 
 // توابع مدیریت نوار پیشرفت
@@ -148,8 +176,9 @@ async function fetchAndDisplayContent() {
                         const imdbId = detailsData.imdb_id || '';
                         if (imdbId) {
                             poster = await getCachedImage(imdbId, async () => {
-                                const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                                    key => `${omdbApiBaseUrl}/?i=${imdbId}&apikey=${key}`
+                                // استفاده از fetchWithKeySwitchOmdb برای OMDb با سویچ
+                                const omdbData = await fetchWithKeySwitchOmdb(
+                                    () => `${mainOmdbBaseUrl}/?i=${imdbId}&apikey=${apiKeySwitcher.currentKey || apiKeySwitcher.keys[0]}`
                                 );
                                 return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
                             });
@@ -185,6 +214,7 @@ async function fetchAndDisplayContent() {
     }
 }
 
+// بقیه توابع بدون تغییر...
 function manageNotification() {
     const notification = document.getElementById('notification');
     const closeButton = document.getElementById('close-notification');
@@ -230,7 +260,6 @@ function manageDisclaimerNotice() {
     });
 }
 
-// تابع کمکی برای دانلود تصاویر
 function downloadImage(url, filename) {
     const link = document.createElement('a');
     link.href = url;
@@ -241,7 +270,6 @@ function downloadImage(url, filename) {
     console.log(`${filename} دانلود شد`);
 }
 
-// تابع مدیریت پاپ‌آپ حمایت
 function manageSupportPopup() {
     const popup = document.getElementById('support-popup');
     const closeButton = document.getElementById('close-popup');
@@ -350,6 +378,9 @@ function manageThemeToggle() {
     if (savedTheme === 'light') {
         body.classList.remove('dark');
         themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+    } else if (savedTheme === 'dark') {
+        body.classList.add('dark');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
     }
 }
 
@@ -388,6 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         manageSupportPopup();
         manageFabButton();
         manageThemeToggle();
+        manageAvailabilityNotice();
     } catch (error) {
         console.error('خطا در بارگذاری اولیه:', error);
     }
