@@ -1,74 +1,18 @@
-// script.js (نسخه کامل با سویچ برای TMDb و OMDb)
+// script.js
 const defaultApiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // کلید پیش‌فرض TMDb
 const userTmdbToken = localStorage.getItem('userTmdbToken'); // توکن کاربر
 const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن کاربر
 const language = 'fa';
-const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // فرض بر عدم فیلتر بودن
+const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
-
-// آدرس‌های اصلی و پروکسی
-const mainApiBaseUrl = 'https://zxcode.ir';
-const proxyUrl = 'https://themoviedb.m4tinbeigi.workers.dev';
-const mainOmdbBaseUrl = 'https://www.omdbapi.com';
 
 // آدرس‌های API TMDb
 const apiUrls = {
-    now_playing: `${mainApiBaseUrl}/3/trending/movie/week?api_key=${apiKey}&language=${language}`,
-    tv_trending: `${mainApiBaseUrl}/3/trending/tv/week?api_key=${apiKey}&language=${language}`
+    now_playing: `https://zxcode.ir/3/trending/movie/week?api_key=${apiKey}&language=${language}`,
+    tv_trending: `https://zxcode.ir/3/trending/tv/week?api_key=${apiKey}&language=${language}`
 };
-
 // شیء کش برای ذخیره تصاویر
 const imageCache = {};
-
-// تایم‌اوت برای تشخیص فیلتر بودن (5 ثانیه)
-const FETCH_TIMEOUT = 5000;
-
-// تابع fetch با سویچ به پروکسی در صورت خطا
-async function fetchWithFallback(url, options = {}) {
-    // تابع کمکی برای fetch با تایم‌اوت
-    async function fetchWithTimeout(resource, timeout = FETCH_TIMEOUT) {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        try {
-            const response = await fetch(resource, {
-                ...options,
-                signal: controller.signal
-            });
-            clearTimeout(id);
-            return response;
-        } catch (error) {
-            clearTimeout(id);
-            throw error;
-        }
-    }
-
-    // تشخیص نوع API بر اساس URL
-    let isTmdb = url.includes('api.themoviedb.org');
-    let isOmdb = url.includes('omdbapi.com');
-
-    try {
-        // ابتدا تلاش برای درخواست به آدرس اصلی
-        console.log(`تلاش برای درخواست به: ${url}`);
-        const response = await fetchWithTimeout(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response;
-    } catch (error) {
-        console.warn(`خطا در درخواست به آدرس اصلی: ${error.message}, سویچ به پروکسی...`);
-        // سویچ به آدرس پروکسی
-        let proxyUrlTransformed;
-        if (isTmdb) {
-            proxyUrlTransformed = url.replace(mainApiBaseUrl, `${proxyUrl}/api.themoviedb.org`);
-        } else if (isOmdb) {
-            proxyUrlTransformed = url.replace(mainOmdbBaseUrl, `${proxyUrl}/www.omdbapi.com`);
-        } else {
-            throw new Error('نوع API ناشناخته!');
-        }
-        console.log(`تلاش برای درخواست به پروکسی: ${proxyUrlTransformed}`);
-        const response = await fetchWithTimeout(proxyUrlTransformed);
-        if (!response.ok) throw new Error(`خطا در پروکسی! status: ${response.status}`);
-        return response;
-    }
-}
 
 // تابع برای دریافت یا ذخیره تصویر از/در کش
 function getCachedImage(id, fetchFunction) {
@@ -89,26 +33,9 @@ function getCachedImage(id, fetchFunction) {
 
 let apiKeySwitcher;
 
-// فرض بر اینه که loadApiKeys در فایل دیگه تعریف شده
 async function initializeSwitcher() {
     apiKeySwitcher = await loadApiKeys();
     console.log('سوئیچر کلید API مقداردهی شد');
-}
-
-// تابع fetchWithKeySwitch پروکسی‌شده (برای OMDb)
-async function fetchWithKeySwitchOmdb(callback) {
-    // فرض بر اینه که apiKeySwitcher یک آرایه کلیدها داره و fetchWithKeySwitch رو داره
-    // اما برای سازگاری، از fetchWithFallback استفاده می‌کنیم
-    const omdbUrl = callback(); // URL با کلید (مثل `https://www.omdbapi.com/?i=...&apikey=${key}`)
-    try {
-        const response = await fetchWithFallback(omdbUrl.replace('${key}', apiKeySwitcher.keys[0])); // مثال ساده؛ کلید اول رو استفاده کن
-        if (!response.ok) throw new Error('خطا در OMDb');
-        return await response.json();
-    } catch (error) {
-        console.warn('خطا در OMDb، تلاش برای کلید بعدی یا پروکسی...');
-        // اگر کلیدهای متعدد داری، لوپ کن؛ فعلاً ساده نگه داشتم
-        throw error;
-    }
 }
 
 // توابع مدیریت نوار پیشرفت
@@ -150,8 +77,8 @@ async function fetchAndDisplayContent() {
         startLoadingBar();
 
         const [movieRes, tvRes] = await Promise.all([
-            fetchWithFallback(apiUrls.now_playing),
-            fetchWithFallback(apiUrls.tv_trending)
+            fetch(apiUrls.now_playing),
+            fetch(apiUrls.tv_trending)
         ]);
 
         if (!movieRes.ok || !tvRes.ok) throw new Error('خطا در دریافت داده‌ها');
@@ -167,18 +94,17 @@ async function fetchAndDisplayContent() {
                 seenIds.add(item.id);
 
                 let poster = defaultPoster;
-                const detailsUrl = `${mainApiBaseUrl}/3/${type}/${item.id}/external_ids?api_key=${apiKey}`;
+                const detailsUrl = `https://zxcode.ir/3/${type}/${item.id}/external_ids?api_key=${apiKey}`;
 
                 try {
-                    const detailsRes = await fetchWithFallback(detailsUrl);
+                    const detailsRes = await fetch(detailsUrl);
                     if (detailsRes.ok) {
                         const detailsData = await detailsRes.json();
                         const imdbId = detailsData.imdb_id || '';
                         if (imdbId) {
                             poster = await getCachedImage(imdbId, async () => {
-                                // استفاده از fetchWithKeySwitchOmdb برای OMDb با سویچ
-                                const omdbData = await fetchWithKeySwitchOmdb(
-                                    () => `${mainOmdbBaseUrl}/?i=${imdbId}&apikey=${apiKeySwitcher.currentKey || apiKeySwitcher.keys[0]}`
+                                const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
+                                    key => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
                                 );
                                 return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
                             });
@@ -214,7 +140,6 @@ async function fetchAndDisplayContent() {
     }
 }
 
-// بقیه توابع بدون تغییر...
 function manageNotification() {
     const notification = document.getElementById('notification');
     const closeButton = document.getElementById('close-notification');
@@ -260,6 +185,7 @@ function manageDisclaimerNotice() {
     });
 }
 
+// تابع کمکی برای دانلود تصاویر
 function downloadImage(url, filename) {
     const link = document.createElement('a');
     link.href = url;
@@ -270,6 +196,7 @@ function downloadImage(url, filename) {
     console.log(`${filename} دانلود شد`);
 }
 
+// تابع مدیریت پاپ‌آپ حمایت
 function manageSupportPopup() {
     const popup = document.getElementById('support-popup');
     const closeButton = document.getElementById('close-popup');
@@ -378,9 +305,6 @@ function manageThemeToggle() {
     if (savedTheme === 'light') {
         body.classList.remove('dark');
         themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-    } else if (savedTheme === 'dark') {
-        body.classList.add('dark');
-        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
     }
 }
 
@@ -419,7 +343,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         manageSupportPopup();
         manageFabButton();
         manageThemeToggle();
-        manageAvailabilityNotice();
     } catch (error) {
         console.error('خطا در بارگذاری اولیه:', error);
     }
