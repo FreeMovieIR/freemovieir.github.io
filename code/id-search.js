@@ -30,8 +30,8 @@ async function searchById(id) {
     if (id.length < 3) return; // حداقل 3 کاراکتر
 
     try {
-        const movieUrl = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language=fa-IR`;
-        const tvUrl = `https://api.themoviedb.org/3/tv/${id}?api_key=${apiKey}&language=fa-IR`;
+        const movieUrl = `https://zxcode.ir/3/movie/${id}?api_key=${apiKey}&language=fa-IR`;
+        const tvUrl = `https://zxcode.ir/3/tv/${id}?api_key=${apiKey}&language=fa-IR`;
 
         const [movieRes, tvRes] = await Promise.all([
             fetch(movieUrl).then(res => res.ok ? res.json() : null),

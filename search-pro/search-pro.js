@@ -76,7 +76,7 @@ async function advancedSearch(page = 1, append = false) {
   showLoading();
 
   try {
-    let movieUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=${language}&sort_by=vote_average.desc&page=${page}`;
+    let movieUrl = `https://zxcode.ir/3/discover/movie?api_key=${apiKey}&language=${language}&sort_by=vote_average.desc&page=${page}`;
 
     if (withGenres) movieUrl += `&with_genres=${withGenres}`;
     if (withoutGenres) movieUrl += `&without_genres=${withoutGenres}`;

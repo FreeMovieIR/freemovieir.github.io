@@ -5,7 +5,7 @@ let apiKeySwitcher;
 let moviePage = 1;
 let isLoading = false;
 
-const apiUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=fa-IR&page=`;
+const apiUrl = `https://zxcode.ir/3/movie/upcoming?api_key=${apiKey}&language=fa-IR&page=`;
 const imageCache = {};
 
 async function initializeSwitcher() {
@@ -60,7 +60,7 @@ async function fetchMovies(page, isInitial = false) {
 
         for (const movie of movies) {
             let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
-            const detailsUrl = `https://api.themoviedb.org/3/movie/${movie.id}/external_ids?api_key=${apiKey}`;
+            const detailsUrl = `https://zxcode.ir/3/movie/${movie.id}/external_ids?api_key=${apiKey}`;
             try {
                 const detailsRes = await fetch(detailsUrl);
                 if (!detailsRes.ok) throw new Error(`خطای جزئیات: ${detailsRes.status}`);

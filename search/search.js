@@ -168,7 +168,7 @@ function displayInitialResults(container, sectionElement, titleElement, items, i
 async function fetchAndSetPoster(item, itemType) {
     const itemId = item.id;
     const itemTitle = itemType === 'movie' ? item.title : item.name;
-    const externalIdsUrl = `https://api.themoviedb.org/3/${itemType}/${itemId}/external_ids?api_key=${tmdbApiKey}`;
+    const externalIdsUrl = `https://zxcode.ir/3/${itemType}/${itemId}/external_ids?api_key=${tmdbApiKey}`;
     let imdbId = null;
 
     try {
@@ -214,7 +214,7 @@ async function searchMedia(query, searchType) {
     tvSection.classList.add('hidden');
 
     const encodedQuery = encodeURIComponent(cleanedQuery);
-    const searchMultiUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbApiKey}&language=${language}&query=${encodedQuery}`;
+    const searchMultiUrl = `https://zxcode.ir/3/search/multi?api_key=${tmdbApiKey}&language=${language}&query=${encodedQuery}`;
 
     try {
         const response = await fetch(searchMultiUrl);

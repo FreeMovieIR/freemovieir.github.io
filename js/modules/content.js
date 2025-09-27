@@ -45,7 +45,7 @@ export async function fetchAndDisplayContent(apiKeySwitcher) {
 }
 
 async function getPoster(id, apiKeySwitcher) {
-    const detailsUrl = `https://api.themoviedb.org/3/movie/${id}/external_ids?api_key=${defaultApiKey}`;
+    const detailsUrl = `https://zxcode.ir/3/movie/${id}/external_ids?api_key=${defaultApiKey}`;
     try {
         const details = await fetch(detailsUrl).then(res => res.json());
         const imdbId = details.imdb_id || '';

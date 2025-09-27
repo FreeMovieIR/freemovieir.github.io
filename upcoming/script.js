@@ -8,8 +8,8 @@ let tvPage = 1;
 let isLoading = false;
 
 const apiUrls = {
-    upcomingMovies: `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=fa-IR&page=`,
-    upcomingTv: `https://api.themoviedb.org/3/tv/on_the_air?api_key=${apiKey}&language=fa-IR&page=`
+    upcomingMovies: `https://zxcode.ir/3/movie/upcoming?api_key=${apiKey}&language=fa-IR&page=`,
+    upcomingTv: `https://zxcode.ir/3/tv/on_the_air?api_key=${apiKey}&language=fa-IR&page=`
 };
 
 // کش تصاویر
@@ -71,7 +71,7 @@ async function fetchContent(containerId, url, page, isInitial = false) {
 
         for (const item of items) {
             let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
-            const detailsUrl = `https://api.themoviedb.org/3/${containerId.includes('movie') ? 'movie' : 'tv'}/${item.id}/external_ids?api_key=${apiKey}`;
+            const detailsUrl = `https://zxcode.ir/3/${containerId.includes('movie') ? 'movie' : 'tv'}/${item.id}/external_ids?api_key=${apiKey}`;
             try {
                 const detailsRes = await fetch(detailsUrl);
                 if (!detailsRes.ok) throw new Error(`خطای جزئیات: ${detailsRes.status}`);

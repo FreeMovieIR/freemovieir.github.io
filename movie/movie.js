@@ -370,9 +370,9 @@ async function getMovieDetails() {
 
     try {
         // Define TMDB API URLs for Persian and English
-        const movieDetailsUrl = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=${language}&append_to_response=credits,videos`;
-        const movieDetailsEnglishUrl = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US`;
-        const externalIdsUrl = `https://api.themoviedb.org/3/movie/${movieId}/external_ids?api_key=${apiKey}`;
+        const movieDetailsUrl = `https://zxcode.ir/3/movie/${movieId}?api_key=${apiKey}&language=${language}&append_to_response=credits,videos`;
+        const movieDetailsEnglishUrl = `https://zxcode.ir/3/movie/${movieId}?api_key=${apiKey}&language=en-US`;
+        const externalIdsUrl = `https://zxcode.ir/3/movie/${movieId}/external_ids?api_key=${apiKey}`;
 
         console.log("Fetching TMDB data concurrently...");
         console.time("TMDB Concurrent Fetch");

@@ -1,5 +1,5 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
-const apiUrl = `https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}&language=fa-IR`;
+const apiUrl = `https://zxcode.ir/3/genre/movie/list?api_key=${apiKey}&language=fa-IR`;
 
 function startLoadingBar() {
     const loadingBar = document.getElementById('loading-bar');
