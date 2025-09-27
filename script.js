@@ -7,7 +7,7 @@ const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // فرض بر عدم ف
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
 // آدرس‌های اصلی و پروکسی
-const mainApiBaseUrl = 'https://api.themoviedb.org';
+const mainApiBaseUrl = 'https://zxcode.ir';
 const proxyUrl = 'https://themoviedb.m4tinbeigi.workers.dev';
 const mainOmdbBaseUrl = 'https://www.omdbapi.com';
 
