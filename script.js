@@ -179,10 +179,13 @@ function manageDisclaimerNotice() {
         notice.classList.add('hidden');
     }
 
-    closeButton.addEventListener('click', () => {
+    if (closeButton && notice) {
+        closeButton.addEventListener('click', () => {
         notice.classList.add('hidden');
         localStorage.setItem('disclaimerNoticeClosed', 'true');
     });
+}
+
 }
 
 // تابع کمکی برای دانلود تصاویر
@@ -338,10 +341,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await initializeSwitcher();
         await fetchAndDisplayContent();
+        manageFabButton();
         manageNotification();
         manageDisclaimerNotice();
         manageSupportPopup();
-        manageFabButton();
         manageThemeToggle();
     } catch (error) {
         console.error('خطا در بارگذاری اولیه:', error);
