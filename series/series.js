@@ -224,7 +224,7 @@ async function getSeriesDetails() {
 
     try {
         // 1. دریافت اطلاعات اصلی سریال از TMDB (شامل ویدئوها و IDهای خارجی)
-        const seriesDetailsUrl = `https://zxcode.ir/3/tv/${seriesId}?api_key=${apiKey}&language=${language}&append_to_response=external_ids,videos`;
+        const seriesDetailsUrl = `https://api.themoviedb.org/3/tv/${seriesId}?api_key=${apiKey}&language=${language}&append_to_response=external_ids,videos`;
         const res = await fetch(seriesDetailsUrl);
 
         if (!res.ok) {
@@ -291,7 +291,7 @@ async function getSeriesDetails() {
 // --- Related Series Function (Optimized) ---
 async function fetchRelatedSeries(currentSeriesId, tmdbApiKey, lang, switcher) {
     console.log(`Workspaceing related series for ID: ${currentSeriesId}`);
-    const relatedUrl = `https://zxcode.ir/3/tv/${currentSeriesId}/similar?api_key=${tmdbApiKey}&language=${lang}&page=1`; // دریافت صفحه اول
+    const relatedUrl = `https://api.themoviedb.org/3/tv/${currentSeriesId}/similar?api_key=${tmdbApiKey}&language=${lang}&page=1`; // دریافت صفحه اول
 
     try {
         const res = await fetch(relatedUrl);
@@ -311,7 +311,7 @@ async function fetchRelatedSeries(currentSeriesId, tmdbApiKey, lang, switcher) {
 
         // دریافت موازی IMDb ID برای همه سریال‌های مرتبط
         const externalIdPromises = relatedSeries.map(serie =>
-            fetch(`https://zxcode.ir/3/tv/${serie.id}/external_ids?api_key=${tmdbApiKey}`)
+            fetch(`https://api.themoviedb.org/3/tv/${serie.id}/external_ids?api_key=${tmdbApiKey}`)
                 .then(res => res.ok ? res.json() : Promise.reject(`Failed to fetch external ID for ${serie.id}`))
                 .then(ids => ({ seriesId: serie.id, imdbId: ids.imdb_id })) // برگرداندن ID سریال اصلی و IMDb ID
                 .catch(err => {

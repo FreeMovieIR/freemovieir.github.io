@@ -5,14 +5,29 @@ const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن ک�
 const language = 'fa';
 const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+function proxify(url) {
+  return `https://odd-disk-9903.armin-apple816467.workers.dev/?url=${encodeURIComponent(url)}`;
+}
+
 
 // آدرس‌های API TMDb
 const apiUrls = {
-    now_playing: `https://zxcode.ir/3/trending/movie/week?api_key=${apiKey}&language=${language}`,
-    tv_trending: `https://zxcode.ir/3/trending/tv/week?api_key=${apiKey}&language=${language}`
+    now_playing: "https://api.themoviedb.org/3/trending/movie/week?api_key=1dc4cbf81f0accf4fa108820d551dafc&language=fa",
+    tv_trending: "https://api.themoviedb.org/3/trending/tv/week?api_key=1dc4cbf81f0accf4fa108820d551dafc&language=fa"
 };
+
 // شیء کش برای ذخیره تصاویر
 const imageCache = {};
+
+function startLoadingBar() {
+    const loadingBar = document.getElementById('loading-bar');
+    if (loadingBar) {
+        // شروع از 5% تا 60% (شبیه‌سازی پیشرفت)
+        loadingBar.style.width = '5%';
+        // افزایش تدریجی تا 60% تا وقتی داده میاد
+        setTimeout(() => loadingBar.style.width = '60%', 100);
+    }
+}
 
 // تابع برای دریافت یا ذخیره تصویر از/در کش
 function getCachedImage(id, fetchFunction) {
@@ -76,10 +91,15 @@ async function fetchAndDisplayContent() {
     try {
         startLoadingBar();
 
-        const [movieRes, tvRes] = await Promise.all([
-            fetch(apiUrls.now_playing),
-            fetch(apiUrls.tv_trending)
-        ]);
+const proxify = url =>
+  `https://odd-disk-9903.armin-apple816467.workers.dev/?url=${encodeURIComponent(url)}`;
+
+
+const [movieRes, tvRes] = await Promise.all([
+    fetch(proxify(apiUrls.now_playing)),
+    fetch(proxify(apiUrls.tv_trending))
+]);
+
 
         if (!movieRes.ok || !tvRes.ok) throw new Error('خطا در دریافت داده‌ها');
 
@@ -94,7 +114,7 @@ async function fetchAndDisplayContent() {
                 seenIds.add(item.id);
 
                 let poster = defaultPoster;
-                const detailsUrl = `https://zxcode.ir/3/${type}/${item.id}/external_ids?api_key=${apiKey}`;
+                const detailsUrl = proxify(`https://api.themoviedb.org/3/${type}/${item.id}/external_ids?api_key=${apiKey}`);
 
                 try {
                     const detailsRes = await fetch(detailsUrl);
