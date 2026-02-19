@@ -28,7 +28,21 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
     <!-- Header -->
-    <div id="shared-header"></div>
+    <header class="bg-gray-800 p-4 shadow-md w-full">
+        <div class="flex justify-between items-center px-4 md:px-8">
+            <nav class="flex items-center space-x-4 space-x-reverse">
+                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-1" aria-label="صفحه اصلی"><i class="fas fa-home"></i></a>
+                <a href="/watchlist" class="hover:text-gray-300" aria-label="لیست تماشا"><i class="fas fa-bookmark"></i></a>
+                <a href="/search" class="hover:text-gray-300" aria-label="جستجو"><i class="fas fa-search"></i></a>
+                <button id="theme-toggle" class="hover:text-gray-300" aria-label="تغییر تم"><i class="fas fa-sun"></i></button>
+            </nav>
+            <div>
+                <a href="https://freemovieir.github.io/">
+                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10">
+                </a>
+            </div>
+        </div>
+    </header>
 
     <!-- Developers Section -->
     <section class="container mx-auto py-8 text-center">
@@ -41,7 +55,22 @@
     </section>
 
     <!-- Footer -->
-    <div id="shared-footer"></div>
+    <footer class="bg-gray-800 p-4 mt-auto w-full">
+        <div class="container mx-auto text-center">
+            <p>
+                فیری مووی - ساخته شده با 🤍
+                <br>
+                استفاده از فونت <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">وزیرمتن</a> به یاد صابر راستی کردار<br>
+            </p>
+            <a href="/developer">توسعه‌دهندگان</a> | <a href="/about-freemovie">درباره فیری مووی</a>
+            <br>
+            <a href="/disclaimer">سلب مسئولیت</a> | <a href="/disclaimer/index-en.html">DMCA</a>
+            <div class="social-icons mb-2">
+                <a class="github-button" href="https://freemovieir.github.io" data-icon="octicon-star" data-show-count="true" aria-label="ستاره دادن به فیری مووی در گیت‌هاب">Star</a>
+                <script async defer src="https://buttons.github.io/buttons.js"></script>
+            </div>
+        </div>
+    </footer>
 
     <!-- JavaScript -->
     <script src="https://buttons.github.io/buttons.js" async defer></script>
@@ -78,6 +107,5 @@
 
         window.addEventListener('DOMContentLoaded', fetchData);
     </script>
-    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

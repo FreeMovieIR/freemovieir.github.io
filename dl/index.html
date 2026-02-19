@@ -140,7 +140,22 @@
     <div id="loading-bar"></div>
 
     <!-- هدر -->
-    <div id="shared-header"></div>
+    <header class="bg-gray-800 p-4 shadow-lg sticky top-0 z-40">
+        <div class="container mx-auto flex flex-row justify-between items-center">
+            <nav class="flex items-center space-x-4">
+                <a href="https://freemovieir.github.io/" class="hover:text-yellow-400 p-4 transition-colors duration-300" aria-label="خانه"><i class="fas fa-home"></i></a>
+                <a href="/watchlist" class="hover:text-yellow-400 transition-colors duration-300" aria-label="واچ‌لیست"><i class="fas fa-bookmark"></i></a>
+                <a href="/search" class="hover:text-yellow-400 transition-colors duration-300" aria-label="جستجو"><i class="fas fa-search"></i></a>
+                <a href="/settings/index.html" class="hover:text-yellow-400 transition-colors duration-300" aria-label="تنظیمات"><i class="fas fa-cog"></i></a>
+                <button id="theme-toggle" class="hover:text-yellow-400 transition-colors duration-300" aria-label="تغییر تم"><i class="fas fa-sun"></i></button>
+            </nav>
+            <div>
+                <a href="https://freemovieir.github.io/">
+                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-12 transition-transform duration-300 hover:scale-110">
+                </a>
+            </div>
+        </div>
+    </header>
 
     <!-- بخش اصلی -->
     <main class="container mx-auto py-12 flex-grow">
@@ -218,7 +233,21 @@
     </main>
 
     <!-- فوتر -->
-    <div id="shared-footer"></div>
+    <footer class="bg-gray-800 p-6 mt-auto shadow-inner">
+        <div class="container mx-auto text-center text-gray-300">
+            <p class="mb-2">فیری مووی - ساخته شده با <span class="text-red-500">🤍</span></p>
+            <p class="mb-4">استفاده از فونت <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-yellow-400 transition-colors duration-300">وزیرمتن</a></p>
+            <div class="flex justify-center gap-4">
+                <a href="/developer" class="hover:text-yellow-400 transition-colors duration-300">توسعه‌دهندگان</a>
+                <span>|</span>
+                <a href="/about-index.html" class="hover:text-yellow-400 transition-colors duration-300">درباره فیری مووی</a>
+                <span>|</span>
+                <a href="/disclaimer" class="hover:text-yellow-400 transition-colors duration-300">سلب مسئولیت</a>
+                <span>|</span>
+                <a href="/disclaimer/index-en.html" class="hover:text-yellow-400 transition-colors duration-300">DMCA</a>
+            </div>
+        </div>
+    </footer>
 
     <script>
         // مدیریت تم
@@ -264,6 +293,5 @@
             });
         });
     </script>
-    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

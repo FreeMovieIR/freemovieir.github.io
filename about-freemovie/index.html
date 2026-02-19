@@ -85,7 +85,23 @@
 </head>
 <body class="min-h-screen flex flex-col">
     <!-- Header -->
-    <div id="shared-header"></div>
+    <header class="bg-gray-800 p-4 shadow-md">
+        <div class="container mx-auto flex flex-row justify-between items-center">
+            <!-- Navigation -->
+            <nav class="flex items-center space-x-4">
+                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4"><i class="fas fa-home"></i></a>
+                
+                <a href="/watchlist" class="hover:text-gray-300"><i class="fas fa-bookmark"></i></a>
+                <a href="/search" class="hover:text-gray-300"><i class="fas fa-search"></i></a>
+            </nav>
+            <!-- Logo -->
+            <div>
+                <a href="https://freemovieir.github.io/">
+                    <img src="https://freemovieir.github.io/logo.png" alt="لوگو" class="h-10">
+                </a>
+            </div>
+        </div>
+    </header>
 
     <!-- Main Content -->
     <main class="container mx-auto flex-1 py-12 bg-about">
@@ -104,9 +120,27 @@
     </main>
 
     <!-- Footer -->
-    <div id="shared-footer"></div>
+    <footer class="bg-gray-800 p-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>
+                فیری مووی - ساخته شده توسط 
+                <a href="https://x.com/m4tinbeigi" class="hover:text-gray-300">ریک سانچز</a> و 
+                <a href="https://x.com/armin_np_" class="hover:text-gray-300">ارمین جوان</a> با 🤍 | 
+                استفاده از فونت 
+                <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">وزیر</a> به یاد 
+                <a href="https://example.com/saber-rastikerdar" class="hover:text-gray-300">صابر راستی کردار</a><br>
+                در این وبسایت از وب سرویس 
+                <a href="https://www.omdbapi.com/" class="hover:text-gray-300">OMDB</a> و 
+                <a href="https://www.themoviedb.org/" class="hover:text-gray-300">TMDB</a> برای جستجو و اطلاعات فیلم‌ها و از 
+                <a href="https://almasmovie.website/" class="hover:text-gray-300">الماس مووی</a> برای دانلود فیلم‌ها استفاده می‌شود.
+            </p>
+            <div class="social-icons mb-2">
+                <a class="github-button" href="https://freemovieir.github.io" data-icon="octicon-star" data-show-count="true" aria-label="Star m4tinbeigi-official/freemovie on GitHub">Star</a>
+                <script async defer src="https://buttons.github.io/buttons.js"></script>
+            </div>
+        </div>
+    </footer>
 
     <script src="about.js"></script>
-    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

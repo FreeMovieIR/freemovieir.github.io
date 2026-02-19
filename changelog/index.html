@@ -8,11 +8,11 @@
     <meta name="keywords" content="فیری مووی, تغییرات, نسخه جدید, changelog">
     <meta name="robots" content="index, follow">
     <meta name="author" content="تیم فیری مووی">
-    <link rel="canonical" href="https://freemovieir.github.io/pages/changelog/">
+    <link rel="canonical" href="https://freemovieir.github.io/changelog/">
     <meta property="og:title" content="فیری مووی - تغییرات و نسخه‌ها">
     <meta property="og:description" content="جدیدترین تغییرات و نسخه‌های فیری مووی را اینجا ببینید.">
     <meta property="og:image" content="https://freemovieir.github.io/images/tweet2.png">
-    <meta property="og:url" content="https://freemovieir.github.io/pages/changelog/">
+    <meta property="og:url" content="https://freemovieir.github.io/changelog/">
     <meta property="og:type" content="website">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
@@ -40,7 +40,21 @@
     <div id="loading-bar"></div>
 
     <!-- هدر -->
-    <div id="shared-header"></div>
+    <header class="bg-gray-800 p-4 shadow-md">
+        <div class="container mx-auto flex flex-row justify-between items-center">
+            <nav class="flex items-center space-x-4">
+                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4" aria-label="خانه"><i class="fas fa-home"></i></a>
+                <a href="/watchlist" class="hover:text-gray-300" aria-label="واچ‌لیست"><i class="fas fa-bookmark"></i></a>
+                <a href="/search" class="hover:text-gray-300" aria-label="جستجو"><i class="fas fa-search"></i></a>
+                <a href="/settings/index.html" class="hover:text-gray-300" aria-label="تنظیمات"><i class="fas fa-cog"></i></a>
+            </nav>
+            <div>
+                <a href="https://freemovieir.github.io/">
+                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10">
+                </a>
+            </div>
+        </div>
+    </header>
 
     <!-- بخش اصلی تغییرات -->
     <section class="container mx-auto py-8">
@@ -51,9 +65,12 @@
     </section>
 
     <!-- فوتر -->
-    <div id="shared-footer"></div>
+    <footer class="bg-gray-800 p-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>فیری مووی - ساخته شده با 🤍<br></p>
+        </div>
+    </footer>
 
     <script src="changelog.js" defer></script>
-    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

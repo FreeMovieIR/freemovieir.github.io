@@ -22,7 +22,22 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
     <!-- Header -->
-    <div id="shared-header"></div>
+    <header class="bg-gray-800 p-4 shadow-md">
+        <div class="container mx-auto flex flex-row justify-between items-center">
+            <!-- Navigation -->
+            <nav class="flex items-center space-x-4">
+                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4"><i class="fas fa-home"></i></a>
+                <a href="/watchlist" class="hover:text-gray-300"><i class="fas fa-bookmark"></i></a>
+                <a href="/search" class="hover:text-gray-300"><i class="fas fa-search"></i></a>
+            </nav>
+            <!-- Logo -->
+            <div>
+                <a href="https://freemovieir.github.io/">
+                    <img src="https://freemovieir.github.io/logo.png" alt="Logo" class="h-10">
+                </a>
+            </div>
+        </div>
+    </header>
 
     <!-- Main Content -->
     <main class="container mx-auto py-8 px-4 flex-grow">
@@ -82,10 +97,21 @@
     </main>
 
     <!-- Footer -->
-    <div id="shared-footer"></div>
+    <footer class="bg-gray-800 p-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>
+                FreeMovie - Built with 🤍 | 
+                Using the <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">Vazir</a> font in memory of Saber Rastikerdar<br>
+            </p>
+            <a href="/developer">Developers</a> | <a href="/about-freemovie">About FreeMovie</a>
+            <div class="social-icons mb-2">
+                <a class="github-button" href="https://freemovieir.github.io" data-icon="octicon-star" data-show-count="true" aria-label="Star m4tinbeigi-official/freemovie on GitHub">Star</a>
+                <script async defer src="https://buttons.github.io/buttons.js"></script>
+            </div>
+        </div>
+    </footer>
 
     <script src="/script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>
