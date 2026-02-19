@@ -131,23 +131,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
-    <header class="bg-gray-800 p-4 shadow-md">
-        <div class="container mx-auto flex flex-row justify-between items-center">
-            <!-- Navigation -->
-            <nav class="flex items-center space-x-4">
-                <a href="/index.html" class="hover:text-gray-300 p-4"><i class="fas fa-home"></i></a>
-                
-                <a href="index.html" class="hover:text-gray-300"><i class="fas fa-bookmark"></i></a>
-                <a href="/search" class="hover:text-gray-300"><i class="fas fa-search"></i></a>
-            </nav>
-            <!-- Logo -->
-            <div>
-                <a href="https://freemovieir.github.io/">
-                    <img src="https://freemovieir.github.io/logo.png" alt="لوگو" class="h-10">
-                </a>
-            </div>
-        </div>
-    </header>
+    <div id="shared-header"></div>
 
     <main class="container mx-auto py-8 flex-1">
         <h2 class="text-2xl font-bold mb-8 text-center">واچ لیست شما</h2>
@@ -165,11 +149,7 @@
         </div>
     </main>
 
-    <footer class="bg-gray-800 p-4 mt-auto">
-        <div class="container mx-auto text-center">
-            <p>فیری مووی - دانلود رایگان فیلم و سریال</p>
-        </div>
-    </footer>
+    <div id="shared-footer"></div>
 	<script src="../apiKeySwitcher.js"></script>	
     <script src="watchlist.js" defer></script>
     <script>
@@ -187,5 +167,6 @@
             themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
         }
     </script>
+    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

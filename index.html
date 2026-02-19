@@ -59,23 +59,7 @@
     <div id="loading-bar"></div>
 
     <!-- هدر -->
-    <header class="bg-gray-800 p-4 shadow-md">
-        <div class="container mx-auto flex flex-row justify-between items-center">
-            <!-- ناوبری -->
-            <nav class="flex items-center space-x-4">
-                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4" aria-label="خانه"><i class="fas fa-home"></i></a>
-                <a href="/watchlist" class="hover:text-gray-300" aria-label="واچ‌لیست"><i class="fas fa-bookmark"></i></a>
-                <a href="/search" class="hover:text-gray-300" aria-label="جستجو"><i class="fas fa-search"></i></a>
-				<a href="/settings/index.html" class="hover:text-gray-300" aria-label="تنظیمات"><i class="fas fa-cog"></i></a>
-            </nav>
-            <!-- لوگو -->
-            <div>
-                <a href="https://freemovieir.github.io/">
-                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10">
-                </a>
-            </div>
-        </div>
-    </header>
+    <div id="shared-header"></div>
 
 <!-- بخش فیلم‌های جدید -->
 <section class="container mx-auto py-8">
@@ -83,7 +67,7 @@
     <div id="disclaimer-notice" class="bg-gray-700 text-white p-4 rounded-lg shadow-md mb-6 mx-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
             <p class="text-sm md:text-base">
-                📢 <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی را میزبانی نمی‌کند. اطلاعات از APIهای عمومی و لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" class="underline hover:text-gray-300" rel="nofollow">الماس مووی</a> دریافت می‌شود. برای جزئیات بیشتر، <a href="/disclaimer" class="underline hover:text-gray-300">صفحه سلب مسئولیت</a> را ببینید.
+                📢 <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی را میزبانی نمی‌کند. اطلاعات از APIهای عمومی و لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" class="underline hover:text-gray-300" rel="nofollow">الماس مووی</a> دریافت می‌شود. برای جزئیات بیشتر، <a href="/pages/disclaimer/" class="underline hover:text-gray-300">صفحه سلب مسئولیت</a> را ببینید.
             </p>
         </div>
     </div>
@@ -159,47 +143,11 @@
     </div>
 
     <!-- فوتر -->
-<footer class="bg-gray-800 p-4 mt-auto">
-    <div class="container mx-auto text-center">
-        <p>
-            فیری مووی - ساخته شده با 🤍
-            <br>
-            استفاده از فونت <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">وزیرمتن</a> به یاد صابر راستی کردار
-        </p>
-        <a href="/developer">توسعه‌دهندگان</a> | <a href="/about-freemovie">درباره فیری مووی</a>
-        <br>
-        <a href="/disclaimer">سلب مسئولیت</a> | <a href="/disclaimer/index-en.html">DMCA</a>
-        <div class="social-icons mb-2">
-            <!-- دکمه گیت‌هاب -->
-            <a class="github-button" 
-               href="https://github.com/FreeMovieIR/web" 
-               data-icon="octicon-star" 
-               data-show-count="true" 
-               aria-label="ستاره دادن به FreeMovieIR/web در گیت‌هاب"></a>
-        </div>
-        <!-- خط جدید برای آیکون‌های توییتر و اینستاگرام -->
-        <div class="social-icons mb-2">
-            <!-- آیکون توییتر -->
-            <a href="https://twitter.com/freemovie_ir" 
-               target="_blank" 
-               class="mx-2 hover:text-gray-300" 
-               aria-label="ما را در توییتر دنبال کنید">
-                <i class="fab fa-twitter"></i>
-            </a>
-            <!-- آیکون اینستاگرام -->
-            <a href="https://instagram.com/freemovie_ir" 
-               target="_blank" 
-               class="mx-2 hover:text-gray-300" 
-               aria-label="ما را در اینستاگرام دنبال کنید">
-                <i class="fab fa-instagram"></i>
-            </a>
-        </div>
-        <script async defer src="https://buttons.github.io/buttons.js"></script>
-    </div>
-</footer>
+<div id="shared-footer"></div>
 
     <script src="apiKeySwitcher.js" defer></script>
     <script src="script.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>
