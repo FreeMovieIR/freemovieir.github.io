@@ -1,1 +1,112 @@
-<!doctype html><html lang="fa"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/pages/about-freemovie/"><link rel="canonical" href="/pages/about-freemovie/"></head><body></body></html>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="درباره فیری مووی - اطلاعات بیشتر درباره پلتفرم ما">
+    <meta property="og:title" content="درباره فیری مووی">
+    <meta property="og:description" content="درباره فیری مووی - اطلاعات بیشتر درباره پلتفرم ما">
+    <meta property="og:image" content="https://freemovieir.github.io/images/tweet2.png">
+    <meta name="twitter:title" content="درباره فیری مووی">
+    <meta name="twitter:description" content="درباره فیری مووی - اطلاعات بیشتر درباره پلتفرم ما">
+    <meta name="twitter:image" content="https://freemovieir.github.io/images/tweet2.png">
+    <title>درباره فیری مووی</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/fav/favicon.ico" type="favicon/ico">
+	<script src="/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>    <style>
+        body {
+            font-family: 'Vazir', sans-serif;
+            direction: rtl;
+            background-color: #1f2937;
+            color: #ffffff;
+        }
+        .bg-about {
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(31, 41, 55, 0.9)), url('https://via.placeholder.com/1920x1080?text=FreeMovie+Background');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            padding: 4rem 2rem;
+        }
+        .about-card {
+            background: #2d3748;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            transition: transform 0.3s ease;
+        }
+        .about-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-modern {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            color: #ffffff;
+            font-weight: bold;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .btn-modern:hover {
+            background: linear-gradient(90deg, #60a5fa, #3b82f6);
+            transform: scale(1.05);
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: #dbeafe;
+        }
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #93c5fd;
+        }
+        .nav-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .skeleton {
+            background: #333;
+            animation: pulse 1.5s infinite;
+            height: 4rem;
+            border-radius: 0.5rem;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <div id="shared-header"></div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto flex-1 py-12 bg-about">
+        <section class="about-card text-center">
+            <h1 id="about-title">درباره فیری مووی</h1>
+            <p id="about-description" class="text-gray-300 mb-6">
+            </p>
+            <h2 id="mission-title">ماموریت ما</h2>
+            <p id="mission-description" class="text-gray-300 mb-6">
+            </p>
+            <h2 id="team-title">تیم ما</h2>
+            <p id="team-description" class="text-gray-300 mb-6">
+            </p>
+            <a id="site-link" href="https://freemoviez.ir" class="btn-modern mt-6 inline-block">بازدید از سایت</a>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <div id="shared-footer"></div>
+
+    <script src="about.js"></script>
+    <script src="/js/layout-shared.js" defer></script>
+</body>
+</html>

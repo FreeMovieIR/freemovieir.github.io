@@ -1,1 +1,83 @@
-<!doctype html><html lang="fa"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/pages/developer/"><link rel="canonical" href="/pages/developer/"></head><body></body></html>
+<!DOCTYPE html>
+<html lang="fa" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معرفی توسعه‌دهندگان - فیری مووی</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
+    <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+	<script src="/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <style>
+        body {
+            font-family: 'Vazir', sans-serif;
+            direction: rtl;
+        }
+        .skeleton {
+            background: #333;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
+    <!-- Header -->
+    <div id="shared-header"></div>
+
+    <!-- Developers Section -->
+    <section class="container mx-auto py-8 text-center">
+        <h2 class="text-2xl font-bold mb-8">معرفی توسعه‌دهندگان</h2>
+        <div id="developers" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 m-4 justify-items-center">
+            <div class="skeleton w-64 h-64 rounded-lg"></div>
+            <div class="skeleton w-64 h-64 rounded-lg"></div>
+            <div class="skeleton w-64 h-64 rounded-lg"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div id="shared-footer"></div>
+
+    <!-- JavaScript -->
+    <script src="https://buttons.github.io/buttons.js" async defer></script>
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('./developers.json');
+                if (!response.ok) throw new Error('خطا در دریافت اطلاعات از سرور');
+                const data = await response.json();
+
+                const developersContainer = document.getElementById('developers');
+                developersContainer.innerHTML = ''; // Clear skeleton placeholders
+
+                data.developers.forEach(dev => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-800 p-4 rounded-lg shadow-md w-64';
+                    card.innerHTML = `
+                        <img src="${dev.photo}" alt="${dev.name}" class="w-24 h-24 rounded-full mx-auto" loading="lazy">
+                        <h3 class="text-lg font-bold mt-4">${dev.name}</h3>
+                        <p class="text-sm text-gray-400">${dev.subtitle}</p>
+                        <div class="flex justify-center space-x-4 mt-4 space-x-reverse">
+                            ${dev.twitter ? `<a href="${dev.twitter}" target="_blank" class="text-blue-400 hover:text-blue-300" aria-label="توییتر"><i class="fab fa-twitter"></i></a>` : ''}
+                            ${dev.instagram ? `<a href="${dev.instagram}" target="_blank" class="text-blue-400 hover:text-blue-300" aria-label="اینستاگرام"><i class="fab fa-instagram"></i></a>` : ''}
+                            ${dev.linkedin ? `<a href="${dev.linkedin}" target="_blank" class="text-blue-400 hover:text-blue-300" aria-label="لینکدین"><i class="fab fa-linkedin"></i></a>` : ''}
+                        </div>
+                    `;
+                    developersContainer.appendChild(card);
+                });
+            } catch (error) {
+                console.error('خطا در بارگذاری اطلاعات:', error);
+                document.getElementById('developers').innerHTML = '<p class="text-red-400 text-center">خطا در بارگذاری اطلاعات توسعه‌دهندگان</p>';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', fetchData);
+    </script>
+    <script src="/js/layout-shared.js" defer></script>
+</body>
+</html>

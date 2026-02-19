@@ -1,1 +1,94 @@
-<!doctype html><html lang="fa"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/pages/code/"><link rel="canonical" href="/pages/code/"></head><body></body></html>
+<!DOCTYPE html>
+<html lang="fa" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>فیری مووی - جستجو با کد</title>
+    <meta name="description" content="با وارد کردن کد فیلم یا سریال در فیری مووی، اطلاعات کامل و لینک دانلود را مشاهده کنید." />
+    <meta name="keywords" content="فیری مووی, جستجو با کد, دانلود فیلم, سریال, اطلاعات فیلم" />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="تیم فیری مووی" />
+    <link rel="canonical" href="https://freemovieir.github.io/id-search/" />
+    <meta property="og:title" content="فیری مووی - جستجو با کد" />
+    <meta property="og:description" content="جستجوی سریع فیلم و سریال با کد اختصاصی و دسترسی به اطلاعات و لینک دانلود." />
+    <meta property="og:image" content="https://freemovieir.github.io/logo.png" />
+    <meta property="og:url" content="https://freemovieir.github.io/id-search/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="فیری مووی - جستجو با کد" />
+    <meta name="twitter:description" content="با کد فیلم یا سریال، به اطلاعات و لینک دانلود دسترسی پیدا کنید." />
+    <meta name="twitter:image" content="https://freemovieir.github.io/logo.png" />
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/gh/rAastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="icon" href="/fav/favicon.ico" type="favicon/ico" />
+	<script src="/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <style>
+        body {
+            font-family: "Vazir", sans-serif;
+            direction: rtl;
+            background-color: #1f2937;
+            color: #ffffff;
+        }
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            padding: 1.5rem;
+            font-size: 1.25rem;
+            border-radius: 0.75rem;
+            background-color: #374151;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .search-box:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px #3b82f6;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .info-section {
+            background-color: #374151;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .search-box {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+            .result-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <div id="shared-header"></div>
+
+    <main class="container mx-auto flex-1 py-8 flex flex-col items-center">
+        <h1 class="text-2xl md:text-3xl font-bold mb-6">جستجو با کد فیلم یا سریال</h1>
+        <input type="text" id="search-id" class="search-box" placeholder="کد فیلم یا سریال را وارد کنید (مثال: 123)" />
+        <div id="results" class="result-grid w-full max-w-5xl"></div>
+        <div class="info-section w-full max-w-2xl">
+            <p class="text-lg">
+                ما در صفحه اینستاگرام <a href="https://instagram.com/freemovie_ir" target="_blank" class="text-blue-400 hover:underline">@freemovie_ir</a> کد اختصاصی هر فیلم و سریال را زیر پست‌ها قرار می‌دهیم. کافیست کد را از آنجا بردارید و در این صفحه وارد کنید تا اطلاعات کامل و لینک دانلود را ببینید!
+            </p>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="../apiKeySwitcher.js"></script>
+    <script src="./id-search.js"></script>
+    <script src="/js/layout-shared.js" defer></script>
+</body>
+</html>

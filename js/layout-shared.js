@@ -28,9 +28,9 @@
           <br>
           استفاده از فونت <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">وزیرمتن</a> به یاد صابر راستی کردار
         </p>
-        <a href="/pages/developer/">توسعه‌دهندگان</a> | <a href="/pages/about-freemovie/">درباره فیری مووی</a>
+        <a href="/developer/">توسعه‌دهندگان</a> | <a href="/about-freemovie/">درباره فیری مووی</a>
         <br>
-        <a href="/pages/disclaimer/">سلب مسئولیت</a> | <a href="/pages/disclaimer/index-en.html">DMCA</a>
+        <a href="/disclaimer/">سلب مسئولیت</a> | <a href="/disclaimer/index-en.html">DMCA</a>
         <div class="social-icons mb-2">
           <a class="github-button"
              href="https://github.com/FreeMovieIR/web"
