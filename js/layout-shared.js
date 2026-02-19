@@ -46,19 +46,10 @@
             <i class="fab fa-instagram"></i>
           </a>
         </div>
+        <script async defer src="https://buttons.github.io/buttons.js"></script>
       </div>
     </footer>
   `;
-
-  function ensureGithubButtonScript() {
-    if (document.querySelector('script[data-github-buttons]')) return;
-    const script = document.createElement('script');
-    script.src = 'https://buttons.github.io/buttons.js';
-    script.async = true;
-    script.defer = true;
-    script.setAttribute('data-github-buttons', 'true');
-    document.body.appendChild(script);
-  }
 
   if (headerTarget) {
     headerTarget.innerHTML = headerHtml;
@@ -66,6 +57,5 @@
 
   if (footerTarget) {
     footerTarget.innerHTML = footerHtml;
-    ensureGithubButtonScript();
   }
 })();
