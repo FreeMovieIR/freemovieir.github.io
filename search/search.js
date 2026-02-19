@@ -263,6 +263,12 @@ async function searchMedia(query, searchType) {
 }
 
 
+
+function getQueryParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name) || '';
+}
+
 // --- Event Listeners & Initial Setup ---
 function handleSearch() {
     const query = searchInput.value;
@@ -287,6 +293,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     tvSection.classList.add('hidden');
     movieTitleElement.textContent = 'نتایج جستجو فیلم';
     tvTitleElement.textContent = 'نتایج جستجو سریال';
+
+    const initialQuery = getQueryParam('q');
+    if (initialQuery) {
+        searchInput.value = initialQuery;
+        handleSearch();
+    }
 
     // Mobile menu toggle
     document.getElementById('menu-toggle')?.addEventListener('click', () => {

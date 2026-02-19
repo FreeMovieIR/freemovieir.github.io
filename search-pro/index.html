@@ -133,20 +133,7 @@
     </style>
   </head>
   <body class="min-h-screen flex flex-col text-white">
-    <header class="bg-gray-800 p-4 shadow-md">
-      <div class="container mx-auto flex justify-between items-center">
-        <nav class="flex items-center space-x-4">
-          <a href="https://freemovieir.github.io/" class="hover:text-blue-400 p-4 transition-colors"><i class="fas fa-home"></i></a>
-          <a href="/watchlist" class="hover:text-blue-400 transition-colors"><i class="fas fa-bookmark"></i></a>
-          <a href="/search" class="hover:text-blue-400 transition-colors"><i class="fas fa-search"></i></a>
-        </nav>
-        <div>
-          <a href="https://freemovieir.github.io/">
-            <img src="https://freemovieir.github.io/logo.png" alt="لوگو" class="h-10" />
-          </a>
-        </div>
-      </div>
-    </header>
+    <div id="shared-header"></div>
 
     <main class="container mx-auto flex-1 py-8">
       <!-- فرم جستجوی پیشرفته -->
@@ -397,11 +384,7 @@
       </section>
     </main>
 
-    <footer class="bg-gray-800 p-4 mt-auto">
-      <div class="container mx-auto text-center">
-        <p>فیری مووی - دانلود رایگان فیلم</p>
-      </div>
-    </footer>
+    <div id="shared-footer"></div>
 
     <script src="../apiKeySwitcher.js"></script>
     <script src="search-pro.js"></script>
@@ -438,5 +421,6 @@
         }
       })();
     </script>
-  </body>
+      <script src="/js/layout-shared.js" defer></script>
+</body>
 </html>
