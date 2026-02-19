@@ -38,23 +38,7 @@
     <div id="loading-bar"></div>
 
     <!-- هدر -->
-    <header class="bg-gray-800 p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <nav class="flex items-center space-x-4">
-                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4" aria-label="خانه"><i class="fas fa-home"></i></a>
-                <a href="/movies.html" class="hover:text-gray-300 p-4" aria-label="فیلم‌ها"><i class="fas fa-film"></i></a>
-                <a href="/series.html" class="hover:text-gray-300 p-4" aria-label="سریال‌ها"><i class="fas fa-tv"></i></a>
-                <a href="/genres.html" class="hover:text-gray-300 p-4" aria-label="دسته‌بندی‌ها"><i class="fas fa-list"></i></a>
-                <a href="/watchlist" class="hover:text-gray-300" aria-label="واچ‌لیست"><i class="fas fa-bookmark"></i></a>
-                <a href="/search" class="hover:text-gray-300" aria-label="جستجو"><i class="fas fa-search"></i></a>
-            </nav>
-            <div>
-                <a href="https://freemovieir.github.io/">
-                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10">
-                </a>
-            </div>
-        </div>
-    </header>
+    <div id="shared-header"></div>
 
     <!-- بخش اصلی -->
     <main class="container mx-auto py-8 flex-1">
@@ -71,17 +55,10 @@
     </main>
 
     <!-- فوتر -->
-    <footer class="bg-gray-800 p-4 mt-auto">
-        <div class="container mx-auto text-center">
-            <p>
-                فیری مووی - ساخته شده با 🤍
-                <br>
-                استفاده از فونت <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">وزیرمتن</a> به یاد صابر راستی کردار
-            </p>
-        </div>
-    </footer>
+    <div id="shared-footer"></div>
 
     <script src="/apiKeySwitcher.js" defer></script>
     <script src="airing-today.js" defer></script>
+    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

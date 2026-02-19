@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fa" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فیری مووی - تغییرات و نسخه‌ها</title>
+    <meta name="description" content="جدیدترین تغییرات و نسخه‌های فیری مووی را اینجا ببینید.">
+    <meta name="keywords" content="فیری مووی, تغییرات, نسخه جدید, changelog">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="تیم فیری مووی">
+    <link rel="canonical" href="https://freemovieir.github.io/pages/changelog/">
+    <meta property="og:title" content="فیری مووی - تغییرات و نسخه‌ها">
+    <meta property="og:description" content="جدیدترین تغییرات و نسخه‌های فیری مووی را اینجا ببینید.">
+    <meta property="og:image" content="https://freemovieir.github.io/images/tweet2.png">
+    <meta property="og:url" content="https://freemovieir.github.io/pages/changelog/">
+    <meta property="og:type" content="website">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/fav/favicon.ico" type="favicon/ico">
+    <style>
+        body { font-family: 'Vazir', sans-serif; direction: rtl; }
+        * { box-sizing: border-box; padding: 0; margin: 0; text-decoration: none; }
+        .version-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .version-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
+        #loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background-color: #FFC107;
+            width: 0;
+            z-index: 9999;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <!-- نوار پیشرفت -->
+    <div id="loading-bar"></div>
+
+    <!-- هدر -->
+    <div id="shared-header"></div>
+
+    <!-- بخش اصلی تغییرات -->
+    <section class="container mx-auto py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">تغییرات و نسخه‌های فیری مووی</h1>
+        <div id="changelog-container" class="space-y-6 mx-4">
+            <!-- نسخه‌ها به صورت پویا اینجا اضافه می‌شوند -->
+        </div>
+    </section>
+
+    <!-- فوتر -->
+    <div id="shared-footer"></div>
+
+    <script src="changelog.js" defer></script>
+    <script src="/js/layout-shared.js" defer></script>
+</body>
+</html>

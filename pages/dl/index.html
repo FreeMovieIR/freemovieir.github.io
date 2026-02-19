@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fa" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دانلود اپلیکیشن فیری مووی - نسخه‌های جداگانه</title>
+    <meta name="description" content="دانلود نسخه‌های جداگانه اپلیکیشن فیری مووی برای اندروید، ویندوز، و موبایل (اندروید و iOS).">
+    <meta name="keywords" content="دانلود فیری مووی, اپلیکیشن اندروید, اپلیکیشن ویندوز, اپلیکیشن موبایل, iOS">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="تیم فیری مووی">
+    <link rel="canonical" href="https://freemovieir.github.io/download/">
+    <meta property="og:title" content="دانلود اپلیکیشن فیری مووی - نسخه‌های جداگانه">
+    <meta property="og:description" content="نسخه‌های اندروید، ویندوز و موبایل فیری مووی را جداگانه دانلود کنید.">
+    <meta property="og:image" content="https://freemovieir.github.io/images/tweet2.png">
+    <meta property="og:url" content="https://freemovieir.github.io/download/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="دانلود اپلیکیشن فیری مووی">
+    <meta name="twitter:description" content="نسخه‌های جداگانه برای اندروید، ویندوز و موبایل.">
+    <meta name="twitter:image" content="https://freemovieir.github.io/images/tweet2.png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/fav/favicon.ico" type="favicon/ico">
+    <script src="/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <style>
+        body {
+            font-family: 'Vazir', sans-serif;
+            direction: rtl;
+            background: linear-gradient(135deg, #1f2937, #111827);
+            transition: background 0.3s ease;
+        }
+        .light body {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        }
+        * { box-sizing: border-box; padding: 0; margin: 0; text-decoration: none; }
+        #loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: #facc15;
+            width: 0;
+            z-index: 9999;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+        }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: #374151;
+            color: #d1d5db;
+            border-radius: 0.5rem 0.5rem 0 0;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background: #facc15;
+            color: #1f2937;
+            font-weight: bold;
+        }
+        .tab-button:hover:not(.active) {
+            background: #4b5563;
+            color: #fff;
+        }
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .download-card {
+            background: #1f2937;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .light .download-card {
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .download-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .download-card img {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            margin: 0 auto;
+            transition: transform 0.3s ease;
+        }
+        .download-card:hover img {
+            transform: scale(1.1);
+        }
+        .download-card h3 {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+            color: #facc15;
+        }
+        .download-card p {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .download-card a {
+            display: inline-block;
+            margin: 0.5rem 0.25rem;
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border-radius: 0.5rem;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .download-card a:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        .download-card a.special {
+            background: #facc15;
+            color: #1f2937;
+        }
+        .download-card a.special:hover {
+            background: #eab308;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- نوار پیشرفت -->
+    <div id="loading-bar"></div>
+
+    <!-- هدر -->
+    <div id="shared-header"></div>
+
+    <!-- بخش اصلی -->
+    <main class="container mx-auto py-12 flex-grow">
+        <h1 class="text-4xl font-bold mb-6 text-center text-yellow-400">دانلود اپلیکیشن فیری مووی</h1>
+        <p class="text-center text-gray-300 mb-10 text-lg max-w-2xl mx-auto">نسخه مورد نظر خود را برای اندروید، ویندوز یا موبایل انتخاب کنید!</p>
+
+        <!-- تب‌ها -->
+        <div class="flex justify-center gap-2 mb-8 flex-wrap">
+            <button class="tab-button active" data-tab="all">همه</button>
+            <button class="tab-button" data-tab="android">اندروید</button>
+            <button class="tab-button" data-tab="windows">ویندوز</button>
+            <button class="tab-button" data-tab="mobile">موبایل</button>
+            <button class="tab-button" data-tab="mac">مک</button>
+            <button class="tab-button" data-tab="linux">لینوکس</button>
+        </div>
+
+        <!-- گرید دانلود -->
+        <div class="download-grid" id="download-grid">
+            <!-- نسخه اندروید -->
+            <div class="download-card fade-in" data-platform="android">
+                <img src="https://freemovieir.github.io/images/android-icon.png" alt="آیکون اندروید">
+                <h3>نسخه اندروید</h3>
+                <p>سازگار با همه دستگاه‌های اندرویدی</p>
+                <a href="https://play.google.com/store/apps/details?id=com.freemovie" target="_blank">گوگل پلی</a>
+                <a href="https://cafebazaar.ir/app/com.freemovie" target="_blank">کافه بازار</a>
+                <a href="https://myket.ir/app/com.freemovie" target="_blank">مایکت</a>
+                <a href="https://freemovie.ir/download/android.apk" target="_blank" class="special">دانلود مستقیم (APK)</a>
+            </div>
+
+            <!-- نسخه ویندوز -->
+            <div class="download-card fade-in" data-platform="windows">
+                <img src="https://freemovieir.github.io/images/windows-icon.png" alt="آیکون ویندوز">
+                <h3>نسخه ویندوز</h3>
+                <p>سازگار با ویندوز 10 و 11</p>
+                <a href="https://www.microsoft.com/store/apps/freemovie" target="_blank">مایکروسافت استور</a>
+                <a href="https://freemovie.ir/download/freemovie-windows.exe" target="_blank" class="special">دانلود مستقیم (EXE)</a>
+            </div>
+
+            <!-- نسخه موبایل (اندروید و iOS) -->
+            <div class="download-card fade-in" data-platform="mobile">
+                <img src="https://freemovieir.github.io/images/android-icon.png" alt="آیکون اندروید">
+                <h3>موبایل - اندروید</h3>
+                <p>برای همه گوشی‌های اندرویدی</p>
+                <a href="https://play.google.com/store/apps/details?id=com.freemovie" target="_blank">گوگل پلی</a>
+                <a href="https://cafebazaar.ir/app/com.freemovie" target="_blank">کافه بازار</a>
+                <a href="https://freemovie.ir/download/android.apk" target="_blank" class="special">دانلود مستقیم (APK)</a>
+            </div>
+            <div class="download-card fade-in" data-platform="mobile">
+                <img src="https://freemovieir.github.io/images/ios-icon.png" alt="آیکون iOS">
+                <h3>موبایل - iOS</h3>
+                <p>برای آیفون و آیپد</p>
+                <a href="https://apps.apple.com/app/id123456789" target="_blank">اپ استور</a>
+                <a href="https://sibapp.com/applications/freemovie" target="_blank">سیب اپ</a>
+                <a href="https://freemovie.ir/download/freemovie-ios.ipa" target="_blank" class="special">دانلود مستقیم (IPA)</a>
+            </div>
+
+            <!-- نسخه مک -->
+            <div class="download-card fade-in" data-platform="mac">
+                <img src="https://freemovieir.github.io/images/mac-icon.png" alt="آیکون مک">
+                <h3>نسخه مک</h3>
+                <p>برای macOS Ventura و بالاتر</p>
+                <a href="https://apps.apple.com/app/freemovie-mac/id987654321" target="_blank">اپ استور مک</a>
+                <a href="https://freemovie.ir/download/freemovie-mac.dmg" target="_blank" class="special">دانلود مستقیم (DMG)</a>
+            </div>
+
+            <!-- نسخه لینوکس -->
+            <div class="download-card fade-in" data-platform="linux">
+                <img src="https://freemovieir.github.io/images/linux-icon.png" alt="آیکون لینوکس">
+                <h3>نسخه لینوکس</h3>
+                <p>برای توزیع‌های مختلف لینوکس</p>
+                <a href="https://snapcraft.io/freemovie" target="_blank">اسنپ</a>
+                <a href="https://freemovie.ir/download/freemovie-linux.AppImage" target="_blank" class="special">دانلود (AppImage)</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- فوتر -->
+    <div id="shared-footer"></div>
+
+    <script>
+        // مدیریت تم
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            body.classList.toggle('light');
+            const isDark = body.classList.contains('dark');
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            body.classList.remove('dark');
+            body.classList.add('light');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+
+        // نوار پیشرفت
+        window.addEventListener('load', () => {
+            const loadingBar = document.getElementById('loading-bar');
+            loadingBar.style.width = '100%';
+            setTimeout(() => loadingBar.style.width = '0', 500);
+        });
+
+        // مدیریت تب‌ها
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const downloadCards = document.querySelectorAll('.download-card');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const tab = button.getAttribute('data-tab');
+                downloadCards.forEach(card => {
+                    const platform = card.getAttribute('data-platform');
+                    card.style.display = tab === 'all' || tab === platform ? 'block' : 'none';
+                    if (tab === 'all' || tab === platform) {
+                        card.classList.remove('fade-in');
+                        setTimeout(() => card.classList.add('fade-in'), 10);
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="/js/layout-shared.js" defer></script>
+</body>
+</html>

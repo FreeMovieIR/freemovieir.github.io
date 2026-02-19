@@ -127,20 +127,7 @@
     <script type="application/ld+json" id="series-schema"></script>
 </head>
 <body class="min-h-screen flex flex-col">
-    <header class="bg-gray-800 p-4 shadow-md">
-        <div class="container mx-auto flex flex-row justify-between items-center">
-            <nav class="flex items-center space-x-4">
-                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4"><i class="fas fa-home"></i></a>
-                <a href="/watchlist" class="hover:text-gray-300"><i class="fas fa-bookmark"></i></a>
-                <a href="/search" class="hover:text-gray-300"><i class="fas fa-search"></i></a>
-            </nav>
-            <div>
-                <a href="https://freemovieir.github.io/">
-                    <img src="https://freemovieir.github.io/logo.png" alt="لوگو" class="h-10">
-                </a>
-            </div>
-        </div>
-    </header>
+    <div id="shared-header"></div>
 
     <main class="container mx-auto flex-1 py-12 bg-poster" id="series-bg">
         <article class="series-card flex flex-col md:flex-row gap-6">
@@ -176,11 +163,7 @@
         </section>
     </main>
 
-    <footer class="bg-gray-800 p-4 mt-auto">
-        <div class="container mx-auto text-center">
-            <p>فیری مووی - دانلود رایگان فیلم و سریال</p>
-        </div>
-    </footer>
+    <div id="shared-footer"></div>
 
     <script src="../apiKeySwitcher.js"></script>
     <script>
@@ -211,5 +194,6 @@
         }
     </script>
     <script src="series.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926960e14c7fed7c',t:'MTc0MzAyMDczOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926960e14c7fed7c',t:'MTc0MzAyMDczOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>    <script src="/js/layout-shared.js" defer></script>
+</body>
 </html>
