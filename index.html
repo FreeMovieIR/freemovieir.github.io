@@ -20,7 +20,8 @@
     <meta name="twitter:description" content="اطلاعات فیلم‌ها و سریال‌ها با لینک دانلود از الماس مووی;">
     <meta name="twitter:image" content="https://freemovieir.github.io/images/tweet2.png">
     <!-- پایان تغییرات سئو -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="/js/tailwind-config.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="/fav/favicon.ico" type="favicon/ico">
@@ -54,7 +55,7 @@
         @keyframes pop { 0% { transform: scale(0.8) translateY(0); opacity: 0.8; } 50% { transform: scale(1.1) translateY(-15px); opacity: 1; } 100% { transform: scale(0.8) translateY(0); opacity: 0.8; } }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+<body class="bg-base-900 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-accent selection:text-base-900">
     <!-- نوار پیشرفت -->
     <div id="loading-bar"></div>
 
@@ -64,27 +65,37 @@
 <!-- بخش فیلم‌های جدید -->
 <section class="container mx-auto py-8">
     <!-- بیانیه سلب مسئولیت -->
-    <div id="disclaimer-notice" class="bg-gray-700 text-white p-4 rounded-lg shadow-md mb-6 mx-4">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <p class="text-sm md:text-base">
-                📢 <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی را میزبانی نمی‌کند. اطلاعات از APIهای عمومی و لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" class="underline hover:text-gray-300" rel="nofollow">الماس مووی</a> دریافت می‌شود. برای جزئیات بیشتر، <a href="/pages/disclaimer/" class="underline hover:text-gray-300">صفحه سلب مسئولیت</a> را ببینید.
-            </p>
+    <div id="disclaimer-notice" class="bg-base-800/80 backdrop-blur-sm border border-gray-700 text-gray-200 p-4 rounded-xl shadow-lg mb-6 mx-4 relative overflow-hidden group">
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-blue-400 mt-1 text-xl"></i>
+                <p class="text-sm md:text-base leading-relaxed">
+                    <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی را میزبانی نمی‌کند. لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" class="text-blue-400 hover:text-blue-300 font-bold transition-colors" rel="nofollow">الماس مووی</a> دریافت می‌شود. برای جزئیات، <a href="/pages/disclaimer/" class="text-blue-400 hover:text-blue-300 transition-colors">قوانین</a> را ببینید.
+                </p>
+            </div>
+            <button id="close-disclaimer" class="text-gray-400 hover:text-white transition-colors" aria-label="بستن اطلاعیه">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     </div>
 
     <!-- اطلاعیه جدید با لینک درخواست -->
-    <div id="availability-notice" class="bg-yellow-600 text-white p-4 rounded-lg shadow-md mb-6 mx-4">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <p class="text-sm md:text-base">
-                📢 <strong>اطلاعیه:</strong> لطفاً توجه داشته باشید که جدیدترین فیلم‌ها ممکن است هنوز قابل دانلود نباشند. این به این دلیل است که یا هنوز به صورت عمومی منتشر نشده‌اند یا منابع تأمین‌کننده ما آن‌ها را ارائه نکرده‌اند. پیشنهاد می‌کنیم فیلم‌هایی را <a href="https://freemovieir.github.io/search/index.html" target="_blank" class="underline hover:text-gray-300">جستجو</a> کنید که مطمئن هستید در دسترس هستند. اگر فیلمی را در سایت دیگری دیدید و در اینجا موجود نیست، می‌توانید از طریق <a href="https://freemovieir.github.io/issues/new" target="_blank" class="underline hover:text-gray-300">این لینک</a> درخواست اضافه کردن آن را ثبت کنید.
-            </p>
-            <button id="close-availability" class="text-gray-300 hover:text-white mt-2 md:mt-0 md:mr-2" aria-label="بستن اطلاعیه">
+    <div id="availability-notice" class="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-md border border-yellow-500/30 text-gray-100 p-4 rounded-xl shadow-[0_0_15px_rgba(234,179,8,0.1)] mb-6 mx-4 relative">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-triangle text-accent mt-1 text-xl animate-pulse"></i>
+                <p class="text-sm md:text-base leading-relaxed">
+                    <strong>توجه:</strong> برخی از فیلم‌های جدید ممکن است هنوز برای دانلود در دسترس نباشند. می‌توانید فیلم‌های موجود را <a href="/search/index.html" class="text-accent hover:text-yellow-300 font-bold transition-colors">جستجو کنید</a> یا از طریق <a href="https://github.com/FreeMovieIR/web/issues/new" target="_blank" class="text-accent hover:text-yellow-300 font-bold transition-colors">این لینک</a> درخواست اضافه کردن فیلم بدهید.
+                </p>
+            </div>
+            <button id="close-availability" class="text-gray-400 hover:text-white transition-colors" aria-label="بستن اطلاعیه">
                 <i class="fas fa-times"></i>
             </button>
         </div>
     </div>
     
-    <h2 class="text-2xl font-bold mb-4 text-center">جدیدترین فیلم‌ها</h2>
+    <h2 class="text-3xl font-extrabold mb-6 text-center tracking-tight text-white drop-shadow-md">جدیدترین فیلم‌ها</h2>
     <div id="new-movies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 m-4">
         <!-- Skeleton placeholders -->
         <div class="skeleton w-full"></div>
@@ -96,7 +107,7 @@
 
     <!-- بخش سریال‌های پرطرفدار -->
     <section class="container mx-auto py-8">
-        <h2 class="text-2xl font-bold mb-8 text-center">سریال‌های پرطرفدار</h2>
+        <h2 class="text-3xl font-extrabold mb-6 text-center tracking-tight text-white drop-shadow-md">سریال‌های پرطرفدار</h2>
         <div id="trending-tv" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 m-4">
             <!-- Skeleton placeholders -->
             <div class="skeleton w-full"></div>

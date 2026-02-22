@@ -53,16 +53,20 @@ async function initializeSwitcher() {
 
 function createContentCard(item, poster, type) {
   const title = item.title || item.name || 'نامشخص';
-  const overview = item.overview ? `${item.overview.slice(0, 100)}...` : 'توضیحات موجود نیست';
+  const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
   const route = type === 'movie' ? 'movie' : 'series';
 
   return `
-    <div class="group relative">
-      <img src="${poster}" alt="${title}" class="w-full h-full rounded-lg shadow-lg">
-      <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-        <h3 class="text-lg font-bold text-white">${title}</h3>
-        <p class="text-sm text-gray-200">${overview}</p>
-        <a href="/${route}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
+    <div class="group relative overflow-hidden rounded-xl shadow-lg transform transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl hover:shadow-accent/20 cursor-pointer" onclick="window.location.href='/${route}/index.html?id=${item.id}'">
+      <img src="${poster}" alt="${title}" class="w-full aspect-[2/3] object-cover transition-transform duration-700 group-hover:scale-110">
+      <div class="absolute inset-0 bg-gradient-to-t from-base-900 via-base-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4 translate-y-4 group-hover:translate-y-0">
+        <h3 class="text-lg font-bold text-white mb-1 drop-shadow-md">${title}</h3>
+        <p class="text-xs text-gray-300 mb-4 line-clamp-3">${overview}</p>
+        <a href="/${route}/index.html?id=${item.id}" class="mt-auto w-full text-center bg-gradient-to-r from-accent to-yellow-500 text-base-900 font-bold py-2 rounded-lg hover:from-yellow-400 hover:to-yellow-300 transition-colors shadow-[0_0_10px_rgba(255,193,7,0.4)]">مشاهده</a>
+      </div>
+      <div class="absolute top-2 right-2 bg-base-900/60 backdrop-blur-md rounded-md px-2 py-1 flex items-center gap-1 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <i class="fas fa-star text-accent text-xs"></i>
+        <span class="text-white text-xs font-bold">${item.vote_average ? item.vote_average.toFixed(1) : '—'}</span>
       </div>
     </div>
   `;
@@ -113,7 +117,9 @@ async function fetchAndDisplayContent() {
   const tvContainer = document.getElementById('trending-tv');
   if (!movieContainer || !tvContainer) return;
 
-  const skeletonHTML = '<div class="skeleton w-full"></div>'.repeat(4);
+  const skeletonHTML = `
+    <div class="animate-pulse bg-base-800 rounded-xl aspect-[2/3] w-full shadow-lg border border-gray-700/50"></div>
+  `.repeat(4);
   movieContainer.innerHTML = skeletonHTML;
   tvContainer.innerHTML = skeletonHTML;
 
@@ -138,7 +144,14 @@ async function fetchAndDisplayContent() {
     ]);
   } catch (error) {
     console.error('خطا در دریافت داده‌ها:', error);
-    const errorHTML = '<p class="text-center text-red-500">خطایی رخ داد! لطفاً دوباره تلاش کنید.</p>';
+    const errorHTML = `
+      <div class="col-span-full flex flex-col items-center justify-center p-8 bg-red-900/20 border border-red-500/30 rounded-xl backdrop-blur-sm">
+        <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"></i>
+        <h3 class="text-xl font-bold text-red-400 mb-2">خطا در دریافت اطلاعات</h3>
+        <p class="text-gray-300 text-center">متأسفانه در حال حاضر امکان دریافت اطلاعات از سرور وجود ندارد. لطفاً ارتباط خود را بررسی کرده و صفحه را رفرش کنید.</p>
+        <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-600/40 transition-colors">تلاش مجدد</button>
+      </div>
+    `;
     movieContainer.innerHTML = errorHTML;
     tvContainer.innerHTML = errorHTML;
   } finally {

@@ -67,11 +67,13 @@ function updateDomWithSeriesDetails(seriesData, posterUrl, imdbId) {
     }
 
     // به روز رسانی المان‌های DOM
-    document.getElementById('title').textContent = title;
-    document.getElementById('overview').textContent = overview;
-    document.getElementById('genre').innerHTML = `<strong>ژانر:</strong> ${genres}`;
-    document.getElementById('year').innerHTML = `<strong>سال تولید:</strong> ${year}`;
-    document.getElementById('rating').innerHTML = `<strong>امتیاز:</strong> ${rating}/10`;
+    document.getElementById('title').innerHTML = `${title} <span class="text-2xl text-gray-400 inline-block font-medium">(${year})</span>`;
+    document.getElementById('overview').innerHTML = `${overview}`;
+    document.getElementById('genre').innerHTML = `<i class="fas fa-tags text-accent ml-2"></i><strong class="text-gray-400">ژانر:</strong> <span class="mr-2 text-gray-200">${genres}</span>`;
+    document.getElementById('year').innerHTML = `<i class="fas fa-calendar-alt text-accent ml-2"></i><strong class="text-gray-400">سال تولید:</strong> <span class="mr-2 text-gray-200">${year}</span>`;
+    document.getElementById('rating').innerHTML = `<i class="fas fa-star text-accent ml-2 drop-shadow-[0_0_5px_rgba(255,193,7,0.8)]"></i><strong class="text-gray-400">امتیاز:</strong> <span class="mr-2 text-white font-bold tracking-wide">${rating}<span class="text-gray-500 text-sm font-normal">/10</span></span>`;
+    const seasonsValNode = document.getElementById('seasons-val');
+    if (seasonsValNode) seasonsValNode.textContent = seriesData.number_of_seasons ? String(seriesData.number_of_seasons) : 'نامشخص';
 
     // لینک IMDb
     const imdbLinkHref = imdbId ? `https://www.imdb.com/title/${imdbId}/` : '#';
@@ -93,9 +95,9 @@ function updateDomWithSeriesDetails(seriesData, posterUrl, imdbId) {
     // تریلر
     const trailerContainer = document.getElementById('trailer');
     if (trailerUrl) {
-        trailerContainer.innerHTML = `<iframe src="${trailerUrl}" title="تریلر سریال ${title}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-64 md:h-96 mx-auto"></iframe>`;
+        trailerContainer.innerHTML = `<iframe src="${trailerUrl}" title="تریلر سریال ${title}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-64 md:h-96 mx-auto rounded-xl"></iframe>`;
     } else {
-        trailerContainer.innerHTML = '<p class="text-yellow-500">تریلر در دسترس نیست</p>';
+        trailerContainer.innerHTML = '<p class="text-yellow-500 py-4 text-center">تریلر در دسترس نیست</p>';
     }
 
     // متا تگ‌ها
@@ -135,7 +137,7 @@ function updateDomWithSeriesDetails(seriesData, posterUrl, imdbId) {
     // حذف کلیدهای با مقدار undefined از schema
     Object.keys(schema).forEach(key => schema[key] === undefined && delete schema[key]);
     if (schema.aggregateRating && schema.aggregateRating.ratingValue === '0') delete schema.aggregateRating; // اگر امتیازی نیست حذف شود
-    if(schema.trailer && !schema.trailer.uploadDate) delete schema.trailer.uploadDate;
+    if (schema.trailer && !schema.trailer.uploadDate) delete schema.trailer.uploadDate;
 
     document.getElementById('series-schema').textContent = JSON.stringify(schema);
 }
@@ -150,18 +152,19 @@ function updateDownloadLinks(imdbId, numberOfSeasons) {
         console.log(`Generating download links for ${numberOfSeasons} seasons (IMDb: ${imdbId})`);
         for (let season = 1; season <= numberOfSeasons; season++) {
             // ایجاد لینک دانلود برای هر فصل و کیفیت
-            downloadHtml += `<div class="season-downloads mt-4 p-4 bg-gray-800 rounded">`; // استایل بهتر برای هر فصل
-            downloadHtml += `<h3 class="text-xl font-bold mb-3 text-yellow-400">فصل ${season}</h3>`; // عنوان فصل با استایل
+            downloadHtml += `<div class="season-downloads mt-6 p-6 bg-base-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-lg">`; // استایل بهتر برای هر فصل
+            downloadHtml += `<h3 class="text-xl font-bold mb-4 text-accent border-b border-gray-700/50 pb-2">فصل ${season}</h3>`; // عنوان فصل با استایل
+            downloadHtml += `<div class="flex flex-wrap gap-3">`;
             // لینک‌های کیفیت‌های مختلف
             for (let quality = 1; quality <= 4; quality++) { // فرض بر 4 کیفیت
                 // ایجاد لینک دانلود
                 const downloadLink = `https://subtitle.saymyname.website/DL/filmgir/?i=${imdbId}&f=${season}&q=${quality}`;
                 downloadHtml += `
-                    <a href="${downloadLink}" target="_blank" rel="nofollow noopener" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200 mx-1 my-1 inline-block text-sm">
-                        کیفیت ${quality} <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    <a href="${downloadLink}" target="_blank" rel="nofollow noopener" class="flex-1 min-w-[140px] bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[0_4px_15px_rgba(79,70,229,0.3)] text-white px-4 py-2.5 rounded-lg hover:from-blue-500 hover:to-indigo-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2">
+                        کیفیت ${quality} <i class="fas fa-download mx-1"></i>
                     </a>`;
             }
-            downloadHtml += `</div>`; // پایان div فصل
+            downloadHtml += `</div></div>`; // پایان div فصل
         }
     } else {
         console.warn("Cannot generate download links: Missing IMDb ID or number of seasons.");
@@ -342,17 +345,18 @@ async function fetchRelatedSeries(currentSeriesId, tmdbApiKey, lang, switcher) {
         const posterMap = new Map(posterResults.map(item => [item.seriesId, item.poster]));
 
         // ساخت HTML نهایی با استفاده از اطلاعات جمع‌آوری شده
-        let relatedHtml = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">'; // استفاده از Grid برای نمایش بهتر
+        let relatedHtml = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">'; // استفاده از Grid برای نمایش بهتر
         relatedSeries.forEach(serie => {
             const poster = posterMap.get(serie.id) || (serie.poster_path ? `${baseImageUrl}w300${serie.poster_path}` : defaultPoster); // اولویت با پوستر OMDb، سپس TMDB، سپس پیش‌فرض
             const title = serie.name || 'نامشخص';
             // استفاده از loading="lazy" برای تصاویر
+
             relatedHtml += `
-                <a href="/series/index.html?id=${serie.id}" class="related-series-card block bg-gray-800 rounded overflow-hidden hover:scale-105 transform transition duration-300 shadow-lg">
-                    <img src="${poster}" alt="${title}" loading="lazy" class="w-full h-auto object-cover">
-                    <div class="p-2">
-                        <h3 class="text-sm font-semibold text-white truncate" title="${title}">${title}</h3>
-                         ${serie.first_air_date ? `<p class="text-xs text-gray-400">${serie.first_air_date.substring(0, 4)}</p>` : ''}
+                <a href="/series/index.html?id=${serie.id}" class="group block bg-base-800/80 rounded-xl overflow-hidden hover:scale-105 hover:shadow-[0_10px_30px_rgba(255,193,7,0.15)] transform transition-all duration-300 border border-gray-700/30 relative">
+                    <img src="${poster}" alt="${title}" loading="lazy" class="w-full aspect-[2/3] object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="p-3 bg-gradient-to-t from-base-900 to-transparent absolute bottom-0 w-full opacity-90 transition-opacity duration-300">
+                        <h3 class="text-sm font-bold text-white truncate drop-shadow-md" title="${title}">${title}</h3>
+                         ${serie.first_air_date ? `<p class="text-xs text-gray-300 mt-1">${serie.first_air_date.substring(0, 4)}</p>` : ''}
                     </div>
                 </a>
             `;

@@ -66,7 +66,7 @@ async function fetchOmdbPoster(imdbId) {
  */
 function updateDomWithMovieDetails(movieData, movieDataEnglish, externalIdsData, videosData, finalPosterUrl) {
     const title = movieData.title || 'نامشخص';
-    const titleEnglish = movieDataEnglish.title || title; 
+    const titleEnglish = movieDataEnglish.title || title;
     const year = movieData.release_date ? movieData.release_date.substring(0, 4) : 'نامشخص';
     const runTime = movieData.runtime ? `${movieData.runtime} دقیقه` : 'نامشخص';
     const backdropPath = movieData.backdrop_path || movieData.poster_path;
@@ -126,16 +126,16 @@ function updateDomWithMovieDetails(movieData, movieDataEnglish, externalIdsData,
     }
 
     // Update Text Content
-    document.getElementById('title').textContent = `${title} (${year})`;
-    document.getElementById('overview').innerHTML = `<strong>خلاصه داستان:</strong> ${overview}`;
-    document.getElementById('genre').innerHTML = `<strong>ژانر:</strong> ${genres}`;
-    document.getElementById('year').innerHTML = `<strong>سال تولید:</strong> ${year}`;
-    document.getElementById('rating').innerHTML = `<strong>امتیاز:</strong> ${rating}/10`;
-    document.getElementById('runTime').innerHTML = `<strong>مدت زمان:</strong> ${runTime}`;
-    document.getElementById('spokenLanguages').innerHTML = `<strong>زبان‌ها:</strong> ${spokenLanguages}`;
-    document.getElementById('budget').innerHTML = `<strong>بودجه:</strong> ${budget}`;
-    document.getElementById('productionCountries').innerHTML = `<strong>محصول کشور:</strong> ${productionCountries}`;
-    document.getElementById('director').innerHTML = `<strong>کارگردان:</strong> ${directorName}`;
+    document.getElementById('title').innerHTML = `${title} <span class="text-2xl text-gray-400 inline-block font-medium">(${year})</span>`;
+    document.getElementById('overview').innerHTML = `${overview}`;
+    document.getElementById('genre').innerHTML = `<i class="fas fa-tags text-accent ml-2"></i><strong class="text-gray-400">ژانر:</strong> <span class="mr-2 text-gray-200">${genres}</span>`;
+    document.getElementById('year').innerHTML = `<i class="fas fa-calendar-alt text-accent ml-2"></i><strong class="text-gray-400">سال تولید:</strong> <span class="mr-2 text-gray-200">${year}</span>`;
+    document.getElementById('rating').innerHTML = `<i class="fas fa-star text-accent ml-2 drop-shadow-[0_0_5px_rgba(255,193,7,0.8)]"></i><strong class="text-gray-400">امتیاز:</strong> <span class="mr-2 text-white font-bold tracking-wide">${rating}<span class="text-gray-500 text-sm font-normal">/10</span></span>`;
+    document.getElementById('runTime').innerHTML = `<i class="fas fa-clock text-accent ml-2"></i><strong class="text-gray-400">مدت زمان:</strong> <span class="mr-2 text-gray-200">${runTime}</span>`;
+    document.getElementById('spokenLanguages').innerHTML = `<i class="fas fa-language text-accent ml-2"></i><strong class="text-gray-400">زبان‌ها:</strong> <span class="mr-2 text-gray-200">${spokenLanguages}</span>`;
+    document.getElementById('budget').innerHTML = `<i class="fas fa-dollar-sign text-accent ml-2"></i><strong class="text-gray-400">بودجه:</strong> <span class="mr-2 text-gray-200">${budget}</span>`;
+    document.getElementById('productionCountries').innerHTML = `<i class="fas fa-globe text-accent ml-2"></i><strong class="text-gray-400">محصول کشور:</strong> <span class="mr-2 text-gray-200">${productionCountries}</span>`;
+    document.getElementById('director').innerHTML = `<i class="fas fa-video text-accent ml-2"></i><strong class="text-gray-400">کارگردان:</strong> <span class="mr-2 text-gray-200">${directorName}</span>`;
 
     const imdbLinkElement = document.getElementById('imdb-link');
     if (imdbLinkElement) {
@@ -243,27 +243,27 @@ function updateDownloadLinks(imdbId, year, title) {
 
     let downloadLinksHtml = serverBaseUrls.map((baseUrl, index) => `
         <a href="${baseUrl}${downloadPath}"
-           class="bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition duration-200 text-sm font-medium flex items-center gap-1"
+           class="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[0_4px_15px_rgba(79,70,229,0.3)] text-white px-5 py-2.5 rounded-lg hover:from-blue-500 hover:to-indigo-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2 flex-1 min-w-[120px]"
            rel="nofollow noopener" target="_blank">
             <span>دانلود (${index === 0 ? 'اصلی' : `کمکی ${index}`})</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            <i class="fas fa-download"></i>
         </a>
     `).join('');
 
     downloadLinksHtml += `
         <a href="${subtitleLink}"
-           class="bg-purple-600 text-white px-3 py-1.5 rounded hover:bg-purple-700 transition duration-200 text-sm font-medium flex items-center gap-1"
+           class="bg-gradient-to-r from-purple-600 to-pink-600 shadow-[0_4px_15px_rgba(168,85,247,0.3)] text-white px-5 py-2.5 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2 flex-1 min-w-[120px]"
            rel="nofollow noopener" target="_blank">
             <span>دریافت زیرنویس</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
+            <i class="fas fa-language"></i>
         </a>
     `;
 
     // Add placeholder for the watchlist button (will be initialized separately)
     downloadLinksHtml += `
-        <button id="add-to-watchlist" class="bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition duration-200 text-sm font-medium flex items-center gap-1 opacity-50" disabled>
+        <button id="add-to-watchlist" class="bg-gradient-to-r from-emerald-600 to-teal-600 shadow-[0_4px_15px_rgba(16,185,129,0.3)] text-white px-5 py-2.5 rounded-lg hover:from-emerald-500 hover:to-teal-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2 flex-1 min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed" disabled>
              <span>واچ‌لیست</span>
-             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+             <i class="fas fa-bookmark"></i>
          </button>
     `;
 
@@ -338,14 +338,14 @@ function setupWatchlistButton(currentMovieId, title) {
                     watchlistButton.disabled = true;
                     watchlistButton.classList.add('opacity-50', 'cursor-not-allowed');
                     watchlistButton.querySelector('span').textContent = 'در واچ‌لیست';
-                    if(iconSvg) iconSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
+                    if (iconSvg) iconSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
 
                 } else {
                     alert(`"${title}" از قبل در واچ‌لیست شما وجود دارد.`);
                     watchlistButton.disabled = true; // Ensure it's disabled
                     watchlistButton.classList.add('opacity-50', 'cursor-not-allowed');
                     watchlistButton.querySelector('span').textContent = 'در واچ‌لیست';
-                    if(iconSvg) iconSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
+                    if (iconSvg) iconSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
                 }
             } catch (error) {
                 console.error("Error saving to watchlist:", error);
