@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fa" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>فیری مووی - جستجو</title>
+
+    <meta
+      name="description"
+      content="فیری مووی - اطلاعات جدیدترین فیلم‌ها و سریال‌های پرطرفدار را ببینید و از لینک‌های دانلود الماس مووی استفاده کنید."
+    />
+    <meta
+      name="keywords"
+      content="فیری مووی, دانلود فیلم, سریال پرطرفدار, اطلاعات فیلم, الماس مووی"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="تیم فیری مووی" />
+    <link
+      rel="canonical"
+      href="https://freemovieir.github.io/"
+    />
+    <meta property="og:title" content="فیری مووی - جستجو" />
+    <meta
+      property="og:description"
+      content="جستجوی فیلم‌ها و سریال‌ها در فیری مووی با اطلاعات کامل و لینک دانلود."
+    />
+    <meta
+      property="og:image"
+      content="https://freemovieir.github.io/logo.png"
+    />
+    <meta
+      property="og:url"
+      content="https://freemovieir.github.io/search/"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="فیری مووی - جستجو" />
+    <meta
+      name="twitter:description"
+      content="جستجوی فیلم‌ها و سریال‌ها با لینک دانلود از الماس مووی."
+    />
+    <meta
+      name="twitter:image"
+      content="https://freemovieir.github.io/logo.png"
+    />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico" />
+    <script src="/assets/js/analytics.js"></script>
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"
+    ></script>
+    <style>
+      body {
+        font-family: "Vazir", sans-serif;
+        direction: rtl;
+      }
+      .skeleton {
+        background: #333;
+        animation: pulse 1.5s infinite;
+        height: 16rem;
+        border-radius: 0.5rem;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.5;
+        }
+      }
+      .search-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 2rem;
+      }
+      .search-column {
+        flex: 1;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      @media (min-width: 768px) {
+        .grid-container {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 640px) {
+        .search-container {
+          flex-direction: column;
+        }
+      }
+      /* انیمیشن کلی جعبه */
+      .popcorn {
+        animation: bounce 1s infinite ease-in-out;
+      }
+
+      /* انیمیشن پاپ‌کورن‌های بیرون‌زده */
+      .popcorn-piece {
+        transform-origin: center;
+      }
+
+      /* انیمیشن پرش جعبه */
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      /* انیمیشن پاپ شدن دونه‌های پاپ‌کورن */
+      @keyframes pop {
+        0% {
+          transform: scale(0.8) translateY(0);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.1) translateY(-15px);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(0.8) translateY(0);
+          opacity: 0.8;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div id="shared-header"></div>
+
+    <main class="container mx-auto flex-1 py-8">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-8 w-full max-w-3xl mx-auto px-4">
+
+
+        <div class="relative flex-shrink-0">
+
+          <label for="search-type" class="sr-only">نوع جستجو:</label>
+          <select
+                  id="search-type"
+                  class="w-full appearance-none rounded-lg border border-gray-700 bg-gray-800 py-2 pl-3 pr-10 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+          >
+
+            <option value="all">همه</option>
+            <option value="movie">فیلم</option>
+            <option value="tv">سریال</option>
+          </select>
+
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+            <svg class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+          </div>
+        </div>
+
+        <div class="flex-grow">
+          <label for="search" class="sr-only">عبارت جستجو:</label>
+          <input
+                  type="text"
+                  id="search"
+                  class="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 px-3 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+                  placeholder="فیلم یا سریال مورد نظر..."
+          />
+        </div>
+
+        <div class="flex-shrink-0">
+          <button
+                  id="search-button"
+                  type="button"
+          class="inline-flex w-full items-center justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-150 ease-in-out sm:w-auto"
+          >
+          <i class="fas fa-search me-1 mr-2 h-5 w-5" aria-hidden="true"></i>
+          <span class="mr-2">جستجو</span>
+          </button>
+        </div>
+
+      </div>
+      <div class="search-container m-12">
+        <section class="search-column">
+          <h2
+            id="movie-title"
+            class="text-sm sm:text-lg md:text-xl xl:text-2xl font-bold mb-4 text-center bg-blue-500 w-full rounded-lg p-1"
+          >
+            نتایج جستجو فیلم
+          </h2>
+          <div id="movie-results" class="grid-container">
+            <!-- Skeleton placeholders -->
+            <div></div>
+            <div></div>
+          </div>
+        </section>
+        <section class="search-column">
+          <h2
+            id="tv-title"
+            class="text-sm sm:text-lg md:text-xl xl:text-2xl font-bold mb-4 text-center bg-blue-500 w-full rounded-lg p-1"
+          >
+            نتایج جستجو سریال
+          </h2>
+          <div id="tv-results" class="grid-container">
+            <!-- Initially empty -->
+          </div>
+        </section>
+      </div>
+    </main>
+    <div id="shared-footer"></div>
+    <script src="/assets/js/apiKeySwitcher.js"></script>
+    <script src="./search.js"></script>
+      <script src="/assets/js/components/layout-shared.js" defer></script>
+</body>
+</html>

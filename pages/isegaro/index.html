@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مترجم زیرنویس - طراحی‌شده توسط iSegaro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- اضافه کردن کتابخانه franc برای تشخیص زبان -->
+    <script src="https://unpkg.com/franc-min@6.2.0/franc-min.js"></script>
+	<script src="/assets/js/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-6xl mx-auto bg-white shadow-lg rounded-lg p-8">
+        <h1 class="text-4xl font-bold text-center mb-6 text-blue-600">مترجم زیرنویس</h1>
+
+        <div class="mb-8 space-y-4">
+            <div id="apiKeySection">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">مدیریت کلیدهای API</h3>
+                <div id="apiKeyList">
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <input type="text" placeholder="کلید API اول خود را وارد کنید" class="api-key-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" dir="ltr">
+                        <button class="add-api-key-btn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition duration-300">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label for="modelSelector" class="block text-sm font-medium text-gray-700">انتخاب مدل Gemini:</label>
+                <select id="modelSelector" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" dir="rtl">
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <!-- مدل‌های دیگر را بر اساس مستندات API اضافه کنید -->
+                </select>
+            </div>
+
+            <div class="mt-4">
+                <button id="advancedOptionsToggle" class="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 transition-colors py-2">
+                    <span class="text-sm font-medium">تنظیمات پیشرفته</span>
+                    <svg id="toggleIcon" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="advancedOptionsContent" class="hidden space-y-4 mt-4">
+                    <div>
+                        <label for="waitTimeInput" class="block text-sm font-medium text-gray-700">زمان انتظار هنگام محدودیت کلیدها (ثانیه):</label>
+                        <input type="number" id="waitTimeInput" min="5" max="300" value="60" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" dir="ltr">
+                    </div>
+                    <div>
+                        <label for="contextCountInput" class="block text-sm font-medium text-gray-700">تعداد بلوک‌های زمینه (قبل/بعد):</label>
+                        <input type="number" id="contextCountInput" min="1" max="5" value="1" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" dir="ltr">
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">تنظیمات ترجمه</h3>
+                        <textarea id="customPrompt" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="3" placeholder="Custom translation prompt..." dir="ltr">
+You are an expert subtitle translator. Translate ONLY the "current" subtitle (index: 0) from any language to Persian.
+
+Instructions:
+- Use the JSON array in {{CONTEXT}} for context:
+  - Index -1 or lower: previous subtitles
+  - Index 0: current subtitle (translate this only)
+  - Index 1 or higher: next subtitles
+- Maintain the original meaning and tone (e.g., casual, formal, humorous).
+- Keep it concise and natural for Persian subtitles.
+- Replace inappropriate content (e.g., profanity) with ***.
+
+Rules:
+- Return only the Persian translation of the current subtitle.
+- Do not include text from previous or next subtitles.
+- No extra formatting or explanations.
+
+Example:
+- Input: "I love you" (index: 0)
+- Output: "دوستت دارم"
+
+{{CONTEXT}}
+                        </textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="progressContainer" class="hidden mb-4">
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm text-gray-600">پیشرفت ترجمه:</span>
+                    <span id="progressText" class="text-sm text-gray-600">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center mb-8">
+            <input type="file" id="subtitleFile" accept=".srt" class="hidden" />
+            <label for="subtitleFile" class="bg-blue-500 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-600 transition duration-300">
+                انتخاب فایل SRT
+            </label>
+            <p id="fileName" class="mt-2 text-sm text-gray-500 italic hidden"></p>
+        </div>
+
+        <div id="subtitleSections" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden">
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">زیرنویس‌های اصلی</h2>
+                <div id="originalSubtitleContainer" class="space-y-6 h-[400px] overflow-y-auto border border-gray-200 rounded-lg p-4 w-full md:w-[450px]"></div>
+            </div>
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-700 flex justify-between items-center">
+                    <span>زیرنویس‌های ترجمه‌شده</span>
+                    <button id="editToggle" class="text-sm bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 hidden">تغییر حالت ویرایش</button>
+                </h2>
+                <div id="translatedSubtitleContainer" class="space-y-6 h-[400px] overflow-y-auto border border-gray-200 rounded-lg p-4 w-full md:w-[450px]"></div>
+            </div>
+        </div>
+
+        <div id="actionButtons" class="flex justify-between mt-8 hidden">
+            <div class="flex gap-4">
+                <button id="translateButton" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition duration-300">ترجمه</button>
+                <button id="continueButton" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-300 hidden">ادامه از نقطه آخر</button>
+            </div>
+            <button id="saveButton" class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition duration-300" disabled>ذخیره زیرنویس‌های ترجمه‌شده</button>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-center text-sm mt-8 pt-4 border-t border-gray-200 gap-4">
+            <div class="text-gray-500 flex items-center gap-2">
+                <span>&copy; 1404 مترجم زیرنویس نسخه 0.1 - طراحی‌شده توسط iSegaro.</span>
+                <div class="flex items-center gap-3 mr-4">
+                    <a href="https://x.com/iSegar0" target="_blank" class="text-gray-400 hover:text-blue-400 transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                    <a href="https://github.com/iSegaro" target="_blank" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-500">حمایت از این پروژه:</span>
+                <button onclick="copyWallet()" class="inline-flex items-center gap-2 bg-[#26A17B] text-white px-4 py-2 rounded-lg hover:bg-[#1f8463] transition duration-300">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.375 0 0 5.375 0 12C0 18.625 5.375 24 12 24C18.625 24 24 18.625 24 12C24 5.375 18.625 0 12 0ZM12.25 15.875V17.75H9.75V15.875C7.625 15.5 6 14.125 6 12.5C6 10.875 7.625 9.5 9.75 9.125V4.25H12.25V9.125C14.375 9.5 16 10.875 16 12.5C16 14.125 14.375 15.5 12.25 15.875ZM12.25 13.375C13.125 13.25 13.75 12.875 13.75 12.5C13.75 12.125 13.125 11.75 12.25 11.625V13.375ZM9.75 11.625C8.875 11.75 8.25 12.125 8.25 12.5C8.25 12.875 8.875 13.25 9.75 13.375V11.625Z"/>
+                    </svg>
+                    USDT (TRC20)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="flashMessageContainer"></div>
+    <script src="scripts.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پلی‌شو - تماشای همزمان</title>
+    <meta name="referrer" content="no-referrer">
+    <script src="/assets/js/config/tailwind-config.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+	<script src="/assets/js/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <style>
+        #connectionStatus {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+        .fade-in { animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div id="shared-header"></div>
+
+    <main class="container mx-auto flex-1 py-8 px-4">
+        <div class="flex flex-col items-center gap-6">
+            <div id="inputSection" class="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow">
+                <div class="relative">
+                    <input type="text" id="videoLink" class="w-full p-4 pr-12 rounded-lg bg-gray-700 text-white text-lg focus:ring-2 focus:ring-blue-500" placeholder="https://example.com/video.mp4">
+                    <button onclick="loadVideo()" class="absolute left-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="shareSection" class="w-full max-w-2xl bg-gray-800 p-6 rounded-lg shadow hidden">
+                <h2 class="text-lg font-semibold mb-4 text-center">لینک اشتراک‌گذاری</h2>
+                <div class="flex flex-col gap-4">
+                    <div class="relative">
+                        <input type="text" id="shareLink" class="w-full p-3 rounded-lg bg-gray-700 text-white font-mono text-sm" readonly>
+                        <button onclick="copyShareLink()" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg text-sm">
+                            <i class="fas fa-copy ml-1"></i> کپی
+                        </button>
+                    </div>
+                    <div class="flex gap-3">
+                        <a id="whatsappShare" href="https://freemovieir.github.io/" target="_blank" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-center">
+                            <i class="fab fa-whatsapp ml-2"></i> واتساپ
+                        </a>
+                        <a id="telegramShare" href="https://freemovieir.github.io/" target="_blank" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-center">
+                            <i class="fab fa-telegram ml-2"></i> تلگرام
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="videoSection" class="w-full max-w-4xl hidden fade-in">
+                <video id="videoPlayer" controls class="w-full rounded-lg shadow-lg bg-black" crossorigin="anonymous"></video>
+                <div id="connectionStatus" class="mt-3 text-center text-gray-300 p-2 rounded bg-gray-800/80"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/layout-shared.js" defer></script>
+</body>
+</html>
