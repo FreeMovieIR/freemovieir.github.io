@@ -9,6 +9,10 @@
           <a href="/" class="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-800 transition-all duration-300" aria-label="خانه">
             <i class="fas fa-home text-gray-400 group-hover:text-accent group-hover:scale-110 transition-transform duration-300"></i>
           </a>
+          <a href="/finder/index.html" class="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-800 transition-all duration-300 relative" aria-label="جستجوی هوشمند">
+            <i class="fas fa-magic text-gray-400 group-hover:text-yellow-400 group-hover:scale-110 transition-all duration-300 drop-shadow-[0_0_5px_rgba(255,193,7,0)] group-hover:drop-shadow-[0_0_8px_rgba(255,193,7,0.8)]"></i>
+            <span class="absolute -bottom-8 bg-base-800 text-xs text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-700">جستجوی هوشمند</span>
+          </a>
           <a href="/watchlist" class="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-800 transition-all duration-300" aria-label="واچ‌لیست">
             <i class="fas fa-bookmark text-gray-400 group-hover:text-accent group-hover:scale-110 transition-transform duration-300"></i>
           </a>
