@@ -14,9 +14,9 @@ window.CONFIG = {
 
     // Assets
     ASSETS: {
-        DEFAULT_POSTER: 'https://freemovieir.github.io/images/default-freemovie-300.png',
-        STORY_IMAGE: 'https://freemovieir.github.io/images/story.png',
-        TWEET_IMAGE: 'https://freemovieir.github.io/images/tweet.png',
+        DEFAULT_POSTER: '/assets/images/default-freemovie-300.png',
+        STORY_IMAGE: '/assets/images/story.png',
+        TWEET_IMAGE: '/assets/images/tweet.png',
         FAVICON_IMDB: 'https://m.media-amazon.com/images/G/01/imdb/images-ANDW73HA/favicon_desktop_32x32._CB1582158068_.png'
     },
 

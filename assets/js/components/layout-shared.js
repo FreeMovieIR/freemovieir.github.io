@@ -70,55 +70,59 @@
     if (cached) return cached;
 
     // 2. TMDB Provided Path
-    const baseUrl = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
-    const size = type === 'hero' ? 'w1280' : (type === 'detail' ? 'w500' : 'w342');
-    const url = `${baseUrl}/${size}${tmdbPosterPath}`;
-    localStorage.setItem(cacheKey, url);
-    return url;
-  }
+    if (tmdbPosterPath) {
+      const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+      const size = type === 'hero' ? 'w1280' : (type === 'detail' ? 'w500' : 'w342');
+      const url = `${tmdbImageBase}/${size}${tmdbPosterPath}`;
+      localStorage.setItem(cacheKey, url);
+      return url;
+    }
 
-  if (type === 'tv' || type === 'series') {
-    try {
-      const tvmazeBase = window.CONFIG ? window.CONFIG.API.TVMAZE : 'https://api.tvmaze.com';
-      const tvmazeRes = await fetch(`${tvmazeBase}/lookup/shows?thetvdb=${itemId}`).catch(() =>
-        fetch(`${tvmazeBase}/lookup/shows?imdb=${itemId}`)
-      );
-      if (tvmazeRes.ok) {
-        const tvmazeData = await tvmazeRes.json();
-        if (tvmazeData.image && tvmazeData.image.medium) {
-          localStorage.setItem(cacheKey, tvmazeData.image.medium);
-          return tvmazeData.image.medium;
-        }
-      }
-    } catch (e) { /* silent fail to next provider */ }
-  }
-
-  if (window.apiKeySwitcher && typeof window.apiKeySwitcher.fetchWithKeySwitch === 'function') {
-    try {
-      const tmdbKey = localStorage.getItem('userTmdbToken') || (window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc');
-      const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
-      const extUrl = window.proxify(`${tmdbBase}/${type === 'series' ? 'tv' : type}/${itemId}/external_ids?api_key=${tmdbKey}`);
-      const extRes = await fetch(extUrl);
-      if (extRes.ok) {
-        const extData = await extRes.json();
-        if (imdbId) {
-          const omdbBase = window.CONFIG ? window.CONFIG.API.OMDB : 'https://www.omdbapi.com';
-          const omdbData = await window.apiKeySwitcher.fetchWithKeySwitch(
-            (key) => `${omdbBase}/?i=${imdbId}&apikey=${key}`
-          );
-          if (omdbData.Poster && omdbData.Poster !== 'N/A') {
-            localStorage.setItem(cacheKey, omdbData.Poster);
-            return omdbData.Poster;
+    // 3. Provider: TVMaze
+    if (type === 'tv' || type === 'series') {
+      try {
+        const tvmazeBase = window.CONFIG ? window.CONFIG.API.TVMAZE : 'https://api.tvmaze.com';
+        const tvmazeRes = await fetch(`${tvmazeBase}/lookup/shows?thetvdb=${itemId}`).catch(() =>
+          fetch(`${tvmazeBase}/lookup/shows?imdb=${itemId}`)
+        );
+        if (tvmazeRes.ok) {
+          const tvmazeData = await tvmazeRes.json();
+          if (tvmazeData.image && tvmazeData.image.medium) {
+            localStorage.setItem(cacheKey, tvmazeData.image.medium);
+            return tvmazeData.image.medium;
           }
         }
-      }
-    } catch (e) { /* silent fail */ }
-  }
+      } catch (e) { /* silent fail */ }
+    }
 
-  return window.defaultPoster;
-};
+    // 4. Provider: OMDB
+    if (window.apiKeySwitcher && typeof window.apiKeySwitcher.fetchWithKeySwitch === 'function') {
+      try {
+        const tmdbKey = localStorage.getItem('userTmdbToken') || (window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc');
+        const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+        const extUrl = window.proxify(`${tmdbBase}/${type === 'series' ? 'tv' : type}/${itemId}/external_ids?api_key=${tmdbKey}`);
+        const extRes = await fetch(extUrl);
+        if (extRes.ok) {
+          const extData = await extRes.json();
+          const imdbId = extData.imdb_id;
+          if (imdbId) {
+            const omdbBase = window.CONFIG ? window.CONFIG.API.OMDB : 'https://www.omdbapi.com';
+            const omdbData = await window.apiKeySwitcher.fetchWithKeySwitch(
+              (key) => `${omdbBase}/?i=${imdbId}&apikey=${key}`
+            );
+            if (omdbData.Poster && omdbData.Poster !== 'N/A') {
+              localStorage.setItem(cacheKey, omdbData.Poster);
+              return omdbData.Poster;
+            }
+          }
+        }
+      } catch (e) { /* silent fail */ }
+    }
 
-const headerHtml = `
+    return window.defaultPoster;
+  };
+
+  const headerHtml = `
     <header class="sticky top-0 z-50 glass-nav transition-all duration-500">
       <div class="container mx-auto flex flex-col md:flex-row justify-between items-center px-6 py-4 gap-4 md:gap-0">
         <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-start">
@@ -159,7 +163,7 @@ const headerHtml = `
     </header>
   `;
 
-const footerHtml = `
+  const footerHtml = `
     <footer class="bg-base-950 pt-20 pb-10 border-t border-white/5 relative overflow-hidden">
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"></div>
         <div class="container mx-auto px-6 relative z-10 text-center md:text-right">
@@ -214,50 +218,50 @@ const footerHtml = `
     </footer>
   `;
 
-if (headerTarget) {
-  headerTarget.innerHTML = headerHtml;
-  localStorage.setItem('homeCache_header', headerHtml);
+  if (headerTarget) {
+    headerTarget.innerHTML = headerHtml;
+    localStorage.setItem('homeCache_header', headerHtml);
 
-  // Add search listener
-  const headerSearchInput = document.getElementById('header-search-input');
-  if (headerSearchInput) {
-    headerSearchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        const query = headerSearchInput.value.trim();
-        if (query.length >= 3) {
-          window.location.href = `/pages/search/index.html?q=${encodeURIComponent(query)}`;
+    // Add search listener
+    const headerSearchInput = document.getElementById('header-search-input');
+    if (headerSearchInput) {
+      headerSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const query = headerSearchInput.value.trim();
+          if (query.length >= 3) {
+            window.location.href = `/pages/search/index.html?q=${encodeURIComponent(query)}`;
+          }
         }
-      }
-    });
-  }
-}
-
-if (footerTarget) {
-  footerTarget.innerHTML = footerHtml;
-}
-// --- Global Performance Helpers ---
-function setupGlobalPreload() {
-  document.addEventListener('mouseover', async (e) => {
-    const card = e.target.closest('.movie-card');
-    if (card && card.dataset.id && card.dataset.type) {
-      const id = card.dataset.id;
-      const type = card.dataset.type;
-      const tmdbKey = localStorage.getItem('userTmdbToken') || (window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc');
-      const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
-
-      // Pre-fetch detail API for instant transitions
-      const isMovie = type === 'movie' || type === 'hero' || type === 'detail';
-      const url = `${tmdbBase}/${type === 'series' ? 'tv' : 'movie'}/${id}?api_key=${tmdbKey}&language=fa-IR&append_to_response=credits,videos,external_ids`;
-
-      // Use high priority for hover-initiated fetch
-      fetch(url, { priority: 'low' }).catch(() => { });
+      });
     }
-  }, { passive: true });
-}
+  }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupGlobalPreload);
-} else {
-  setupGlobalPreload();
-}
-}) ();
+  if (footerTarget) {
+    footerTarget.innerHTML = footerHtml;
+  }
+  // --- Global Performance Helpers ---
+  function setupGlobalPreload() {
+    document.addEventListener('mouseover', async (e) => {
+      const card = e.target.closest('.movie-card');
+      if (card && card.dataset.id && card.dataset.type) {
+        const id = card.dataset.id;
+        const type = card.dataset.type;
+        const tmdbKey = localStorage.getItem('userTmdbToken') || (window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc');
+        const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+
+        // Pre-fetch detail API for instant transitions
+        const isMovie = type === 'movie' || type === 'hero' || type === 'detail';
+        const url = `${tmdbBase}/${type === 'series' ? 'tv' : 'movie'}/${id}?api_key=${tmdbKey}&language=fa-IR&append_to_response=credits,videos,external_ids`;
+
+        // Use high priority for hover-initiated fetch
+        fetch(url, { priority: 'low' }).catch(() => { });
+      }
+    }, { passive: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupGlobalPreload);
+  } else {
+    setupGlobalPreload();
+  }
+})();

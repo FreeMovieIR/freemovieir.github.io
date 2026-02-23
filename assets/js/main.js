@@ -269,10 +269,9 @@ function manageNotification() {
 
   if (!supportButton) return;
   supportButton.addEventListener('click', () => {
-    window.open(
-      'https://twitter.com/intent/tweet?text=من از فیری مووی حمایت می‌کنم! یک سایت عالی برای تماشای فیلم و سریال: https://b2n.ir/freemovie',
-      '_blank'
-    );
+    const text = window.CONFIG ? window.CONFIG.LINKS.DEFAULT_SUPPORT_TEXT : 'من از فیری مووی حمایت می‌کنم!';
+    const intent = window.CONFIG ? window.CONFIG.LINKS.TWITTER_INTENT : 'https://twitter.com/intent/tweet?text=';
+    window.open(`${intent}${encodeURIComponent(text)}`, '_blank');
   });
 }
 
@@ -317,18 +316,19 @@ function manageSupportPopup() {
   closeButton?.addEventListener('click', () => popup.classList.add('hidden'));
 
   tweetButton?.addEventListener('click', () => {
-    const tweetText = encodeURIComponent(
-      'من از فیری مووی حمایت می‌کنم! یک سایت عالی برای تماشای فیلم و سریال: https://b2n.ir/freemovie'
-    );
-    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
+    const text = window.CONFIG ? window.CONFIG.LINKS.DEFAULT_SUPPORT_TEXT : 'من از فیری مووی حمایت می‌کنم!';
+    const intent = window.CONFIG ? window.CONFIG.LINKS.TWITTER_INTENT : 'https://twitter.com/intent/tweet?text=';
+    window.open(`${intent}${encodeURIComponent(text)}`, '_blank');
   });
 
   downloadTwitterButton?.addEventListener('click', () => {
-    downloadImage('https://freemovieir.github.io/images/story.png', 'freemovie-twitter-support.jpg');
+    const img = window.CONFIG ? window.CONFIG.ASSETS.STORY_IMAGE : 'https://freemovieir.github.io/images/story.png';
+    downloadImage(img, 'freemovie-twitter-support.jpg');
   });
 
   downloadInstagramButton?.addEventListener('click', () => {
-    downloadImage('https://freemovieir.github.io/images/tweet.png', 'freemovie-instagram-support.jpg');
+    const img = window.CONFIG ? window.CONFIG.ASSETS.TWEET_IMAGE : 'https://freemovieir.github.io/images/tweet.png';
+    downloadImage(img, 'freemovie-instagram-support.jpg');
   });
 
   popup.addEventListener('click', (event) => {
@@ -524,12 +524,13 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     let dlHtml = '';
     const seasons = data.number_of_seasons || 1;
     for (let s = 1; s <= seasons; s++) {
+      const subProxy = window.CONFIG ? window.CONFIG.LINKS.SUBTITLE_PROXY : 'https://subtitle.saymyname.website/DL/filmgir';
       dlHtml += `
                 <div class="w-full glass-card p-4 rounded-2xl text-center">
                     <h3 class="font-bold text-amber-500 mb-2">فصل ${s}</h3>
                     <div class="flex gap-2 flex-wrap justify-center">
-                        <a href="https://subtitle.saymyname.website/DL/filmgir/?i=${imdbId}&f=${s}&q=1" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 1</a>
-                        <a href="https://subtitle.saymyname.website/DL/filmgir/?i=${imdbId}&f=${s}&q=2" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 2</a>
+                        <a href="${subProxy}/?i=${imdbId}&f=${s}&q=1" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 1</a>
+                        <a href="${subProxy}/?i=${imdbId}&f=${s}&q=2" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 2</a>
                     </div>
                 </div>
             `;
