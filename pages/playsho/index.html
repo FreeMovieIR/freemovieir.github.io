@@ -90,6 +90,17 @@
     </main>
 
     <div id="shared-footer"></div>
+    <script>
+        // بروزرسانی لینک‌های شبکه‌های اجتماعی
+        window.addEventListener('DOMContentLoaded', () => {
+            const siteUrl = window.CONFIG ? window.CONFIG.SITE_URL : 'https://freemovieir.github.io';
+            const whatsapp = document.getElementById('whatsappShare');
+            const telegram = document.getElementById('telegramShare');
+
+            if (whatsapp) whatsapp.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(siteUrl)}`;
+            if (telegram) telegram.href = `https://t.me/share/url?url=${encodeURIComponent(siteUrl)}`;
+        });
+    </script>
     <script src="/assets/js/main.js"></script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>

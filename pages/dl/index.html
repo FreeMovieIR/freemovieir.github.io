@@ -215,8 +215,7 @@
                 <h3>نسخه ویندوز</h3>
                 <p>سازگار با ویندوز 10 و 11</p>
                 <a href="https://www.microsoft.com/store/apps/freemovie" target="_blank">مایکروسافت استور</a>
-                <a href="https://freemovie.ir/download/freemovie-windows.exe" target="_blank" class="special">دانلود
-                    مستقیم (EXE)</a>
+                <a id="download-windows" href="#" target="_blank" class="special">دانلود مستقیم (EXE)</a>
             </div>
 
             <!-- نسخه موبایل (اندروید و iOS) -->
@@ -226,8 +225,7 @@
                 <p>برای همه گوشی‌های اندرویدی</p>
                 <a href="https://play.google.com/store/apps/details?id=com.freemovie" target="_blank">گوگل پلی</a>
                 <a href="https://cafebazaar.ir/app/com.freemovie" target="_blank">کافه بازار</a>
-                <a href="https://freemovie.ir/download/android.apk" target="_blank" class="special">دانلود مستقیم
-                    (APK)</a>
+                <a id="download-android-mobile" href="#" target="_blank" class="special">دانلود مستقیم (APK)</a>
             </div>
             <div class="download-card fade-in" data-platform="mobile">
                 <img src="https://freemovieir.github.io/images/ios-icon.png" alt="آیکون iOS">
@@ -235,8 +233,7 @@
                 <p>برای آیفون و آیپد</p>
                 <a href="https://apps.apple.com/app/id123456789" target="_blank">اپ استور</a>
                 <a href="https://sibapp.com/applications/freemovie" target="_blank">سیب اپ</a>
-                <a href="https://freemovie.ir/download/freemovie-ios.ipa" target="_blank" class="special">دانلود مستقیم
-                    (IPA)</a>
+                <a id="download-ios" href="#" target="_blank" class="special">دانلود مستقیم (IPA)</a>
             </div>
 
             <!-- نسخه مک -->
@@ -245,8 +242,7 @@
                 <h3>نسخه مک</h3>
                 <p>برای macOS Ventura و بالاتر</p>
                 <a href="https://apps.apple.com/app/freemovie-mac/id987654321" target="_blank">اپ استور مک</a>
-                <a href="https://freemovie.ir/download/freemovie-mac.dmg" target="_blank" class="special">دانلود مستقیم
-                    (DMG)</a>
+                <a id="download-mac" href="#" target="_blank" class="special">دانلود مستقیم (DMG)</a>
             </div>
 
             <!-- نسخه لینوکس -->
@@ -255,8 +251,7 @@
                 <h3>نسخه لینوکس</h3>
                 <p>برای توزیع‌های مختلف لینوکس</p>
                 <a href="https://snapcraft.io/freemovie" target="_blank">اسنپ</a>
-                <a href="https://freemovie.ir/download/freemovie-linux.AppImage" target="_blank" class="special">دانلود
-                    (AppImage)</a>
+                <a id="download-linux" href="#" target="_blank" class="special">دانلود (AppImage)</a>
             </div>
         </div>
     </main>
@@ -273,11 +268,15 @@
                 const androidMobileLink = document.getElementById('download-android-mobile');
                 const windowsLink = document.getElementById('download-windows');
                 const iosLink = document.getElementById('download-ios');
+                const macLink = document.getElementById('download-mac');
+                const linuxLink = document.getElementById('download-linux');
 
                 if (androidLink) androidLink.href = downloads.ANDROID;
                 if (androidMobileLink) androidMobileLink.href = downloads.ANDROID;
                 if (windowsLink) windowsLink.href = downloads.WINDOWS;
                 if (iosLink) iosLink.href = downloads.IOS;
+                if (macLink) macLink.href = downloads.MAC;
+                if (linuxLink) linuxLink.href = downloads.LINUX;
             }
         });
 

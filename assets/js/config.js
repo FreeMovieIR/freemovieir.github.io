@@ -4,6 +4,9 @@
  */
 
 window.CONFIG = {
+    // Base URLs
+    SITE_URL: 'https://freemovieir.github.io',
+
     // API Base URLs
     API: {
         TMDB: 'https://api.themoviedb.org/3',
@@ -31,7 +34,9 @@ window.CONFIG = {
         OFFICIAL_DOWNLOADS: {
             ANDROID: 'https://freemovie.ir/download/android.apk',
             WINDOWS: 'https://freemovie.ir/download/freemovie-windows.exe',
-            IOS: 'https://freemovie.ir/download/freemovie-ios.ipa'
+            IOS: 'https://freemovie.ir/download/freemovie-ios.ipa',
+            MAC: 'https://freemovie.ir/download/freemovie-mac.dmg',
+            LINUX: 'https://freemovie.ir/download/freemovie-linux.AppImage'
         }
     },
 
