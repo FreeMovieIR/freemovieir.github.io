@@ -1,6 +1,6 @@
-const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc';
+const tmdbApiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
 let includedGenres = new Set();
 let excludedGenres = new Set();
@@ -9,8 +9,9 @@ let totalPages = 1;
 let apiKeySwitcher;
 
 // Base API endpoints
-const genreUrl = () => `https://api.themoviedb.org/3/genre/movie/list?api_key=${localStorage.getItem('userTmdbToken') || tmdbApiKey}&language=${language}`;
-const discoverBaseUrl = () => `https://api.themoviedb.org/3/discover/movie?api_key=${localStorage.getItem('userTmdbToken') || tmdbApiKey}&language=${language}&include_adult=false&include_video=false`;
+const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+const genreUrl = () => `${tmdbBase}/genre/movie/list?api_key=${localStorage.getItem('userTmdbToken') || tmdbApiKey}&language=${language}`;
+const discoverBaseUrl = () => `${tmdbBase}/discover/movie?api_key=${localStorage.getItem('userTmdbToken') || tmdbApiKey}&language=${language}&include_adult=false&include_video=false`;
 
 // DOM Elements
 const includeContainer = document.getElementById('include-genres-container');
@@ -180,7 +181,8 @@ async function renderResults(movies) {
     resultsContainer.innerHTML = '';
 
     for (const movie of movies) {
-        let posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : defaultPoster;
+        const tmdbImgBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+        let posterUrl = movie.poster_path ? `${tmdbImgBase}/w300${movie.poster_path}` : defaultPoster;
 
         // Use createMovieCard shared function
         if (window.createMovieCard) {

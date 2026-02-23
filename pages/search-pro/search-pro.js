@@ -1,6 +1,6 @@
-const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc';
+const tmdbApiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
 let currentPage = 1;
 let totalPages = 1;
@@ -94,7 +94,8 @@ async function performAdvancedSearch() {
   loadMoreButton.classList.add('hidden');
 
   const tmdbKey = localStorage.getItem('userTmdbToken') || tmdbApiKey;
-  let url = `https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&language=${language}&page=${currentPage}&sort_by=popularity.desc&include_adult=false`;
+  const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+  let url = `${tmdbBase}/discover/movie?api_key=${tmdbKey}&language=${language}&page=${currentPage}&sort_by=popularity.desc&include_adult=false`;
 
   if (currentFilters.genres) url += `&with_genres=${currentFilters.genres}`;
   if (currentFilters.countries) url += `&with_origin_country=${currentFilters.countries}`;
@@ -131,7 +132,8 @@ async function performAdvancedSearch() {
 
 function renderResults(movies) {
   movies.forEach(movie => {
-    let posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : defaultPoster;
+    const tmdbImgBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+    let posterUrl = movie.poster_path ? `${tmdbImgBase}/w300${movie.poster_path}` : defaultPoster;
 
     if (window.createMovieCard) {
       const cardHtml = window.createMovieCard(movie, posterUrl, 'movie');

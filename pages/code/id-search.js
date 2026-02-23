@@ -1,6 +1,6 @@
-const apiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // TMDb API key
-const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png';
+const apiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
+const baseImageUrl = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p/w500';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : '/assets/images/default-freemovie-300.png';
 
 let apiKeySwitcher;
 
@@ -30,8 +30,9 @@ async function searchById(id) {
     if (id.length < 3) return; // حداقل 3 کاراکتر
 
     try {
-        const movieUrl = `https://zxcode.ir/3/movie/${id}?api_key=${apiKey}&language=fa-IR`;
-        const tvUrl = `https://zxcode.ir/3/tv/${id}?api_key=${apiKey}&language=fa-IR`;
+        const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+        const movieUrl = `${tmdbBase}/movie/${id}?api_key=${apiKey}&language=fa-IR`;
+        const tvUrl = `${tmdbBase}/tv/${id}?api_key=${apiKey}&language=fa-IR`;
 
         const [movieRes, tvRes] = await Promise.all([
             fetch(movieUrl).then(res => res.ok ? res.json() : null),
@@ -78,7 +79,7 @@ async function searchById(id) {
 function convertPersianToEnglishNumbers(input) {
     const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    
+
     return input.split('').map(char => {
         const index = persianNumbers.indexOf(char);
         return index !== -1 ? englishNumbers[index] : char;

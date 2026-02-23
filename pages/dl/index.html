@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="fa" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>دانلود اپلیکیشن فیری مووی - نسخه‌های جداگانه</title>
-    <meta name="description" content="دانلود نسخه‌های جداگانه اپلیکیشن فیری مووی برای اندروید، ویندوز، و موبایل (اندروید و iOS).">
+    <script src="/assets/js/config.js"></script>
+    <meta name="description"
+        content="دانلود نسخه‌های جداگانه اپلیکیشن فیری مووی برای اندروید، ویندوز، و موبایل (اندروید و iOS).">
     <meta name="keywords" content="دانلود فیری مووی, اپلیکیشن اندروید, اپلیکیشن ویندوز, اپلیکیشن موبایل, iOS">
     <meta name="robots" content="index, follow">
     <meta name="author" content="تیم فیری مووی">
@@ -19,12 +22,13 @@
     <meta name="twitter:description" content="نسخه‌های جداگانه برای اندروید، ویندوز و موبایل.">
     <meta name="twitter:image" content="https://freemovieir.github.io/images/tweet2.png">
     <script src="/assets/js/config/tailwind-config.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/dist/font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico">
     <script src="/assets/js/analytics.js" defer></script>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
@@ -32,10 +36,18 @@
             background: linear-gradient(135deg, #1f2937, #111827);
             transition: background 0.3s ease;
         }
+
         .light body {
             background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
         }
-        * { box-sizing: border-box; padding: 0; margin: 0; text-decoration: none; }
+
+        * {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+            text-decoration: none;
+        }
+
         #loading-bar {
             position: fixed;
             top: 0;
@@ -47,6 +59,7 @@
             transition: width 0.5s ease;
             box-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
         }
+
         .tab-button {
             padding: 0.75rem 1.5rem;
             background: #374151;
@@ -54,15 +67,18 @@
             border-radius: 0.5rem 0.5rem 0 0;
             transition: all 0.3s ease;
         }
+
         .tab-button.active {
             background: #facc15;
             color: #1f2937;
             font-weight: bold;
         }
+
         .tab-button:hover:not(.active) {
             background: #4b5563;
             color: #fff;
         }
+
         .download-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -71,6 +87,7 @@
             max-width: 1400px;
             margin: 0 auto;
         }
+
         .download-card {
             background: #1f2937;
             border-radius: 1rem;
@@ -79,14 +96,17 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+
         .light .download-card {
             background: #fff;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         .download-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
+
         .download-card img {
             width: 100%;
             max-width: 120px;
@@ -94,19 +114,23 @@
             margin: 0 auto;
             transition: transform 0.3s ease;
         }
+
         .download-card:hover img {
             transform: scale(1.1);
         }
+
         .download-card h3 {
             font-size: 1.5rem;
             margin: 1rem 0;
             color: #facc15;
         }
+
         .download-card p {
             color: #d1d5db;
             font-size: 0.9rem;
             margin-bottom: 1rem;
         }
+
         .download-card a {
             display: inline-block;
             margin: 0.5rem 0.25rem;
@@ -116,26 +140,39 @@
             border-radius: 0.5rem;
             transition: background 0.3s ease, transform 0.2s ease;
         }
+
         .download-card a:hover {
             background: #2563eb;
             transform: scale(1.05);
         }
+
         .download-card a.special {
             background: #facc15;
             color: #1f2937;
         }
+
         .download-card a.special:hover {
             background: #eab308;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .fade-in {
             animation: fadeIn 0.5s ease forwards;
         }
     </style>
 </head>
+
 <body class="min-h-screen flex flex-col">
     <!-- نوار پیشرفت -->
     <div id="loading-bar"></div>
@@ -146,7 +183,8 @@
     <!-- بخش اصلی -->
     <main class="container mx-auto py-12 flex-grow">
         <h1 class="text-4xl font-bold mb-6 text-center text-yellow-400">دانلود اپلیکیشن فیری مووی</h1>
-        <p class="text-center text-gray-300 mb-10 text-lg max-w-2xl mx-auto">نسخه مورد نظر خود را برای اندروید، ویندوز یا موبایل انتخاب کنید!</p>
+        <p class="text-center text-gray-300 mb-10 text-lg max-w-2xl mx-auto">نسخه مورد نظر خود را برای اندروید، ویندوز
+            یا موبایل انتخاب کنید!</p>
 
         <!-- تب‌ها -->
         <div class="flex justify-center gap-2 mb-8 flex-wrap">
@@ -168,7 +206,7 @@
                 <a href="https://play.google.com/store/apps/details?id=com.freemovie" target="_blank">گوگل پلی</a>
                 <a href="https://cafebazaar.ir/app/com.freemovie" target="_blank">کافه بازار</a>
                 <a href="https://myket.ir/app/com.freemovie" target="_blank">مایکت</a>
-                <a href="https://freemovie.ir/download/android.apk" target="_blank" class="special">دانلود مستقیم (APK)</a>
+                <a id="download-android" href="#" target="_blank" class="special">دانلود مستقیم (APK)</a>
             </div>
 
             <!-- نسخه ویندوز -->
@@ -177,7 +215,8 @@
                 <h3>نسخه ویندوز</h3>
                 <p>سازگار با ویندوز 10 و 11</p>
                 <a href="https://www.microsoft.com/store/apps/freemovie" target="_blank">مایکروسافت استور</a>
-                <a href="https://freemovie.ir/download/freemovie-windows.exe" target="_blank" class="special">دانلود مستقیم (EXE)</a>
+                <a href="https://freemovie.ir/download/freemovie-windows.exe" target="_blank" class="special">دانلود
+                    مستقیم (EXE)</a>
             </div>
 
             <!-- نسخه موبایل (اندروید و iOS) -->
@@ -187,7 +226,8 @@
                 <p>برای همه گوشی‌های اندرویدی</p>
                 <a href="https://play.google.com/store/apps/details?id=com.freemovie" target="_blank">گوگل پلی</a>
                 <a href="https://cafebazaar.ir/app/com.freemovie" target="_blank">کافه بازار</a>
-                <a href="https://freemovie.ir/download/android.apk" target="_blank" class="special">دانلود مستقیم (APK)</a>
+                <a href="https://freemovie.ir/download/android.apk" target="_blank" class="special">دانلود مستقیم
+                    (APK)</a>
             </div>
             <div class="download-card fade-in" data-platform="mobile">
                 <img src="https://freemovieir.github.io/images/ios-icon.png" alt="آیکون iOS">
@@ -195,7 +235,8 @@
                 <p>برای آیفون و آیپد</p>
                 <a href="https://apps.apple.com/app/id123456789" target="_blank">اپ استور</a>
                 <a href="https://sibapp.com/applications/freemovie" target="_blank">سیب اپ</a>
-                <a href="https://freemovie.ir/download/freemovie-ios.ipa" target="_blank" class="special">دانلود مستقیم (IPA)</a>
+                <a href="https://freemovie.ir/download/freemovie-ios.ipa" target="_blank" class="special">دانلود مستقیم
+                    (IPA)</a>
             </div>
 
             <!-- نسخه مک -->
@@ -204,7 +245,8 @@
                 <h3>نسخه مک</h3>
                 <p>برای macOS Ventura و بالاتر</p>
                 <a href="https://apps.apple.com/app/freemovie-mac/id987654321" target="_blank">اپ استور مک</a>
-                <a href="https://freemovie.ir/download/freemovie-mac.dmg" target="_blank" class="special">دانلود مستقیم (DMG)</a>
+                <a href="https://freemovie.ir/download/freemovie-mac.dmg" target="_blank" class="special">دانلود مستقیم
+                    (DMG)</a>
             </div>
 
             <!-- نسخه لینوکس -->
@@ -213,7 +255,8 @@
                 <h3>نسخه لینوکس</h3>
                 <p>برای توزیع‌های مختلف لینوکس</p>
                 <a href="https://snapcraft.io/freemovie" target="_blank">اسنپ</a>
-                <a href="https://freemovie.ir/download/freemovie-linux.AppImage" target="_blank" class="special">دانلود (AppImage)</a>
+                <a href="https://freemovie.ir/download/freemovie-linux.AppImage" target="_blank" class="special">دانلود
+                    (AppImage)</a>
             </div>
         </div>
     </main>
@@ -222,6 +265,22 @@
     <div id="shared-footer"></div>
 
     <script>
+        // مدیریت لینک‌های دانلود از CONFIG
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.CONFIG && window.CONFIG.LINKS && window.CONFIG.LINKS.OFFICIAL_DOWNLOADS) {
+                const downloads = window.CONFIG.LINKS.OFFICIAL_DOWNLOADS;
+                const androidLink = document.getElementById('download-android');
+                const androidMobileLink = document.getElementById('download-android-mobile');
+                const windowsLink = document.getElementById('download-windows');
+                const iosLink = document.getElementById('download-ios');
+
+                if (androidLink) androidLink.href = downloads.ANDROID;
+                if (androidMobileLink) androidMobileLink.href = downloads.ANDROID;
+                if (windowsLink) windowsLink.href = downloads.WINDOWS;
+                if (iosLink) iosLink.href = downloads.IOS;
+            }
+        });
+
         // مدیریت تم
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
@@ -267,4 +326,5 @@
     </script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>
+
 </html>

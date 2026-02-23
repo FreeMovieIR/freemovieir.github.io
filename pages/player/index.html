@@ -1,27 +1,33 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پخش آنلاین پیشرفته - فیری مووی</title>
+    <script src="/assets/js/config.js"></script>
     <script src="/assets/js/config/tailwind-config.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-	<script src="/assets/js/analytics.js" defer></script>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <script src="/assets/js/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
     <style>
         .video-wrapper {
             aspect-ratio: 16/9;
             background: #1a1a1a;
         }
+
         .neon-border {
-            box-shadow: 0 0 15px rgba(255,193,7,0.3);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
         }
+
         .smooth-transition {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
     </style>
 </head>
+
 <body class="bg-gray-900 text-gray-100 min-h-screen">
     <!-- هدر هوشمند -->
     <div id="shared-header"></div>
@@ -38,13 +44,9 @@
                             <i class="fas fa-video mr-2 text-yellow-500"></i>
                             <label class="font-semibold">لینک ویدیو (اتوماتیک)</label>
                         </div>
-                        <input
-                            id="videoUrl"
-                            type="url"
+                        <input id="videoUrl" type="url"
                             class="w-full bg-gray-700 rounded-xl p-4 pr-12 focus:ring-2 focus:ring-yellow-500"
-                            placeholder="Ctrl+V برای پیست خودکار"
-                            autofocus
-                        >
+                            placeholder="Ctrl+V برای پیست خودکار" autofocus>
                         <i class="fas fa-paste absolute right-4 top-12 text-gray-400"></i>
                     </div>
 
@@ -54,20 +56,14 @@
                             <i class="fas fa-closed-captioning mr-2 text-yellow-500"></i>
                             <label class="font-semibold">لینک زیرنویس (اختیاری)</label>
                         </div>
-                        <input
-                            id="subtitleUrl"
-                            type="url"
+                        <input id="subtitleUrl" type="url"
                             class="w-full bg-gray-700 rounded-xl p-4 focus:ring-2 focus:ring-yellow-500"
-                            placeholder="https://example.com/sub.vtt"
-                        >
+                            placeholder="https://example.com/sub.vtt">
                     </div>
                 </div>
 
-                <button 
-                    onclick="initPlayer()"
-                    class="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-4 rounded-xl 
-                    smooth-transition transform hover:scale-[1.02]"
-                >
+                <button onclick="initPlayer()" class="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-4 rounded-xl 
+                    smooth-transition transform hover:scale-[1.02]">
                     <i class="fas fa-play mr-2"></i>
                     شروع پخش
                 </button>
@@ -107,7 +103,7 @@
                         <div>زیرنویس: <span id="subState">غیرفعال</span></div>
                     </div>
                 </div>
-                
+
                 <div class="bg-gray-800 p-4 rounded-xl">
                     <h3 class="text-yellow-500 mb-2 font-semibold">
                         <i class="fas fa-keyboard mr-2"></i>
@@ -167,7 +163,7 @@
         function initPlayer() {
             const videoUrl = document.getElementById('videoUrl').value;
             const subtitleUrl = document.getElementById('subtitleUrl').value;
-            
+
             if (!isValidMediaUrl(videoUrl)) {
                 showError('لینک ویدیو نامعتبر است!');
                 return;
@@ -176,7 +172,7 @@
             // تنظیم وضعیت
             showStatus('در حال بارگیری...', true);
             videoPlayer.src = videoUrl;
-            
+
             // مدیریت زیرنویس
             const subTrack = document.getElementById('subTrack');
             if (subtitleUrl && subtitleUrl.endsWith('.vtt')) {
@@ -189,9 +185,9 @@
             videoPlayer.addEventListener('progress', updateBuffer);
             videoPlayer.addEventListener('play', () => updatePlayState('پخش'));
             videoPlayer.addEventListener('pause', () => updatePlayState('مکث'));
-            
+
             videoPlayer.onloadedmetadata = () => {
-                document.getElementById('videoFormat').textContent = 
+                document.getElementById('videoFormat').textContent =
                     videoUrl.split('.').pop().split(/[?#]/)[0].toUpperCase();
                 showStatus('آماده پخش', false);
                 if (isAutoPlayEnabled) videoPlayer.play();
@@ -235,7 +231,7 @@
 
         // کنترل‌های صفحه‌کلید
         document.addEventListener('keydown', (e) => {
-            switch(e.key.toLowerCase()) {
+            switch (e.key.toLowerCase()) {
                 case ' ':
                     videoPlayer.paused ? videoPlayer.play() : videoPlayer.pause();
                     break;
@@ -259,4 +255,5 @@
     </script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>
+
 </html>

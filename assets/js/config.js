@@ -27,7 +27,12 @@ window.CONFIG = {
         TWITTER_INTENT: 'https://twitter.com/intent/tweet?text=',
         DEFAULT_SUPPORT_TEXT: 'من از فیری مووی حمایت می‌کنم! یک سایت عالی برای تماشای فیلم و سریال: https://b2n.ir/freemovie',
         DOWNLOAD_PROXY: 'https://berlin.saymyname.website/Movies',
-        SUBTITLE_PROXY: 'https://subtitle.saymyname.website/DL/filmgir'
+        SUBTITLE_PROXY: 'https://subtitle.saymyname.website/DL/filmgir',
+        OFFICIAL_DOWNLOADS: {
+            ANDROID: 'https://freemovie.ir/download/android.apk',
+            WINDOWS: 'https://freemovie.ir/download/freemovie-windows.exe',
+            IOS: 'https://freemovie.ir/download/freemovie-ios.ipa'
+        }
     },
 
     // Global Constants

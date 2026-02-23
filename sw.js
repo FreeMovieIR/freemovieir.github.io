@@ -4,6 +4,7 @@ const STATIC_ASSETS = [
   '/index.html',
   '/assets/css/style.css',
   '/assets/js/main.js',
+  '/assets/js/config.js',
   '/assets/js/apiKeySwitcher.js',
   '/assets/js/components/layout-shared.js',
   '/assets/icons/favicon.ico',
