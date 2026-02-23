@@ -7,142 +7,141 @@
     <title>جستجوی هوشمند - فیری مووی</title>
     <script src="/assets/js/config/tailwind-config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/dist/font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico">
     <style>
-        body {
-            font-family: 'Vazir', sans-serif;
-            direction: rtl;
-        }
-
         .genre-btn {
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .genre-btn.selected-include {
-            background: linear-gradient(to right, #10b981, #14b8a6);
-            color: white;
-            border-color: transparent;
+            background: #f59e0b;
+            color: black;
+            border-color: #f59e0b;
+            font-weight: 800;
         }
 
         .genre-btn.selected-exclude {
-            background: linear-gradient(to right, #ef4444, #f87171);
+            background: #ef4444;
             color: white;
-            border-color: transparent;
-        }
-
-        /* Custom Checkbox styles */
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #ffc107;
-            /* accent color */
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+            border-color: #ef4444;
+            font-weight: 800;
         }
     </style>
 </head>
 
-<body
-    class="bg-base-900 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-accent selection:text-base-900">
-    <!-- Header Placeholder -->
+<body class="bg-[#07090f] text-white min-h-screen flex flex-col font-['Vazir']" dir="rtl">
     <div id="shared-header"></div>
 
-    <main class="container mx-auto flex-1 py-12 px-4">
-        <h1
-            class="text-4xl md:text-5xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-accent to-yellow-200 drop-shadow-sm mb-2">
-            جستجوی هوشمند فیلم</h1>
-        <p class="text-center text-gray-400 mb-10 max-w-2xl mx-auto">با انتخاب ژانرهای مورد علاقه و حذف ژانرهایی که دوست
-            ندارید، دقیقاً همون فیلمی که می‌خواید رو پیدا کنید.</p>
+    <main class="container mx-auto flex-1 py-12 px-6">
+        <div class="mb-12 text-center">
+            <h1
+                class="text-4xl md:text-6xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-clip-text text-transparent mb-4 animate-textShimmer">
+                جستجوی هوشمند</h1>
+            <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">با انتخاب ژانرهای مورد علاقه
+                و حذف ژانرهایی که دوست ندارید، دقیقاً همون فیلمی که می‌خواید رو پیدا کنید.</p>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <!-- Filter Sidebar -->
-            <div
-                class="lg:col-span-1 bg-base-900/80 backdrop-blur-xl p-6 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.4)] border border-gray-700/50 sticky top-24 h-fit">
+            <div class="lg:col-span-4 space-y-8">
+                <div class="glass-card-premium p-8 rounded-3xl border border-white/10 sticky top-28">
 
-                <!-- Inclusion Section -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-bold text-emerald-400 mb-3 flex items-center gap-2"><i
-                            class="fas fa-check-circle"></i> ژانرهای مورد علاقه (حتماً باشه)</h3>
-                    <div id="include-genres-container" class="flex flex-wrap gap-2">
-                        <!-- Genres will be injected here -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-black text-amber-500 mb-4 flex items-center gap-2">
+                            <i class="fas fa-check-circle"></i> مورد علاقه
+                        </h3>
+                        <div id="include-genres-container" class="flex flex-wrap gap-2">
+                            <!-- Skeleton Loader -->
+                            <div class="skeleton h-8 w-20 rounded-full"></div>
+                            <div class="skeleton h-8 w-24 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <h3 class="text-lg font-black text-red-500 mb-4 flex items-center gap-2">
+                            <i class="fas fa-times-circle"></i> حذف شده‌ها
+                        </h3>
+                        <div id="exclude-genres-container" class="flex flex-wrap gap-2">
+                            <!-- Skeleton Loader -->
+                            <div class="skeleton h-8 w-20 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <label
+                                class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-3 flex justify-between">
+                                حداقل امتیاز: <span id="rating-val" class="text-amber-500">5.0</span>
+                            </label>
+                            <input type="range" id="min-rating" min="0" max="10" step="0.5" value="5"
+                                class="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                        </div>
+
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <label
+                                class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">مرتب‌سازی</label>
+                            <select id="sort-by"
+                                class="w-full bg-transparent border-none text-white text-sm rounded-xl focus:ring-0 block p-0 cursor-pointer font-bold">
+                                <option value="popularity.desc">محبوب‌ترین‌ها</option>
+                                <option value="vote_average.desc">بیشترین امتیاز</option>
+                                <option value="primary_release_date.desc">جدیدترین‌ها</option>
+                            </select>
+                        </div>
+
+                        <button id="search-btn"
+                            class="w-full bg-amber-500 hover:bg-amber-400 text-black font-black text-lg py-4 rounded-2xl shadow-xl shadow-amber-500/20 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fas fa-magic"></i> پیدا کن!
+                        </button>
                     </div>
                 </div>
-
-                <!-- Exclusion Section -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-bold text-red-400 mb-3 flex items-center gap-2"><i
-                            class="fas fa-times-circle"></i> ژانرهای آزاردهنده (اصلاً نباشه)</h3>
-                    <div id="exclude-genres-container" class="flex flex-wrap gap-2">
-                        <!-- Genres will be injected here -->
-                    </div>
-                </div>
-
-                <!-- Range Filters -->
-                <div class="mb-6 bg-base-800/50 p-4 rounded-xl border border-gray-700/50">
-                    <label class="block text-gray-300 font-bold mb-2 flex justify-between">حداقل امتیاز: <span
-                            id="rating-val" class="text-accent font-bold">5.0</span></label>
-                    <input type="range" id="min-rating" min="0" max="10" step="0.5" value="5"
-                        class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-                </div>
-
-                <div class="mb-8 bg-base-800/50 p-4 rounded-xl border border-gray-700/50">
-                    <label class="block text-gray-300 font-bold mb-2">مرتب‌سازی بر اساس</label>
-                    <select id="sort-by"
-                        class="w-full bg-base-950 border border-gray-700 text-white text-sm rounded-lg focus:ring-accent focus:border-accent block p-2.5">
-                        <option value="popularity.desc">محبوب‌ترین‌ها</option>
-                        <option value="vote_average.desc">بیشترین امتیاز</option>
-                        <option value="primary_release_date.desc">جدیدترین‌ها</option>
-                    </select>
-                </div>
-
-                <button id="search-btn"
-                    class="w-full bg-gradient-to-r from-accent to-yellow-500 text-base-900 font-bold text-lg py-3 rounded-xl hover:from-yellow-400 hover:to-yellow-300 shadow-[0_4px_15px_rgba(255,193,7,0.4)] transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2">
-                    <i class="fas fa-search"></i> پیدا کن!
-                </button>
             </div>
 
             <!-- Results Grid -->
-            <div class="lg:col-span-2">
-                <div id="results-loader" class="hidden flex-col items-center justify-center py-20">
-                    <div class="inline-block relative w-16 h-16 mb-4">
-                        <div class="absolute top-0 left-0 w-full h-full border-4 border-accent/20 rounded-full"></div>
-                        <div
-                            class="absolute top-0 left-0 w-full h-full border-4 border-accent rounded-full border-t-transparent animate-spin">
-                        </div>
+            <div class="lg:col-span-8">
+                <div id="results-loader"
+                    class="hidden flex-col items-center justify-center py-32 glass-card-premium rounded-3xl border border-white/10 mb-8">
+                    <div
+                        class="h-16 w-16 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mb-6">
                     </div>
-                    <p class="text-accent font-bold animate-pulse">در حال جستجو بین هزاران فیلم...</p>
+                    <p class="text-amber-500 font-bold animate-pulse text-lg tracking-tighter">در حال استخراج هوشمند
+                        اطلاعات...</p>
                 </div>
 
-                <div id="results-container" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- Movie Cards injected here -->
+                <div id="results-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Default State -->
                     <div
-                        class="col-span-full py-16 text-center text-gray-400 bg-base-800/30 rounded-2xl border border-dashed border-gray-700">
-                        <i class="fas fa-film text-4xl mb-4 opacity-50"></i>
-                        <p>ژانرهای مورد نظرتون رو انتخاب کنید و روی دکمه جستجو کلیک کنید.</p>
+                        class="col-span-full py-32 text-center glass-card-premium rounded-3xl border border-dashed border-white/10 group">
+                        <div class="mb-6 relative inline-block">
+                            <div class="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full animate-pulse"></div>
+                            <i class="fas fa-sparkles text-amber-500 text-5xl relative"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">آماده جستجوی هوشمند هستید؟</h3>
+                        <p class="text-gray-500 text-sm max-w-xs mx-auto">ژانرهای مورد نظر خود را انتخاب کرده و دکمه
+                            "پیدا کن" را بفشارید.</p>
                     </div>
                 </div>
 
                 <!-- Pagination -->
-                <div id="pagination" class="mt-10 flex justify-center gap-2 hidden">
+                <div id="pagination" class="mt-12 flex justify-center items-center gap-4 hidden">
                     <button id="prev-page"
-                        class="px-4 py-2 bg-base-800 hover:bg-base-700 border border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"><i
-                            class="fas fa-chevron-right"></i> قبلی</button>
+                        class="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-20">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                     <span id="page-info"
-                        class="px-4 py-2 bg-base-900 border border-gray-700 rounded-lg text-accent font-bold text-center min-w-[100px]">1
-                        از 1</span>
+                        class="glass-card px-6 py-3 rounded-2xl text-amber-500 font-black text-sm min-w-[120px] text-center">صفحه
+                        ۱ از ۱</span>
                     <button id="next-page"
-                        class="px-4 py-2 bg-base-800 hover:bg-base-700 border border-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">بعدی
-                        <i class="fas fa-chevron-left"></i></button>
+                        class="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all disabled:opacity-20">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer Placeholder -->
     <div id="shared-footer"></div>
 
     <script src="/assets/js/apiKeySwitcher.js"></script>

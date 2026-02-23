@@ -1,171 +1,151 @@
-// search-pro.js
-const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
+const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
-const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png';
+const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
-let apiKeySwitcher;
 let currentPage = 1;
-let totalPages = 1; 
-let searchParams = {};
+let totalPages = 1;
+let currentFilters = {};
+let apiKeySwitcher;
 
-async function initializeSwitcher() {
-  apiKeySwitcher = await loadApiKeys();
+// DOM Elements
+const genreGrid = document.getElementById('genre-grid');
+const countryGrid = document.getElementById('country-grid');
+const searchButton = document.getElementById('advanced-search-button');
+const resultsContainer = document.getElementById('movie-results');
+const resultsLoader = document.getElementById('results-loader');
+const loadMoreButton = document.getElementById('load-more-button');
+const resultsHeader = document.getElementById('results-header');
+const resultsCount = document.getElementById('results-count');
+
+const genresData = [
+  { id: 28, name: 'اکشن' }, { id: 12, name: 'ماجراجویی' }, { id: 16, name: 'انیمیشن' },
+  { id: 35, name: 'کمدی' }, { id: 80, name: 'جنایی' }, { id: 18, name: 'درام' },
+  { id: 10751, name: 'خانوادگی' }, { id: 14, name: 'فانتزی' }, { id: 27, name: 'ترسناک' },
+  { id: 9648, name: 'رازآلود' }, { id: 10749, name: 'عاشقانه' }, { id: 878, name: 'علمی-تخیلی' },
+  { id: 53, name: 'هیجان‌انگیز' }, { id: 10752, name: 'جنگی' }, { id: 37, name: 'وسترن' }
+];
+
+const countriesData = [
+  { id: 'US', name: 'آمریکا' }, { id: 'IR', name: 'ایران' }, { id: 'GB', name: 'بریتانیا' },
+  { id: 'FR', name: 'فرانسه' }, { id: 'JP', name: 'ژاپن' }, { id: 'KR', name: 'کره جنوبی' },
+  { id: 'IN', name: 'هند' }, { id: 'DE', name: 'آلمان' }, { id: 'ES', name: 'اسپانیا' }
+];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof loadApiKeys === 'function') {
+    apiKeySwitcher = await loadApiKeys();
+  }
+
+  renderFilterOptions();
+
+  searchButton.addEventListener('click', () => {
+    currentPage = 1;
+    resultsContainer.innerHTML = '';
+    currentFilters = getSelectedFilters();
+    performAdvancedSearch();
+  });
+
+  loadMoreButton.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      performAdvancedSearch();
+    }
+  });
+});
+
+function renderFilterOptions() {
+  // Render Genres
+  genreGrid.innerHTML = genresData.map(genre => `
+        <div class="relative group">
+            <input type="checkbox" id="genre-${genre.id}" name="with-genres" value="${genre.id}" class="hidden">
+            <label for="genre-${genre.id}" class="checkbox-label block w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-center text-gray-400 cursor-pointer hover:border-amber-500/50">
+                ${genre.name}
+            </label>
+        </div>
+    `).join('');
+
+  // Render Countries
+  countryGrid.innerHTML = countriesData.map(country => `
+        <div class="relative group">
+            <input type="checkbox" id="country-${country.id}" name="with-countries" value="${country.id}" class="hidden">
+            <label for="country-${country.id}" class="checkbox-label block w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-center text-gray-400 cursor-pointer hover:border-amber-500/50">
+                ${country.name}
+            </label>
+        </div>
+    `).join('');
 }
 
-function getCachedImage(id, fetchFunction) {
-  const cachedImage = localStorage.getItem(`image_${id}`);
-  if (cachedImage && cachedImage !== defaultPoster) {
-    console.log(`تصویر کش‌شده برای شناسه ${id} از Local Storage بارگذاری شد`);
-    return Promise.resolve(cachedImage);
-  }
-  return fetchFunction().then(poster => {
-    if (poster !== defaultPoster) {
-      localStorage.setItem(`image_${id}`, poster);
-      console.log(`تصویر برای شناسه ${id} در Local Storage ذخیره شد`);
+function getSelectedFilters() {
+  const genreCheckboxes = document.querySelectorAll('input[name="with-genres"]:checked');
+  const countryCheckboxes = document.querySelectorAll('input[name="with-countries"]:checked');
+  const minVote = document.getElementById('min-vote').value;
+  const year = document.getElementById('release-year').value;
+
+  return {
+    genres: Array.from(genreCheckboxes).map(cb => cb.value).join(','),
+    countries: Array.from(countryCheckboxes).map(cb => cb.value).join(','),
+    minVote: minVote || 0,
+    year: year || ''
+  };
+}
+
+async function performAdvancedSearch() {
+  resultsLoader.classList.remove('hidden');
+  loadMoreButton.classList.add('hidden');
+
+  const tmdbKey = localStorage.getItem('userTmdbToken') || tmdbApiKey;
+  let url = `https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&language=${language}&page=${currentPage}&sort_by=popularity.desc&include_adult=false`;
+
+  if (currentFilters.genres) url += `&with_genres=${currentFilters.genres}`;
+  if (currentFilters.countries) url += `&with_origin_country=${currentFilters.countries}`;
+  if (currentFilters.minVote) url += `&vote_average.gte=${currentFilters.minVote}`;
+  if (currentFilters.year) url += `&primary_release_year=${currentFilters.year}`;
+
+  const proxiedUrl = window.proxify ? window.proxify(url) : url;
+
+  try {
+    const response = await fetch(proxiedUrl);
+    const data = await response.json();
+
+    resultsLoader.classList.add('hidden');
+    resultsHeader.classList.remove('hidden');
+    resultsCount.textContent = `${data.total_results.toLocaleString('fa-IR')} مورد یافت شد`;
+
+    if (data.results && data.results.length > 0) {
+      totalPages = Math.min(data.total_pages, 500);
+      renderResults(data.results);
+
+      if (currentPage < totalPages) {
+        loadMoreButton.classList.remove('hidden');
+      }
+    } else if (currentPage === 1) {
+      showNoResults();
     }
-    return poster;
+
+  } catch (error) {
+    console.error('Search error:', error);
+    resultsLoader.classList.add('hidden');
+    if (window.showToast) window.showToast('خطا در جستجو!', 'info');
+  }
+}
+
+function renderResults(movies) {
+  movies.forEach(movie => {
+    let posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : defaultPoster;
+
+    if (window.createMovieCard) {
+      const cardHtml = window.createMovieCard(movie, posterUrl, 'movie');
+      resultsContainer.insertAdjacentHTML('beforeend', cardHtml);
+    }
   });
 }
 
-function showLoading() {
-  document.body.insertAdjacentHTML('beforeend', `
-    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-      <div class="flex flex-col items-center">
-        <div class="popcorn mb-6">
-          <svg width="80" height="80" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <rect x="16" y="32" width="32" height="24" rx="4" fill="#ffaa07" stroke="#1f2937" stroke-width="2"/>
-            <rect x="12" y="28" width="40" height="8" rx="2" fill="#ffaa07"/>
-            <path d="M16 32 L48 32" stroke="#1f2937" stroke-width="2"/>
-            <path d="M16 36 L48 36" stroke="#1f2937" stroke-width="1"/>
-            <circle cx="24" cy="24" r="6" fill="#ffaa07" class="popcorn-piece" style="animation: pop 1.5s infinite ease-in-out;"/>
-            <circle cx="32" cy="20" r="5" fill="#ffaa07" class="popcorn-piece" style="animation: pop 1.5s infinite ease-in-out 0.2s;"/>
-            <circle cx="40" cy="24" r="6" fill="#ffaa07" class="popcorn-piece" style="animation: pop 1.5s infinite ease-in-out 0.4s;"/>
-          </svg>
+function showNoResults() {
+  resultsContainer.innerHTML = `
+        <div class="col-span-full py-20 text-center glass-card-premium rounded-3xl border border-dashed border-white/10">
+            <i class="fas fa-search-minus text-gray-500 text-5xl mb-6"></i>
+            <h3 class="text-xl text-gray-300 font-bold mb-2">نتیجه‌ای یافت نشد</h3>
+            <p class="text-gray-500 text-sm">لطفاً فیلترها را تغییر بدهید.</p>
         </div>
-        <p class="text-white text-lg font-semibold">در حال دریافت نتایج...</p>
-      </div>
-    </div>
-  `);
+    `;
 }
-
-function hideLoading() {
-  const loadingOverlay = document.getElementById('loading-overlay');
-  if (loadingOverlay) loadingOverlay.remove();
-}
-
-async function advancedSearch(page = 1, append = false) {
-  const withGenres = Array.from(document.querySelectorAll('input[name="with-genres"]:checked')).map(input => input.value).join(',');
-  const withoutGenres = Array.from(document.querySelectorAll('input[name="without-genres"]:checked')).map(input => input.value).join(',');
-  const withCountries = Array.from(document.querySelectorAll('input[name="with-countries"]:checked')).map(input => input.value);
-  const withoutCountries = Array.from(document.querySelectorAll('input[name="without-countries"]:checked')).map(input => input.value);
-  const minVote = document.getElementById('min-vote').value;
-
-  // ذخیره پارامترهای جستجو برای استفاده در بارگذاری صفحات بعدی
-  searchParams = { withGenres, withoutGenres, withCountries, withoutCountries, minVote };
-
-  const movieResults = document.getElementById('movie-results');
-  const movieTitle = document.getElementById('movie-title');
-  const loadMoreButton = document.getElementById('load-more-button');
-
-  if (!append) {
-    currentPage = 1; // ریست کردن صفحه به 1 در جستجوی جدید
-    movieResults.innerHTML = ''; // پاک کردن نتایج قبلی
-  }
-
-  showLoading();
-
-  try {
-    let movieUrl = `https://zxcode.ir/3/discover/movie?api_key=${apiKey}&language=${language}&sort_by=vote_average.desc&page=${page}`;
-
-    if (withGenres) movieUrl += `&with_genres=${withGenres}`;
-    if (withoutGenres) movieUrl += `&without_genres=${withoutGenres}`;
-    if (withCountries.length > 0) movieUrl += `&with_origin_country=${withCountries.join('|')}`;
-    if (minVote) movieUrl += `&vote_average.gte=${minVote}`;
-
-    const res = await fetch(movieUrl);
-    if (!res.ok) throw new Error(`خطای سرور: ${res.status}`);
-    const movieRes = await res.json();
-
-    totalPages = movieRes.total_pages || 1; // به‌روزرسانی تعداد کل صفحات
-
-    const filterCountries = (items, excludedCountries) => {
-      return items.filter(item => {
-        const countries = item.origin_country || [];
-        return !excludedCountries.some(country => countries.includes(country));
-      });
-    };
-
-    const movies = filterCountries(movieRes.results || [], withoutCountries);
-
-    if (!append) {
-      movieTitle.textContent = 'نتایج جستجو فیلم';
-    }
-
-    const seenIds = new Set();
-
-    if (movies.length > 0) {
-      for (const movie of movies) {
-        if (seenIds.has(movie.id)) continue;
-        seenIds.add(movie.id);
-
-        let poster = movie.poster_path ? `${baseImageUrl}${movie.poster_path}` : defaultPoster;
-        const movieId = movie.id;
-        const title = movie.title || 'نامشخص';
-        const year = movie.release_date ? movie.release_date.substr(0, 4) : 'نامشخص';
-
-        movieResults.innerHTML += `
-          <div class="group relative">
-            <img src="${poster}" alt="${title}" class="w-full h-auto rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-105">
-            <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-              <h3 class="text-lg font-bold">${title}</h3>
-              <p class="text-sm">${year}</p>
-              <a href="../movie/index.html?id=${movieId}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
-            </div>
-          </div>
-        `;
-      }
-
-      // نمایش یا مخفی کردن دکمه "مشاهده بیشتر"
-      if (currentPage < totalPages) {
-        loadMoreButton.classList.remove('hidden');
-      } else {
-        loadMoreButton.classList.add('hidden');
-      }
-    } else if (!append) {
-      movieResults.innerHTML = '<p class="text-center text-red-500">فیلمی یافت نشد!</p>';
-      loadMoreButton.classList.add('hidden');
-    }
-  } catch (error) {
-    console.error('خطا در جستجوی پیشرفته:', error);
-    if (!append) {
-      movieResults.innerHTML = '<p class="text-center text-red-500">خطایی رخ داد!</p>';
-    }
-    loadMoreButton.classList.add('hidden');
-  } finally {
-    hideLoading();
-  }
-}
-
-function loadMore() {
-  currentPage++;
-  advancedSearch(currentPage, true); // بارگذاری صفحه بعدی و اضافه کردن به نتایج فعلی
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  await initializeSwitcher();
-  const searchButton = document.getElementById('advanced-search-button');
-  const loadMoreButton = document.getElementById('load-more-button');
-
-  if (searchButton) {
-    searchButton.addEventListener('click', () => advancedSearch(1, false));
-  } else {
-    console.error('دکمه جستجو پیدا نشد!');
-  }
-
-  if (loadMoreButton) {
-    loadMoreButton.addEventListener('click', loadMore);
-  } else {
-    console.error('دکمه مشاهده بیشتر پیدا نشد!');
-  }
-});

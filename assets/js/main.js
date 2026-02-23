@@ -8,7 +8,7 @@ const apiUrls = {
   tv_trending: `https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}&language=fa`
 };
 
-const imageCache = {};
+// imageCache removed
 let apiKeySwitcher;
 
 // --- Watchlist Logic ---
@@ -46,13 +46,13 @@ window.toggleWatchlist = function (id, type) {
 
   // Show small notification
   const msg = index === -1 ? 'به واچ‌لیست اضافه شد!' : 'از واچ‌لیست حذف شد!';
-  showToast(msg, index === -1 ? 'success' : 'info');
+  if (window.showToast) window.showToast(msg, index === -1 ? 'success' : 'info');
 };
 
 // -----------------------
 
-const proxify = (url) =>
-  `https://odd-disk-9903.armin-apple816467.workers.dev/?url=${encodeURIComponent(url)}`;
+const proxify = (url) => (window.proxify ? window.proxify(url) : url);
+const createContentCard = (item, poster, type) => (window.createMovieCard ? window.createMovieCard(item, poster, type) : '');
 
 function startLoadingBar() {
   const loadingBar = document.getElementById('loading-bar');
@@ -74,62 +74,21 @@ function finishLoadingBar() {
   }, 300);
 }
 
-function getCachedImage(id, fetchFunction) {
-  if (imageCache[id] && imageCache[id] !== defaultPoster) {
-    return Promise.resolve(imageCache[id]);
-  }
-
-  return fetchFunction().then((poster) => {
-    if (poster !== defaultPoster) {
-      imageCache[id] = poster;
-    }
-    return poster;
-  });
-}
+// getCachedImage removed
 
 async function initializeSwitcher() {
   apiKeySwitcher = await loadApiKeys();
 }
 
-function createContentCard(item, poster, type) {
-  const title = item.title || item.name || 'نامشخص';
-  const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
-  const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
-  const paramText = type === 'movie' ? `m=${item.id}` : `s=${item.id}`;
-
-  return `
-    <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" onclick="window.location.href='/?${paramText}'">
-      <div class="aspect-[2/3] relative overflow-hidden">
-        <img src="${poster}" alt="${title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
-        <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
-          <div class="movie-card-info">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                <i class="fas fa-star text-[8px]"></i> ${score}
-              </span>
-              <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${type}</span>
-            </div>
-            <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${title}</h3>
-            <p class="text-xs text-gray-300 mb-4 line-clamp-2 opacity-80">${overview}</p>
-            <button class="w-full bg-white/10 hover:bg-amber-500 hover:text-black hover:scale-105 backdrop-blur-md text-white border border-white/10 text-xs font-black py-2.5 rounded-xl transition-all duration-300">
-              مشاهده جزئیات
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-20">
-        <i class="fas fa-play text-[10px] text-amber-500"></i>
-      </div>
-    </div>
-  `;
-}
+// Shared createMovieCard is used via window.createMovieCard alias above
 
 async function renderHero(movie) {
   const heroContainer = document.getElementById('hero-section');
   if (!heroContainer || !movie) return;
 
-  const poster = await resolvePoster(movie.id, 'movie');
-  const backdrop = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : poster;
+  const poster = await window.resolvePoster(movie.id, 'hero', movie.poster_path);
+  // Backdrops should use w1280 for quality since it's a hero section
+  const backdrop = movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : poster;
   const title = movie.title || 'فیری مووی';
   const overview = movie.overview || 'مرجع دانلود فیلم و سریال';
 
@@ -179,30 +138,9 @@ async function renderHero(movie) {
   });
 }
 
-async function resolvePoster(itemId, type) {
-  const detailsUrl = proxify(
-    `https://api.themoviedb.org/3/${type}/${itemId}/external_ids?api_key=${apiKey}`
-  );
+// Global resolvePoster and Preload are now managed by layout-shared.js
 
-  try {
-    const detailsRes = await fetch(detailsUrl);
-    if (!detailsRes.ok) return defaultPoster;
-
-    const detailsData = await detailsRes.json();
-    const imdbId = detailsData.imdb_id || '';
-    if (!imdbId) return defaultPoster;
-
-    return await getCachedImage(imdbId, async () => {
-      const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-        (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
-      );
-      return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
-    });
-  } catch (error) {
-    console.warn(`خطا در دریافت پوستر ${type} ${itemId}:`, error.message);
-    return defaultPoster;
-  }
-}
+// Global resolvePoster is now centralized in layout-shared.js
 
 async function renderItems(items, container, type, seenIds) {
   const elements = await Promise.all(
@@ -210,7 +148,8 @@ async function renderItems(items, container, type, seenIds) {
       if (seenIds.has(item.id)) return '';
       seenIds.add(item.id);
 
-      const poster = await resolvePoster(item.id, type);
+      // Use global window.resolvePoster
+      const poster = await window.resolvePoster(item.id, type, item.poster_path);
       return createContentCard(item, poster, type);
     })
   );
@@ -419,7 +358,7 @@ async function fetchDetails(id, type) {
 
     const data = await res.json();
     const imdbId = data.external_ids?.imdb_id || '';
-    const posterUrl = await resolvePoster(id, type);
+    const posterUrl = await window.resolvePoster(id, 'detail', data.poster_path);
 
     renderDetailsView(data, posterUrl, imdbId, type);
   } catch (err) {

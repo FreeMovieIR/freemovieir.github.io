@@ -1,163 +1,59 @@
-const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
-const apiUrl = `https://zxcode.ir/3/genre/movie/list?api_key=${apiKey}&language=fa-IR`;
-
-function startLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    if (loadingBar) {
-        loadingBar.style.width = '0';
-        setTimeout(() => {
-            loadingBar.style.width = '30%';
-        }, 100);
-    }
-}
-
-function finishLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    if (loadingBar) {
-        loadingBar.style.width = '100%';
-        setTimeout(() => loadingBar.style.width = '0', 300);
-    }
-}
+const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc';
 
 async function fetchGenres() {
     const container = document.getElementById('genre-list');
-    startLoadingBar();
+    const tmdbKey = localStorage.getItem('userTmdbToken') || tmdbApiKey;
+    const apiUrl = `https://api.themoviedb.org/3/genre/movie/list?api_key=${tmdbKey}&language=fa-IR`;
+    const proxiedUrl = window.proxify ? window.proxify(apiUrl) : apiUrl;
 
     try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error(`خطای سرور: ${response.status}`);
+        const response = await fetch(proxiedUrl);
+        if (!response.ok) throw new Error(`Server Error: ${response.status}`);
         const data = await response.json();
         const genres = data.genres || [];
 
         container.innerHTML = '';
 
         genres.forEach(genre => {
-            container.innerHTML += `
-                <a href="/pages/movie/s-by-genre.html?genreId=${genre.id}&genreName=${encodeURIComponent(genre.name)}" class="genre-item">
-                    <h3 class="text-lg font-bold">${genre.name}</h3>
+            const card = `
+                <a href="/pages/finder/index.html?genreId=${genre.id}" class="group glass-card-premium p-8 rounded-3xl border border-white/10 flex flex-col items-center justify-center gap-4 transition-all duration-300 hover:scale-[1.05] hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/10">
+                    <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-black transition-all">
+                        <i class="fas ${getIconForGenre(genre.id)} text-xl"></i>
+                    </div>
+                    <h3 class="text-sm font-black group-hover:text-amber-500 transition-all">${genre.name}</h3>
                 </a>
             `;
+            container.insertAdjacentHTML('beforeend', card);
         });
     } catch (error) {
-        console.error('خطا در دریافت ژانرها:', error);
-        container.innerHTML = '<p class="text-center text-red-500">خطایی رخ داد! لطفاً دوباره تلاش کنید.</p>';
-    } finally {
-        finishLoadingBar();
+        console.error('Error fetching genres:', error);
+        container.innerHTML = '<p class="text-center text-red-500 col-span-full font-bold">خطا در بارگذاری ژانرها!</p>';
     }
 }
 
-function manageDisclaimerNotice() {
-    const notice = document.getElementById('disclaimer-notice');
-    if (!notice) return;
-
-    if (!localStorage.getItem('disclaimerNoticeClosed')) {
-        notice.classList.remove('hidden');
-    } else {
-        notice.classList.add('hidden');
-    }
-
-    const closeButton = document.getElementById('close-disclaimer');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            notice.classList.add('hidden');
-            localStorage.setItem('disclaimerNoticeClosed', 'true');
-        });
-    }
+function getIconForGenre(id) {
+    const icons = {
+        28: 'fa-fire', // Action
+        12: 'fa-mountain', // Adventure
+        16: 'fa-child', // Animation
+        35: 'fa-laugh', // Comedy
+        80: 'fa-mask', // Crime
+        99: 'fa-camera', // Documentary
+        18: 'fa-theater-masks', // Drama
+        10751: 'fa-users', // Family
+        14: 'fa-wand-magic-sparkles', // Fantasy
+        36: 'fa-landmark', // History
+        27: 'fa-ghost', // Horror
+        10402: 'fa-music', // Music
+        9648: 'fa-clue', // Mystery
+        10749: 'fa-heart', // Romance
+        878: 'fa-flask', // Science Fiction
+        10770: 'fa-tv', // TV Movie
+        53: 'fa-user-ninja', // Thriller
+        10752: 'fa-gun', // War
+        37: 'fa-hat-cowboy' // Western
+    };
+    return icons[id] || 'fa-film';
 }
 
-function downloadImage(url, filename) {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    console.log(`${filename} دانلود شد`);
-}
-
-function manageSupportPopup() {
-    const popup = document.getElementById('support-popup');
-    if (!popup) return;
-
-    const isPopupShown = localStorage.getItem('isPopupShown') === 'true';
-    if (!isPopupShown) {
-        popup.classList.remove('hidden');
-        localStorage.setItem('isPopupShown', 'true');
-    }
-
-    const closeButton = document.getElementById('close-popup');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => popup.classList.add('hidden'));
-    }
-
-    const tweetButton = document.getElementById('tweet-support');
-    if (tweetButton) {
-        tweetButton.addEventListener('click', () => {
-            const tweetText = encodeURIComponent('من از فیری مووی حمایت می‌کنم! یک سایت عالی برای تماشای فیلم و سریال: https://b2n.ir/freemovie');
-            window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
-        });
-    }
-
-    const downloadTwitterButton = document.getElementById('download-twitter');
-    if (downloadTwitterButton) {
-        downloadTwitterButton.addEventListener('click', () => {
-            downloadImage('https://freemovieir.github.io/images/story.png', 'freemovie-twitter-support.jpg');
-        });
-    }
-
-    const downloadInstagramButton = document.getElementById('download-instagram');
-    if (downloadInstagramButton) {
-        downloadInstagramButton.addEventListener('click', () => {
-            downloadImage('https://freemovieir.github.io/images/tweet.png', 'freemovie-instagram-support.jpg');
-        });
-    }
-
-    popup.addEventListener('click', (event) => {
-        if (event.target === popup) popup.classList.add('hidden');
-    });
-}
-
-function manageFabButton() {
-    const fab = document.getElementById('fab');
-    const fabOptions = document.getElementById('fabOptions');
-    if (!fab || !fabOptions) return;
-
-    fab.addEventListener('click', (event) => {
-        event.stopPropagation();
-        fabOptions.classList.toggle('hidden');
-    });
-
-    document.addEventListener('click', (event) => {
-        if (!fab.contains(event.target) && !fabOptions.contains(event.target)) {
-            fabOptions.classList.add('hidden');
-        }
-    });
-}
-
-function manageThemeToggle() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const body = document.body;
-
-    if (!themeToggle) return;
-
-    themeToggle.addEventListener('click', () => {
-        body.classList.toggle('dark');
-        const isDark = body.classList.contains('dark');
-        themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        body.classList.remove('dark');
-        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    fetchGenres();
-    manageDisclaimerNotice();
-    manageSupportPopup();
-    manageFabButton();
-    manageThemeToggle();
-});
+document.addEventListener('DOMContentLoaded', fetchGenres);

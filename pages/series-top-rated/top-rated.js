@@ -29,15 +29,6 @@ function finishLoadingBar() {
     }
 }
 
-async function getCachedImage(id, fetchFunction) {
-    if (imageCache[id] && imageCache[id] !== defaultPoster) {
-        return imageCache[id];
-    }
-    const poster = await fetchFunction();
-    if (poster !== defaultPoster) imageCache[id] = poster;
-    return poster;
-}
-
 async function fetchTopRated(pageNum, isInitial = false) {
     if (isLoading) return;
     isLoading = true;
@@ -56,40 +47,8 @@ async function fetchTopRated(pageNum, isInitial = false) {
         if (isInitial) container.innerHTML = '';
 
         for (const serie of series) {
-            let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
-            const detailsUrl = `https://zxcode.ir/3/tv/${serie.id}/external_ids?api_key=${apiKey}`;
-            try {
-                const detailsRes = await fetch(detailsUrl);
-                if (!detailsRes.ok) throw new Error(`خطای جزئیات: ${detailsRes.status}`);
-                const detailsData = await detailsRes.json();
-                const imdbId = detailsData.imdb_id || '';
-                if (imdbId) {
-                    poster = await getCachedImage(imdbId, async () => {
-                        const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                            (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
-                        );
-                        return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
-                    });
-                }
-            } catch (error) {
-                console.warn(`خطا در دریافت پوستر ${serie.id}:`, error.message);
-            }
-
-            const title = serie.name || 'نامشخص';
-            const overview = serie.overview ? serie.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست';
-            const rating = serie.vote_average ? serie.vote_average.toFixed(1) : 'N/A';
-
-            container.innerHTML += `
-                <div class="group relative">
-                    <img src="${poster}" alt="${title}" class="w-full h-auto rounded-lg shadow-lg">
-                    <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-                        <h3 class="text-lg font-bold text-white">${title}</h3>
-                        <p class="text-sm text-gray-200">امتیاز: ${rating}</p>
-                        <p class="text-sm text-gray-200">${overview}</p>
-                        <a href="/pages/series/index.html?id=${serie.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
-                    </div>
-                </div>
-            `;
+            const poster = await window.resolvePoster(serie.id, 'tv', serie.poster_path);
+            container.innerHTML += window.createMovieCard(serie, poster, 'tv');
         }
     } catch (error) {
         console.error('خطا در دریافت سریال‌ها:', error);

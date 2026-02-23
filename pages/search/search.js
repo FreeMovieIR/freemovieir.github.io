@@ -125,11 +125,12 @@ function createResultCard(item, itemType) {
     const title = itemType === 'movie' ? (item.title || 'نامشخص') : (item.name || 'نامشخص');
     const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
     const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
-    const route = itemType === 'movie' ? 'movie' : 'series';
+    const paramText = itemType === 'movie' ? `m=${id}` : `s=${id}`;
+    const typeLabel = itemType === 'movie' ? 'فیلم' : 'سریال';
 
     return `
         <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" data-item-id="${id}">
-            <div class="aspect-[2/3] relative overflow-hidden" onclick="window.location.href='/pages/${route}/index.html?id=${id}'">
+            <div class="aspect-[2/3] relative overflow-hidden" onclick="window.location.href='/?${paramText}'">
                 <img src="${defaultPoster}" alt="${title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" onerror="this.onerror=null; this.src='${defaultPoster}';">
                 <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
                     <div class="movie-card-info">
@@ -137,7 +138,7 @@ function createResultCard(item, itemType) {
                             <span class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
                                 <i class="fas fa-star text-[8px]"></i> ${score}
                             </span>
-                            <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${itemType}</span>
+                            <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${typeLabel}</span>
                         </div>
                         <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${title}</h3>
                         <p class="text-xs text-gray-300 mb-4 line-clamp-2 opacity-80">${overview}</p>
@@ -147,7 +148,7 @@ function createResultCard(item, itemType) {
                     </div>
                 </div>
             </div>
-            <div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-20" onclick="window.location.href='/pages/${route}/index.html?id=${id}'">
+            <div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-20" onclick="window.location.href='/?${paramText}'">
                 <i class="fas fa-play text-[10px] text-amber-500"></i>
             </div>
         </div>

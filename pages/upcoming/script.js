@@ -42,16 +42,6 @@ function getDaysLeft(releaseDate) {
 }
 
 // دریافت تصویر از کش یا OMDB
-async function getCachedImage(id, fetchFunction) {
-    if (imageCache[id] && imageCache[id] !== defaultPoster) {
-        return imageCache[id];
-    }
-    const poster = await fetchFunction();
-    if (poster !== defaultPoster) imageCache[id] = poster;
-    return poster;
-}
-
-// دریافت و نمایش محتوا
 async function fetchContent(containerId, url, page, isInitial = false) {
     if (isLoading) return;
     isLoading = true;
@@ -70,42 +60,19 @@ async function fetchContent(containerId, url, page, isInitial = false) {
         if (isInitial) container.innerHTML = ''; // پاکسازی اسکلتون‌ها
 
         for (const item of items) {
-            let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
-            const detailsUrl = `https://zxcode.ir/3/${containerId.includes('movie') ? 'movie' : 'tv'}/${item.id}/external_ids?api_key=${apiKey}`;
-            try {
-                const detailsRes = await fetch(detailsUrl);
-                if (!detailsRes.ok) throw new Error(`خطای جزئیات: ${detailsRes.status}`);
-                const detailsData = await detailsRes.json();
-                const imdbId = detailsData.imdb_id || '';
-                if (imdbId) {
-                    poster = await getCachedImage(imdbId, async () => {
-                        const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                            (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
-                        );
-                        return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
-                    });
-                }
-            } catch (error) {
-                console.warn(`خطا در دریافت پوستر ${item.id}:`, error.message);
-            }
+            const type = containerId.includes('movie') ? 'movie' : 'tv';
+            const poster = await window.resolvePoster(item.id, type, item.poster_path);
 
-            const title = item.title || item.name || 'نامشخص';
+            // Special wrapper for daysLeft in upcoming page
+            const cardHtml = window.createMovieCard(item, poster, type);
             const releaseDate = item.release_date || item.first_air_date || '';
             const daysLeft = releaseDate ? getDaysLeft(releaseDate) : 'نامشخص';
-            const overview = item.overview ? item.overview.slice(0, 100) + '...' : 'توضیحات موجود نیست';
 
-            container.innerHTML += `
-                <div class="group relative">
-                    <img src="${poster}" alt="${title}" class="w-full h-auto rounded-lg shadow-lg">
-                    <span class="days-left">${daysLeft}</span>
-                    <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-                        <h3 class="text-lg font-bold text-white">${title}</h3>
-                        <p class="text-sm text-gray-200">تاریخ انتشار: ${releaseDate || 'نامشخص'}</p>
-                        <p class="text-sm text-gray-200">${overview}</p>
-                        <a href="/${containerId.includes('movie') ? 'movie' : 'series'}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
-                    </div>
-                </div>
-            `;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative';
+            wrapper.innerHTML = cardHtml + `<span class="days-left absolute top-3 right-3 z-30">${daysLeft}</span>`;
+
+            container.appendChild(wrapper);
         }
     } catch (error) {
         console.error(`خطا در دریافت داده‌ها (${containerId}):`, error);

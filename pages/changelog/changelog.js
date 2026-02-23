@@ -1,9 +1,19 @@
-// changelog.js
-// داده‌های نمونه برای تغییرات (می‌توانید این را به صورت دستی یا از یک API پر کنید)
 const changelogData = [
     {
+        version: "2.0.0",
+        date: "۱۴۰۲/۱۲/۰۴",
+        type: "major",
+        changes: [
+            { feature: "بازطراحی کامل رابط کاربری به سبک Glassmorphism", contributor: "Antigravity" },
+            { feature: "یکپارچه‌سازی سیستم اعلان‌های هوشمند (Toast)", contributor: "Antigravity" },
+            { feature: "بهبود سیستم جستجوی هوشمند و فیلترهای پیشرفته", contributor: "Antigravity" },
+            { feature: "مهاجرت کامل به ساختار SPA برای تجربه کاربری سریع‌تر", contributor: "Antigravity" }
+        ]
+    },
+    {
         version: "1.3.0",
-        date: "1404/01/07",
+        date: "۱۴۰۲/۰۱/۰۷",
+        type: "feature",
         changes: [
             { feature: "اضافه شدن نوار پیشرفت بارگذاری", contributor: "ریک سانچز" },
             { feature: "بهبود کش تصاویر برای سرعت بیشتر", contributor: "علی رضایی" },
@@ -12,78 +22,60 @@ const changelogData = [
     },
     {
         version: "1.2.0",
-        date: "1403/12/15",
+        date: "۱۴۰۱/۱۲/۱۵",
+        type: "fix",
         changes: [
             { feature: "اضافه شدن پاپ‌آپ حمایت", contributor: "ریک سانچز" },
             { feature: "پشتیبانی از تم روشن", contributor: "ارمین جوان" }
         ]
-    },
-    {
-        version: "1.1.0",
-        date: "1403/11/01",
-        changes: [
-            { feature: "اضافه شدن بخش جستجو", contributor: "ارمین جوان" },
-            { feature: "بهینه‌سازی رابط کاربری", contributor: "ریک سانچز" }
-        ]
     }
 ];
 
-// توابع مدیریت نوار پیشرفت
-function startLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    if (loadingBar) {
-        loadingBar.style.width = '0';
-        setTimeout(() => {
-            loadingBar.style.width = '30%';
-        }, 100);
-    }
-}
-
-function finishLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    if (loadingBar) {
-        loadingBar.style.width = '100%';
-        setTimeout(() => {
-            loadingBar.style.width = '0';
-        }, 300);
-    }
-}
-
-// تابع برای نمایش تغییرات
 function displayChangelog() {
     const container = document.getElementById('changelog-container');
-    if (!container) {
-        console.error('عنصر changelog-container یافت نشد');
-        return;
-    }
+    if (!container) return;
 
-    startLoadingBar();
-
-    container.innerHTML = ''; // پاکسازی محتوای قبلی
+    container.innerHTML = '';
 
     changelogData.forEach((entry) => {
-        const versionCard = `
-            <div class="version-card bg-gray-800 p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold text-yellow-400 mb-2">نسخه ${entry.version}</h2>
-                <p class="text-sm text-gray-400 mb-4">تاریخ انتشار: ${entry.date}</p>
-                <ul class="space-y-2">
-                    ${entry.changes.map(change => `
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-500 ml-2"></i>
-                            <span>${change.feature} - <span class="text-gray-300">اضافه شده توسط: ${change.contributor}</span></span>
-                        </li>
-                    `).join('')}
-                </ul>
+        const entryHtml = `
+            <div class="relative pr-16 group">
+                <!-- Timeline Dot -->
+                <div class="absolute right-0 top-6 w-[64px] h-[64px] flex items-center justify-center">
+                    <div class="w-4 h-4 bg-amber-500 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)] group-hover:scale-125 transition-transform z-10"></div>
+                    <div class="absolute inset-0 bg-amber-500/10 rounded-full animate-pulse"></div>
+                </div>
+
+                <div class="glass-card-premium p-8 rounded-3xl border border-white/10 hover:border-amber-500/30 transition-all duration-500">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <span class="text-xs font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full mb-2 inline-block">
+                                ${entry.type === 'major' ? 'آپدیت بزرگ' : (entry.type === 'feature' ? 'قابلیت جدید' : 'بهبود')}
+                            </span>
+                            <h2 class="text-2xl font-black text-white">نسخه ${entry.version}</h2>
+                        </div>
+                        <div class="text-gray-500 text-sm font-bold flex items-center gap-2">
+                            <i class="far fa-calendar-alt"></i>
+                            ${entry.date}
+                        </div>
+                    </div>
+
+                    <ul class="space-y-4">
+                        ${entry.changes.map(change => `
+                            <li class="flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                                <i class="fas fa-check-circle text-amber-500 mt-1"></i>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-200 font-bold mb-1">${change.feature}</p>
+                                    <p class="text-[10px] text-gray-500 uppercase tracking-tighter">توسط: ${change.contributor}</p>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
             </div>
         `;
-        container.innerHTML += versionCard;
+        container.insertAdjacentHTML('beforeend', entryHtml);
     });
-
-    finishLoadingBar();
 }
 
-// اجرای تابع پس از بارگذاری صفحه
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('صفحه تغییرات بارگذاری شد');
-    displayChangelog();
-});
+document.addEventListener('DOMContentLoaded', displayChangelog);

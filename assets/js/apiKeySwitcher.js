@@ -1,57 +1,74 @@
 class ApiKeySwitcher {
-    constructor(keys) {
-        this.keys = keys || [];
-        this.currentIndex = 0;
-        this.userToken = localStorage.getItem('userOmdbToken'); // توکن کاربر
+    constructor(config = {}) {
+        this.services = config || {}; // { omdb: { keys: [], currentIndex: 0, userToken: "" }, fanart: { ... } }
     }
 
-    getCurrentKey() {
-        if (this.userToken) {
-            console.log('استفاده از توکن کاربر:', this.userToken);
-            return this.userToken; // اولویت با توکن کاربر
+    getService(serviceName) {
+        if (!this.services[serviceName]) {
+            this.services[serviceName] = {
+                keys: [],
+                currentIndex: 0,
+                userToken: localStorage.getItem(`user${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Token`)
+            };
         }
-        if (this.keys.length === 0) {
-            throw new Error('هیچ کلید API در دسترس نیست.');
-        }
-        return this.keys[this.currentIndex];
+        return this.services[serviceName];
     }
 
-    switchToNextKey() {
-        if (this.userToken) {
-            console.log('توکن کاربر استفاده می‌شود، تعویض کلید غیرفعال است.');
-            return; // اگر توکن کاربر باشد، تعویض کلید غیرفعال است
+    getCurrentKey(serviceName) {
+        const s = this.getService(serviceName);
+        if (s.userToken) {
+            return s.userToken;
         }
-        this.currentIndex = (this.currentIndex + 1) % this.keys.length;
-        console.log(`تعویض به کلید API جدید: ${this.getCurrentKey()}`);
+        if (!s.keys || s.keys.length === 0) {
+            return null;
+        }
+        return s.keys[s.currentIndex];
     }
 
-    async fetchWithKeySwitch(urlTemplate, maxRetriesPerKey = 3) {
+    switchToNextKey(serviceName) {
+        const s = this.getService(serviceName);
+        if (s.userToken || !s.keys || s.keys.length === 0) return;
+        s.currentIndex = (s.currentIndex + 1) % s.keys.length;
+        console.log(`[${serviceName}] تعویض به کلید جدید: ${this.getCurrentKey(serviceName)}`);
+    }
+
+    async fetchWithKeySwitch(urlTemplate, serviceName = 'omdb', maxRetriesPerKey = 2) {
         let attempts = 0;
-        const totalAttemptsLimit = this.userToken ? maxRetriesPerKey : this.keys.length * maxRetriesPerKey;
+        const s = this.getService(serviceName);
+        const totalAttemptsLimit = s.userToken ? maxRetriesPerKey : (s.keys.length || 1) * maxRetriesPerKey;
 
         while (attempts < totalAttemptsLimit) {
-            const url = urlTemplate(this.getCurrentKey());
+            const key = this.getCurrentKey(serviceName);
+            if (!key) throw new Error(`هیچ کلیدی برای سرویس ${serviceName} یافت نشد`);
+
+            const url = urlTemplate(key);
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
                     if (response.status === 429) {
-                        console.warn('محدودیت نرخ OMDB API - تلاش مجدد...');
+                        console.warn(`[${serviceName}] محدودیت نرخ API - تلاش مجدد...`);
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         attempts++;
                         continue;
                     }
-                    throw new Error(`خطای سرور (OMDB): ${response.status}`);
+                    throw new Error(`خطای سرور (${serviceName}): ${response.status}`);
                 }
-                return await response.json();
+                const data = await response.json();
+                // Special check for OMDB "False" response
+                if (serviceName === 'omdb' && data.Response === 'False') {
+                    throw new Error(data.Error || 'فیلم یافت نشد');
+                }
+                return data;
             } catch (error) {
-                console.warn(`خطا در درخواست با کلید ${this.getCurrentKey()}: ${error.message}`);
+                console.warn(`[${serviceName}] خطا در درخواست: ${error.message}`);
                 attempts++;
-                if (!this.userToken && attempts % maxRetriesPerKey === 0) {
-                    this.switchToNextKey();
+                if (!s.userToken && attempts % maxRetriesPerKey === 0) {
+                    this.switchToNextKey(serviceName);
                 }
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                const delay = error.message.includes('429') ? 1000 : 200;
+                await new Promise(resolve => setTimeout(resolve, delay));
                 if (attempts >= totalAttemptsLimit) {
-                    throw new Error('تمام تلاش‌ها ناموفق بود.');
+                    throw new Error(`تمام تلاش‌ها برای ${serviceName} ناموفق بود.`);
                 }
             }
         }
@@ -59,26 +76,25 @@ class ApiKeySwitcher {
 }
 
 async function loadApiKeys() {
-    const possiblePaths = [
-        '//assets/js/config/omdbKeys.json',
-        '/..//assets/js/config/omdbKeys.json'
-    ];
+    const switcher = new ApiKeySwitcher();
 
-    for (const path of possiblePaths) {
+    // Load OMDB Keys
+    const omdbPaths = ['/assets/js/config/omdbKeys.json', '../../assets/js/config/omdbKeys.json'];
+    for (const path of omdbPaths) {
         try {
-            const response = await fetch(path);
-            if (!response.ok) {
-                console.warn(`خطا در بارگذاری از ${path}: ${response.status}`);
-                continue;
+            const res = await fetch(path);
+            if (res.ok) {
+                const keys = await res.json();
+                switcher.services.omdb = { keys, currentIndex: 0, userToken: localStorage.getItem('userOmdbToken') };
+                break;
             }
-            const keys = await response.json();
-            console.log(`فایل کلیدها از ${path} با موفقیت بارگذاری شد.`);
-            return new ApiKeySwitcher(keys);
-        } catch (error) {
-            console.warn(`خطا در مسیر ${path}: ${error.message}`);
-        }
+        } catch (e) { }
     }
 
-    console.error('هیچ فایل کلید API پیدا نشد.');
-    return new ApiKeySwitcher(['38fa39d5']); // کلید پیش‌فرض
+    // Initialize OMDB if not loaded
+    if (!switcher.services.omdb) {
+        switcher.services.omdb = { keys: ['38fa39d5'], currentIndex: 0, userToken: localStorage.getItem('userOmdbToken') };
+    }
+
+    return switcher;
 }
