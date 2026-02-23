@@ -98,12 +98,3 @@
     footerTarget.innerHTML = footerHtml;
   }
 })();
-
-if (headerTarget) {
-  headerTarget.innerHTML = headerHtml;
-}
-
-if (footerTarget) {
-  footerTarget.innerHTML = footerHtml;
-}
-}) ();

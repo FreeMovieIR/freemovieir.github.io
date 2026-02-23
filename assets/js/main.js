@@ -605,6 +605,36 @@ async function handleRouting() {
   }
 }
 
+// Support browser back navigation
+window.addEventListener('popstate', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const movieId = params.get('m');
+  const seriesId = params.get('s');
+
+  if (movieId || seriesId) {
+    // We went back to a details page
+    await handleRouting();
+  } else {
+    // We went back to home
+    document.getElementById('details-view').classList.add('hidden');
+    document.getElementById('home-view').classList.remove('hidden');
+    document.title = 'فیری مووی - دانلود و تماشای جدیدترین فیلم‌ها و سریال‌ها';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+// Manual Back Button
+window.goBackHome = function () {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('m') || params.has('s')) {
+    history.pushState(null, '', '/');
+  }
+  document.getElementById('details-view').classList.add('hidden');
+  document.getElementById('home-view').classList.remove('hidden');
+  document.title = 'فیری مووی - دانلود و تماشای جدیدترین فیلم‌ها و سریال‌ها';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await initializeSwitcher();
