@@ -1,11 +1,12 @@
-const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const apiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
 let apiKeySwitcher;
 
 let tvPage = 1;
 let isLoading = false;
 
-const apiUrl = `https://zxcode.ir/3/tv/on_the_air?api_key=${apiKey}&language=fa-IR&page=`;
+const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+const apiUrl = `${tmdbBase}/tv/on_the_air?api_key=${apiKey}&language=fa-IR&page=`;
 const imageCache = {};
 
 async function initializeSwitcher() {
@@ -59,8 +60,9 @@ async function fetchSeries(page, isInitial = false) {
         if (isInitial) container.innerHTML = '';
 
         for (const serie of series) {
-            let poster = defaultPoster.replace(/300(?=\.jpg$)/i, '');
-            const detailsUrl = `https://zxcode.ir/3/tv/${serie.id}/external_ids?api_key=${apiKey}`;
+            let poster = defaultPoster;
+            const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+            const detailsUrl = `${tmdbBase}/tv/${serie.id}/external_ids?api_key=${apiKey}`;
             try {
                 const detailsRes = await fetch(detailsUrl);
                 if (!detailsRes.ok) throw new Error(`خطای جزئیات: ${detailsRes.status}`);
@@ -68,8 +70,9 @@ async function fetchSeries(page, isInitial = false) {
                 const imdbId = detailsData.imdb_id || '';
                 if (imdbId) {
                     poster = await getCachedImage(imdbId, async () => {
+                        const omdbBase = window.CONFIG ? window.CONFIG.API.OMDB : 'https://www.omdbapi.com';
                         const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-                            (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
+                            (key) => `${omdbBase}/?i=${imdbId}&apikey=${key}`
                         );
                         return omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : defaultPoster;
                     });

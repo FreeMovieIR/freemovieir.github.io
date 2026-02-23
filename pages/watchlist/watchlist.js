@@ -1,5 +1,5 @@
 // watchlist.js
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
 let apiKeySwitcher;
 
 async function loadWatchlist() {
@@ -32,16 +32,17 @@ async function loadWatchlist() {
 async function fetchAndDisplayItem(itemId, type, container) {
     if (!container) return;
     try {
-        const tmdbKey = localStorage.getItem('userTmdbToken') || '1dc4cbf81f0accf4fa108820d551dafc';
+        const tmdbKey = localStorage.getItem('userTmdbToken') || (window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc');
+        const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
         const proxify = window.proxify || ((url) => url);
 
         const apiUrl = proxify(type === 'movie'
-            ? `https://api.themoviedb.org/3/movie/${itemId}?api_key=${tmdbKey}&language=fa-IR`
-            : `https://api.themoviedb.org/3/tv/${itemId}?api_key=${tmdbKey}&language=fa-IR`);
+            ? `${tmdbBase}/movie/${itemId}?api_key=${tmdbKey}&language=fa-IR`
+            : `${tmdbBase}/tv/${itemId}?api_key=${tmdbKey}&language=fa-IR`);
 
         const externalIdsUrl = proxify(type === 'movie'
-            ? `https://api.themoviedb.org/3/movie/${itemId}/external_ids?api_key=${tmdbKey}`
-            : `https://api.themoviedb.org/3/tv/${itemId}/external_ids?api_key=${tmdbKey}`);
+            ? `${tmdbBase}/movie/${itemId}/external_ids?api_key=${tmdbKey}`
+            : `${tmdbBase}/tv/${itemId}/external_ids?api_key=${tmdbKey}`);
 
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error(`TMDB Error: ${response.status}`);

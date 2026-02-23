@@ -1,9 +1,10 @@
-const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc';
+const tmdbApiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
 
 async function fetchGenres() {
     const container = document.getElementById('genre-list');
     const tmdbKey = localStorage.getItem('userTmdbToken') || tmdbApiKey;
-    const apiUrl = `https://api.themoviedb.org/3/genre/movie/list?api_key=${tmdbKey}&language=fa-IR`;
+    const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+    const apiUrl = `${tmdbBase}/genre/movie/list?api_key=${tmdbKey}&language=fa-IR`;
     const proxiedUrl = window.proxify ? window.proxify(apiUrl) : apiUrl;
 
     try {

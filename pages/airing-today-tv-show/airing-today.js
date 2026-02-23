@@ -1,11 +1,12 @@
-const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const apiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
 let apiKeySwitcher;
 
 let page = 1;
 let isLoading = false;
 
-const apiUrl = `https://zxcode.ir/3/tv/airing_today?api_key=${apiKey}&language=fa-IR&page=`;
+const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+const apiUrl = `${tmdbBase}/tv/airing_today?api_key=${apiKey}&language=fa-IR&page=`;
 const imageCache = {};
 
 async function initializeSwitcher() {

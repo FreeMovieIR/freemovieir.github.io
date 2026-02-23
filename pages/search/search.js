@@ -1,10 +1,11 @@
 // search.js
 
 // --- Configuration ---
-const tmdbApiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // TMDb API key
+const tmdbApiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
-const baseImageUrl = 'https://image.tmdb.org/t/p/w500'; // Base URL for TMDb images ( fallback if OMDB fails )
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png';
+const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+const baseImageUrl = `${tmdbImageBase}/w500`;
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie.png';
 const minQueryLength = 3;
 
 // --- Globals ---
@@ -75,8 +76,9 @@ async function getCachedOrFetchPoster(imdbId, itemTitle) {
 
     try {
         // Use the apiKeySwitcher to handle fetching and key rotation
+        const omdbBase = window.CONFIG ? window.CONFIG.API.OMDB : 'https://www.omdbapi.com';
         const omdbData = await apiKeySwitcher.fetchWithKeySwitch(
-            (key) => `https://www.omdbapi.com/?i=${imdbId}&apikey=${key}`
+            (key) => `${omdbBase}/?i=${imdbId}&apikey=${key}`
         );
 
         const posterUrl = (omdbData && omdbData.Poster && omdbData.Poster !== 'N/A') ? omdbData.Poster : defaultPoster;
