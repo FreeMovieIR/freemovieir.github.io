@@ -1,56 +1,99 @@
 <!DOCTYPE html>
 <html lang="fa" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تنظیمات - فیری مووی</title>
     <meta name="description" content="تنظیمات فیری مووی - توکن‌های OMDB و TMDb خود را وارد کنید.">
     <script src="/assets/js/config/tailwind-config.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@latest/dist/font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico">
-	<script src="/assets/js/analytics.js" defer></script>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
-    <style>
-        body { font-family: 'Vazir', sans-serif; direction: rtl; }
-        .container { max-width: 600px; margin: 0 auto; padding: 2rem; }
-        .navbar { width: 100%; max-width: 1200px; margin: 0 auto; }
-        .footer { width: 100%; max-width: 1200px; margin: 0 auto; }
-    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+
+<body class="bg-[#07090f] text-white min-h-screen flex flex-col font-['Vazir']" dir="rtl">
     <div id="shared-header"></div>
 
-    <main class="container mx-auto py-8 flex-grow">
-        <h1 class="text-2xl font-bold mb-6 text-center">تنظیمات</h1>
-        <div class="bg-gray-800 p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4">تنظیم توکن‌های API</h2>
-            <p class="text-gray-300 mb-4">
-                با وارد کردن توکن OMDB از 
-                <a href="https://www.omdbapi.com/apikey.aspx" target="_blank" class="underline hover:text-gray-200">OMDB API</a> 
-                تا ۹۰٪ سرعت سایت رو بیشتر کنید! کافیه ثبت‌نام کنید، ایمیل رو تأیید کنید و توکن رو اینجا بذارید. 
-                توکن TMDb از 
-                <a href="https://www.themoviedb.org/settings/api" target="_blank" class="underline hover:text-gray-200">TMDb API</a> 
-                اختیاریه و نیازی بهش نیست، ولی اگه خواستید می‌تونید اضافه کنید.
+    <main class="container mx-auto py-12 px-6 flex-grow max-w-2xl">
+        <div class="mb-10 text-center">
+            <h1
+                class="text-4xl font-black bg-gradient-to-l from-amber-500 to-yellow-200 bg-clip-text text-transparent mb-4">
+                تنظیمات</h1>
+            <p class="text-gray-400 text-sm">شخصی‌سازی تجربه کاربری و مدیریت کلیدهای API</p>
+        </div>
+
+        <div
+            class="glass-card-premium p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden group">
+            <div
+                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50">
+            </div>
+
+            <h2 class="text-xl font-black mb-6 flex items-center gap-3">
+                <i class="fas fa-key text-amber-500"></i>
+                مدیریت کلیدهای API
+            </h2>
+
+            <p class="text-gray-400 text-sm mb-8 leading-relaxed">
+                با وارد کردن توکن <span class="text-amber-500 font-bold">OMDB</span> سرعت دریافت پوسترها را تا ۹۰٪
+                افزایش دهید.
+                برای دریافت رایگان توکن به وب‌سایت <a href="https://www.omdbapi.com/apikey.aspx" target="_blank"
+                    class="text-amber-500 hover:underline">OMDB API</a> مراجعه کنید.
             </p>
-            <div class="mb-4">
-                <label for="omdb-token" class="block text-gray-200 mb-2">توکن OMDB:</label>
-                <input type="text" id="omdb-token" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" placeholder="توکن OMDB خود را وارد کنید">
+
+            <div class="space-y-6">
+                <div>
+                    <label for="omdb-token"
+                        class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 mr-1">توکن
+                        OMDB</label>
+                    <div class="relative">
+                        <input type="text" id="omdb-token"
+                            class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                            placeholder="مثلاً: a1b2c3d4">
+                        <i class="fas fa-terminal absolute left-5 top-1/2 -translate-y-1/2 text-white/20"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="tmdb-token"
+                        class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 mr-1">توکن TMDb
+                        (اختیاری)</label>
+                    <div class="relative">
+                        <input type="text" id="tmdb-token"
+                            class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/10 transition-all"
+                            placeholder="توکن شخصی TMDb">
+                        <i class="fas fa-code absolute left-5 top-1/2 -translate-y-1/2 text-white/20"></i>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex flex-col sm:flex-row gap-4">
+                    <button id="save-token"
+                        class="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-black py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+                        <i class="fas fa-save shadow-icon"></i>
+                        ذخیره تغییرات
+                    </button>
+                    <button id="clear-token"
+                        class="px-6 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-500 border border-white/10 hover:border-red-500/30 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-trash-alt"></i>
+                        پاکسازی
+                    </button>
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="tmdb-token" class="block text-gray-200 mb-2">توکن TMDb (اختیاری):</label>
-                <input type="text" id="tmdb-token" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" placeholder="توکن TMDb خود را وارد کنید">
-            </div>
-            <!-- تغییر آی‌دی دکمه‌ها به save-token و clear-token -->
-			<button id="save-token" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">ذخیره توکن‌ها</button>
-			<button id="clear-token" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2">حذف توکن‌ها</button>
-			<p id="status-message" class="mt-4 text-sm"></p>
+
+            <div id="status-message" class="mt-6 text-center text-sm font-bold min-h-[1.5rem]"></div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <p class="text-xs text-gray-500">تمامی اطلاعات شما به صورت محلی در مرورگر ذخیره می‌شود.</p>
         </div>
     </main>
 
     <div id="shared-footer"></div>
-<script src="settings.js" defer></script>
+
+    <script src="settings.js" defer></script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>
+
 </html>

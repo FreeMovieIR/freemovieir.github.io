@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // بارگذاری توکن‌های ذخیره‌شده
     const savedOmdbToken = localStorage.getItem('userOmdbToken');
     const savedTmdbToken = localStorage.getItem('userTmdbToken');
-    
+
     if (savedOmdbToken) {
         omdbTokenInput.value = savedOmdbToken;
         statusMessage.textContent = 'توکن OMDB شما قبلاً ذخیره شده است.';
-        statusMessage.className = 'text-green-500';
+        statusMessage.className = 'text-amber-500 font-bold';
     }
-    
+
     if (savedTmdbToken) {
         tmdbTokenInput.value = savedTmdbToken;
     }
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (omdbToken) {
             localStorage.setItem('userOmdbToken', omdbToken);
-            
+
             if (tmdbToken) {
                 localStorage.setItem('userTmdbToken', tmdbToken);
             } else {
@@ -34,14 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // نمایش پیام موفقیت
-            statusMessage.textContent = 'توکن‌ها با موفقیت ذخیره شدند!';
-            statusMessage.className = 'text-green-500';
-            
-            // نمایش هشدار تأییدیه
-            alert('✅ توکن با موفقیت ثبت شد!\nاز این به بعد سرعت جستجو تا ۹۰٪ افزایش یافته است!');
+            statusMessage.textContent = 'تغییرات با موفقیت ذخیره شد!';
+            statusMessage.className = 'text-green-500 font-bold';
+
+            if (window.showToast) {
+                window.showToast('تنظیمات با موفقیت ذخیره شد!', 'success');
+            }
         } else {
             statusMessage.textContent = 'لطفاً حداقل توکن OMDB را وارد کنید.';
-            statusMessage.className = 'text-red-500';
+            statusMessage.className = 'text-red-500 font-bold';
+            if (window.showToast) {
+                window.showToast('لطفاً توکن OMDB را وارد کنید', 'info');
+            }
         }
     });
 
@@ -52,7 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
         omdbTokenInput.value = '';
         tmdbTokenInput.value = '';
         statusMessage.textContent = 'تمامی توکن‌ها حذف شدند.';
-        statusMessage.className = 'text-yellow-500';
-        alert('تمامی توکن‌ها با موفقیت حذف شدند.');
+        statusMessage.className = 'text-yellow-500 font-bold';
+        if (window.showToast) {
+            window.showToast('حافظه پاکسازی شد', 'info');
+        }
     });
 });

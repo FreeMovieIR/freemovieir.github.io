@@ -214,7 +214,11 @@ async function fetchAndSetPoster(item, itemType) {
 async function searchMedia(query, searchType) {
     const cleanedQuery = query.trim().toLowerCase();
     if (cleanedQuery.length < minQueryLength) {
-        alert(`لطفاً حداقل ${minQueryLength} کاراکتر وارد کنید.`);
+        if (window.showToast) {
+            window.showToast(`لطفاً حداقل ${minQueryLength} کاراکتر وارد کنید.`, 'info');
+        } else {
+            alert(`لطفاً حداقل ${minQueryLength} کاراکتر وارد کنید.`);
+        }
         return;
     }
 
@@ -273,7 +277,6 @@ async function searchMedia(query, searchType) {
     }
 }
 
-
 // --- Event Listeners & Initial Setup ---
 function handleSearch() {
     const query = searchInput.value;
@@ -298,6 +301,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     tvSection.classList.add('hidden');
     movieTitleElement.textContent = 'نتایج جستجو فیلم';
     tvTitleElement.textContent = 'نتایج جستجو سریال';
+
+    // Handle query parameter from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryParam = urlParams.get('q');
+    if (queryParam) {
+        searchInput.value = queryParam;
+        searchMedia(queryParam, 'all');
+    }
 
     // Mobile menu toggle
     document.getElementById('menu-toggle')?.addEventListener('click', () => {

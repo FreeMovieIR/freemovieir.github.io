@@ -4,8 +4,24 @@
 
   const headerHtml = `
     <header class="sticky top-0 z-50 glass-nav transition-all duration-500">
-      <div class="container mx-auto flex flex-row justify-between items-center px-6 py-4">
-        <nav class="flex items-center gap-2 md:gap-4">
+      <div class="container mx-auto flex flex-col md:flex-row justify-between items-center px-6 py-4 gap-4 md:gap-0">
+        <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-start">
+          <a href="/" class="flex items-center gap-3 group">
+            <div class="relative">
+                <div class="absolute inset-0 bg-amber-500/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                <img src="/assets/images/logo.png" alt="لوگوی فیری مووی" class="h-10 relative transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+            </div>
+            <span class="hidden md:block text-2xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter">فیری مووی</span>
+          </a>
+
+          <!-- Search Bar in Header -->
+          <div class="search-input-wrapper hidden lg:block mr-6">
+            <input type="text" id="header-search-input" placeholder="جستجو در فیری مووی..." dir="rtl">
+            <i class="fas fa-search"></i>
+          </div>
+        </div>
+
+        <nav class="flex items-center gap-3 md:gap-4 justify-center">
           <a href="/" class="group flex items-center justify-center w-11 h-11 rounded-xl glass-card hover:bg-white/10 transition-all duration-300" aria-label="خانه">
             <i class="fas fa-home text-gray-400 group-hover:text-amber-500 group-hover:scale-110 transition-all duration-300"></i>
           </a>
@@ -19,17 +35,10 @@
           <a href="/pages/search/" class="group flex items-center justify-center w-11 h-11 rounded-xl glass-card hover:bg-white/10 transition-all duration-300" aria-label="جستجو">
             <i class="fas fa-search text-gray-400 group-hover:text-amber-500 group-hover:scale-110 transition-all duration-300"></i>
           </a>
-        </nav>
-        
-        <div class="flex items-center">
-          <a href="/" class="flex items-center gap-3 group">
-            <div class="relative">
-                <div class="absolute inset-0 bg-amber-500/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <img src="/assets/images/logo.png" alt="لوگوی فیری مووی" class="h-10 relative transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-            </div>
-            <span class="hidden md:block text-2xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter">فیری مووی</span>
+          <a href="/pages/settings/" class="group flex items-center justify-center w-11 h-11 rounded-xl glass-card hover:bg-white/10 transition-all duration-300" aria-label="تنظیمات">
+            <i class="fas fa-cog text-gray-400 group-hover:text-amber-500 group-hover:scale-110 transition-all duration-300"></i>
           </a>
-        </div>
+        </nav>
       </div>
     </header>
   `;
@@ -92,6 +101,19 @@
 
   if (headerTarget) {
     headerTarget.innerHTML = headerHtml;
+
+    // Add search listener
+    const headerSearchInput = document.getElementById('header-search-input');
+    if (headerSearchInput) {
+      headerSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const query = headerSearchInput.value.trim();
+          if (query.length >= 3) {
+            window.location.href = `/pages/search/index.html?q=${encodeURIComponent(query)}`;
+          }
+        }
+      });
+    }
   }
 
   if (footerTarget) {

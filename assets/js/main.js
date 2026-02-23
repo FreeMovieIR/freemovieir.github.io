@@ -49,21 +49,6 @@ window.toggleWatchlist = function (id, type) {
   showToast(msg, index === -1 ? 'success' : 'info');
 };
 
-function showToast(message, type = 'success') {
-  const toast = document.createElement('div');
-  toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-full font-bold shadow-2xl transition-all translate-y-[-100px] bg-base-800 text-white border border-white/10`;
-  toast.innerHTML = `<div class="flex items-center gap-3">
-    <i class="fas ${type === 'success' ? 'fa-check text-green-500' : 'fa-info-circle text-blue-500'}"></i>
-    <span>${message}</span>
-  </div>`;
-  document.body.appendChild(toast);
-
-  setTimeout(() => toast.style.transform = 'translate(-50%, 0)', 100);
-  setTimeout(() => {
-    toast.style.transform = 'translate(-50%, -100px)';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
-}
 // -----------------------
 
 const proxify = (url) =>
