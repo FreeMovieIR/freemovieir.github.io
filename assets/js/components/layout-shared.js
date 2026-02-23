@@ -220,6 +220,7 @@
 
   if (headerTarget) {
     headerTarget.innerHTML = headerHtml;
+    localStorage.setItem('homeCache_header', headerHtml);
 
     // Add search listener
     const headerSearchInput = document.getElementById('header-search-input');

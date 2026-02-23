@@ -142,7 +142,7 @@ async function renderHero(movie) {
 
 // Global resolvePoster is now centralized in layout-shared.js
 
-async function renderItems(items, container, type, seenIds) {
+async function buildItemsHtml(items, type, seenIds) {
   const elements = await Promise.all(
     items.map(async (item) => {
       if (seenIds.has(item.id)) return '';
@@ -154,8 +154,7 @@ async function renderItems(items, container, type, seenIds) {
     })
   );
 
-  container.innerHTML =
-    elements.filter(Boolean).join('') || '<p class="text-center text-red-500">داده‌ای یافت نشد!</p>';
+  return elements.filter(Boolean).join('') || '<p class="text-center text-red-500">داده‌ای یافت نشد!</p>';
 }
 
 async function fetchAndDisplayContent() {
@@ -163,15 +162,29 @@ async function fetchAndDisplayContent() {
   const tvContainer = document.getElementById('trending-tv');
   if (!movieContainer || !tvContainer) return;
 
-  const skeletonHTML = `
-    <div class="animate-pulse bg-base-800 rounded-xl aspect-[2/3] w-full shadow-lg border border-gray-700/50"></div>
-  `.repeat(4);
-  movieContainer.innerHTML = skeletonHTML;
-  tvContainer.innerHTML = skeletonHTML;
+  // Ultra-fast DOM caching: Inject previously rendered HTML before fetching
+  const cachedMovies = localStorage.getItem('homeCache_movies');
+  const cachedTv = localStorage.getItem('homeCache_tv');
+  const cachedHero = localStorage.getItem('homeCache_hero');
+  const heroContainer = document.getElementById('hero-section');
+
+  const skeletonHTML = '<div class="animate-pulse bg-base-800 rounded-xl aspect-[2/3] w-full shadow-lg border border-gray-700/50"></div>'.repeat(4);
+
+  if (cachedMovies) movieContainer.innerHTML = cachedMovies;
+  else movieContainer.innerHTML = skeletonHTML;
+
+  if (cachedTv) tvContainer.innerHTML = cachedTv;
+  else tvContainer.innerHTML = skeletonHTML;
+
+  if (cachedHero && heroContainer) {
+    heroContainer.classList.remove('animate-pulse');
+    heroContainer.innerHTML = cachedHero;
+  }
 
   try {
     startLoadingBar();
 
+    // Fetch data in background
     const [movieRes, tvRes] = await Promise.all([
       fetch(proxify(apiUrls.now_playing)),
       fetch(proxify(apiUrls.tv_trending))
@@ -188,25 +201,39 @@ async function fetchAndDisplayContent() {
 
     if (featuredMovie) {
       await renderHero(featuredMovie);
+      if (heroContainer) localStorage.setItem('homeCache_hero', heroContainer.innerHTML);
     }
 
     const seenIds = new Set();
-    await Promise.all([
-      renderItems(otherMovies, movieContainer, 'movie', seenIds),
-      renderItems(tvData.results || [], tvContainer, 'tv', seenIds)
+    const [movieHtml, tvHtml] = await Promise.all([
+      buildItemsHtml(otherMovies, 'movie', seenIds),
+      buildItemsHtml(tvData.results || [], 'tv', seenIds)
     ]);
+
+    // Update DOM only if data changed (avoids reflow if nothing changed)
+    if (movieContainer.innerHTML !== movieHtml) {
+      movieContainer.innerHTML = movieHtml;
+      localStorage.setItem('homeCache_movies', movieHtml);
+    }
+    if (tvContainer.innerHTML !== tvHtml) {
+      tvContainer.innerHTML = tvHtml;
+      localStorage.setItem('homeCache_tv', tvHtml);
+    }
   } catch (error) {
     console.error('خطا در دریافت داده‌ها:', error);
-    const errorHTML = `
-      <div class="col-span-full flex flex-col items-center justify-center p-8 bg-red-900/20 border border-red-500/30 rounded-xl backdrop-blur-sm">
-        <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"></i>
-        <h3 class="text-xl font-bold text-red-400 mb-2">خطا در دریافت اطلاعات</h3>
-        <p class="text-gray-300 text-center">متأسفانه در حال حاضر امکان دریافت اطلاعات از سرور وجود ندارد. لطفاً ارتباط خود را بررسی کرده و صفحه را رفرش کنید.</p>
-        <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-600/40 transition-colors">تلاش مجدد</button>
-      </div>
-    `;
-    movieContainer.innerHTML = errorHTML;
-    tvContainer.innerHTML = errorHTML;
+    // Only show error if we have no cached content
+    if (!cachedMovies || !cachedTv) {
+      const errorHTML = `
+          <div class="col-span-full flex flex-col items-center justify-center p-8 bg-red-900/20 border border-red-500/30 rounded-xl backdrop-blur-sm">
+            <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"></i>
+            <h3 class="text-xl font-bold text-red-400 mb-2">خطا در دریافت اطلاعات</h3>
+            <p class="text-gray-300 text-center">متأسفانه در حال حاضر امکان دریافت اطلاعات از سرور وجود ندارد. لطفاً ارتباط خود را بررسی کرده و صفحه را رفرش کنید.</p>
+            <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-600/40 transition-colors">تلاش مجدد</button>
+          </div>
+        `;
+      movieContainer.innerHTML = errorHTML;
+      tvContainer.innerHTML = errorHTML;
+    }
   } finally {
     finishLoadingBar();
   }

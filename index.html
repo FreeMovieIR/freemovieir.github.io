@@ -219,6 +219,36 @@
                     <div class="skeleton"></div>
                 </div>
             </section>
+
+            <!-- Ultra-Fast DOM Caching Injection -->
+            <script>
+                (function () {
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.has('m') || params.has('s')) return;
+                    try {
+                        const head = localStorage.getItem('homeCache_header');
+                        const h = localStorage.getItem('homeCache_hero');
+                        const m = localStorage.getItem('homeCache_movies');
+                        const t = localStorage.getItem('homeCache_tv');
+                        if (head) {
+                            const heal = document.getElementById('shared-header');
+                            if (heal) heal.innerHTML = head;
+                        }
+                        if (h) {
+                            const he = document.getElementById('hero-section');
+                            if (he) { he.innerHTML = h; he.classList.remove('animate-pulse'); }
+                        }
+                        if (m) {
+                            const me = document.getElementById('new-movies');
+                            if (me) me.innerHTML = m;
+                        }
+                        if (t) {
+                            const te = document.getElementById('trending-tv');
+                            if (te) te.innerHTML = t;
+                        }
+                    } catch (e) { }
+                })();
+            </script>
         </div> <!-- End of Home View -->
 
         <!-- Details View (Initially Hidden) -->
