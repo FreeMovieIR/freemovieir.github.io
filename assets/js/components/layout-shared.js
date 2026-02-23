@@ -36,7 +36,7 @@
     const routeLabel = type === 'movie' ? 'فیلم' : 'سریال';
 
     return `
-    <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" 
+    <div class="movie-card reveal-on-scroll group relative overflow-hidden rounded-2xl glass-card cursor-pointer" 
          onclick="window.location.href='/?${paramText}'"
          data-id="${item.id}"
          data-type="${type}">
@@ -51,7 +51,7 @@
               <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${routeLabel}</span>
             </div>
             <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${item.title || item.name}</h3>
-            <p class="text-xs text-gray-300 mb-4 line-clamp-2 opacity-80">${overview}</p>
+            <p class="text-xs text-gray-300 mb-4 line-clamp-1 opacity-80">${overview}</p>
             <button class="w-full bg-white/10 hover:bg-amber-500 hover:text-black hover:scale-105 backdrop-blur-md text-white border border-white/10 text-xs font-black py-2.5 rounded-xl transition-all duration-300">
               مشاهده جزئیات
             </button>
