@@ -2,131 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --accent-color: #f59e0b;
+}
+
 body {
-    font-family: 'Vazir', sans-serif;
+    font-family: 'Vazir', 'Vazirmatn', sans-serif;
     direction: rtl;
+    background-color: #07090f;
+    color: #e2e8f0;
 }
 
+/* Glassmorphism Utilities */
+.glass-card {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-nav {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Skeleton Loading Refined */
 .skeleton {
-    background: #333;
-    animation: pulse 1.5s infinite;
-    height: 240px; /* Match card height */
-    border-radius: 0.5rem;
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 0.75rem;
 }
 
-@keyframes pulse {
-    0% {
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0.5;
-    }
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
-.nav-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1.5rem;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
 }
 
-.nav-container a, .nav-container button {
-    padding: 0.5rem;
-    transition: color 0.3s;
-}
-
+/* Content Grid Adjustments */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 180px));
-    gap: 1rem;
-    justify-content: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1rem;
-}
-
-.content-grid .group {
-    width: 100%;
-    max-width: 180px;
-}
-
-.content-grid img {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-    aspect-ratio: 2 / 3;
-    max-height: 270px;
-    border-radius: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 1rem;
 }
 
 @media (max-width: 640px) {
-    .nav-container {
-        flex-direction: column;
-        gap: 1rem;
-        width: 100%;
-        padding: 1rem 0;
-    }
-
-    .nav-container a, .nav-container button {
-        width: 100%;
-        text-align: center;
-    }
-
     .content-grid {
-        grid-template-columns: repeat(auto-fit, minmax(100px, 120px));
-        gap: 0.75rem;
-        padding: 0.5rem;
-    }
-
-    .content-grid .group {
-        max-width: 120px;
-    }
-
-    .content-grid img {
-        max-height: 180px;
-    }
-
-    .content-grid .absolute {
-        padding: 0.5rem;
-    }
-
-    .content-grid h3 {
-        font-size: 0.9rem;
-    }
-
-    .content-grid p {
-        font-size: 0.7rem;
-    }
-
-    .content-grid a {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1rem;
     }
 }
 
-@media (min-width: 641px) {
-    .content-grid {
-        gap: 1.5rem;
-        padding: 1.5rem;
-    }
+/* Movie Card Premium Styles */
+.movie-card-overlay {
+    background: linear-gradient(to top, rgba(7, 9, 15, 0.95) 0%, rgba(7, 9, 15, 0.6) 40%, transparent 100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    .content-grid .absolute {
-        padding: 1rem;
-    }
+.movie-card:hover .movie-card-info {
+    transform: translateY(0);
+    opacity: 1;
+}
 
-    .content-grid h3 {
-        font-size: 1.125rem;
-    }
+.movie-card-info {
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    .content-grid p {
-        font-size: 0.875rem;
-    }
+/* Text Shimmer Effect for Accent */
+.text-shimmer {
+    background: linear-gradient(to right, #f59e0b 20%, #fbbf24 40%, #fbbf24 60%, #f59e0b 80%);
+    background-size: 200% auto;
+    color: #000;
+    background-clip: text;
+    text-fill-color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: textShimmer 3s linear infinite;
+}
 
-    .content-grid a {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-    }
+@keyframes textShimmer {
+    to { background-position: 200% center; }
 }

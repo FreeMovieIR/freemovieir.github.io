@@ -126,24 +126,24 @@ function updateDomWithMovieDetails(movieData, movieDataEnglish, externalIdsData,
     }
 
     // Update Text Content
-    document.getElementById('title').innerHTML = `${title} <span class="text-2xl text-gray-400 inline-block font-medium">(${year})</span>`;
-    document.getElementById('overview').innerHTML = `${overview}`;
-    document.getElementById('genre').innerHTML = `<i class="fas fa-tags text-accent ml-2"></i><strong class="text-gray-400">ژانر:</strong> <span class="mr-2 text-gray-200">${genres}</span>`;
-    document.getElementById('year').innerHTML = `<i class="fas fa-calendar-alt text-accent ml-2"></i><strong class="text-gray-400">سال تولید:</strong> <span class="mr-2 text-gray-200">${year}</span>`;
-    document.getElementById('rating').innerHTML = `<i class="fas fa-star text-accent ml-2 drop-shadow-[0_0_5px_rgba(255,193,7,0.8)]"></i><strong class="text-gray-400">امتیاز:</strong> <span class="mr-2 text-white font-bold tracking-wide">${rating}<span class="text-gray-500 text-sm font-normal">/10</span></span>`;
-    document.getElementById('runTime').innerHTML = `<i class="fas fa-clock text-accent ml-2"></i><strong class="text-gray-400">مدت زمان:</strong> <span class="mr-2 text-gray-200">${runTime}</span>`;
-    document.getElementById('spokenLanguages').innerHTML = `<i class="fas fa-language text-accent ml-2"></i><strong class="text-gray-400">زبان‌ها:</strong> <span class="mr-2 text-gray-200">${spokenLanguages}</span>`;
-    document.getElementById('budget').innerHTML = `<i class="fas fa-dollar-sign text-accent ml-2"></i><strong class="text-gray-400">بودجه:</strong> <span class="mr-2 text-gray-200">${budget}</span>`;
-    document.getElementById('productionCountries').innerHTML = `<i class="fas fa-globe text-accent ml-2"></i><strong class="text-gray-400">محصول کشور:</strong> <span class="mr-2 text-gray-200">${productionCountries}</span>`;
-    document.getElementById('director').innerHTML = `<i class="fas fa-video text-accent ml-2"></i><strong class="text-gray-400">کارگردان:</strong> <span class="mr-2 text-gray-200">${directorName}</span>`;
+    document.getElementById('title').textContent = title;
+    document.getElementById('overview').textContent = overview;
+    document.getElementById('genre-val').textContent = genres;
+    document.getElementById('year-val').textContent = year;
+    document.getElementById('rating-text').textContent = `${rating}/10`;
+    document.getElementById('runTime-val').textContent = runTime;
+    document.getElementById('director-val').textContent = directorName;
 
     const imdbLinkElement = document.getElementById('imdb-link');
     if (imdbLinkElement) {
         const imdbLinkHref = imdbId ? `https://www.imdb.com/title/${imdbId}/` : '#';
         imdbLinkElement.innerHTML = `
-            <a href="${imdbLinkHref}" target="_blank" rel="noopener noreferrer" class="flex items-center text-yellow-500 hover:text-yellow-600 ${!imdbId ? 'opacity-50 cursor-not-allowed' : ''}">
-                <img src="https://m.media-amazon.com/images/G/01/imdb/images-ANDW73HA/favicon_desktop_32x32._CB1582158068_.png" alt="IMDb Logo" class="w-5 h-5 ml-2">
-                <span>صفحه IMDb ${!imdbId ? '(موجود نیست)' : ''}</span>
+            <a href="${imdbLinkHref}" target="_blank" rel="noopener noreferrer" class="glass-card flex items-center justify-between p-4 rounded-2xl border-white/5 hover:bg-white/10 transition-all duration-300 group/imdb ${!imdbId ? 'opacity-50 cursor-not-allowed' : ''}">
+                <div class="flex items-center gap-3">
+                    <img src="https://m.media-amazon.com/images/G/01/imdb/images-ANDW73HA/favicon_desktop_32x32._CB1582158068_.png" alt="IMDb Logo" class="w-6 h-6 grayscale group-hover/imdb:grayscale-0 transition-all">
+                    <span class="text-white font-bold">مشاهده در IMDb</span>
+                </div>
+                <i class="fas fa-external-link-alt text-xs text-gray-500 group-hover/imdb:text-amber-500 transition-colors"></i>
             </a>
         `;
         if (!imdbId) {
@@ -154,18 +154,17 @@ function updateDomWithMovieDetails(movieData, movieDataEnglish, externalIdsData,
     const posterElement = document.getElementById('poster');
     if (posterElement) {
         posterElement.alt = `پوستر فیلم ${title}`;
-        posterElement.src = defaultPoster;
         if (finalPosterUrl && finalPosterUrl !== defaultPoster) {
-            const tempImage = new Image();
-            tempImage.onload = () => { posterElement.src = finalPosterUrl; };
-            tempImage.onerror = () => { console.warn(`Failed to load poster: ${finalPosterUrl}. Keeping default.`); };
-            tempImage.src = finalPosterUrl;
+            posterElement.src = finalPosterUrl;
         }
     }
 
     const movieBgElement = document.getElementById('main-content-sections');
     if (movieBgElement) {
-        movieBgElement.style.backgroundImage = `url('${backdropUrl}')`;
+        movieBgElement.style.background = `linear-gradient(to bottom, rgba(7, 9, 15, 0.8), #07090f), url('${backdropUrl}')`;
+        movieBgElement.style.backgroundSize = 'cover';
+        movieBgElement.style.backgroundPosition = 'center';
+        movieBgElement.style.backgroundAttachment = 'fixed';
     }
 
     document.title = `${title} (${year}) - فیری مووی`;
@@ -243,32 +242,31 @@ function updateDownloadLinks(imdbId, year, title) {
 
     let downloadLinksHtml = serverBaseUrls.map((baseUrl, index) => `
         <a href="${baseUrl}${downloadPath}"
-           class="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-[0_4px_15px_rgba(79,70,229,0.3)] text-white px-5 py-2.5 rounded-lg hover:from-blue-500 hover:to-indigo-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2 flex-1 min-w-[120px]"
+           class="bg-amber-500 hover:bg-amber-400 text-black px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 shadow-xl shadow-amber-500/10 flex-1 min-w-[150px]"
            rel="nofollow noopener" target="_blank">
-            <span>دانلود (${index === 0 ? 'اصلی' : `کمکی ${index}`})</span>
             <i class="fas fa-download"></i>
+            <span>دانلود (${index === 0 ? 'اصلی' : `کمکی ${index}`})</span>
         </a>
     `).join('');
 
     downloadLinksHtml += `
         <a href="${subtitleLink}"
-           class="bg-gradient-to-r from-purple-600 to-pink-600 shadow-[0_4px_15px_rgba(168,85,247,0.3)] text-white px-5 py-2.5 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2 flex-1 min-w-[120px]"
+           class="bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 flex-1 min-w-[150px]"
            rel="nofollow noopener" target="_blank">
+            <i class="fas fa-language text-amber-500"></i>
             <span>دریافت زیرنویس</span>
-            <i class="fas fa-language"></i>
         </a>
     `;
 
     // Add placeholder for the watchlist button (will be initialized separately)
     downloadLinksHtml += `
-        <button id="add-to-watchlist" class="bg-gradient-to-r from-emerald-600 to-teal-600 shadow-[0_4px_15px_rgba(16,185,129,0.3)] text-white px-5 py-2.5 rounded-lg hover:from-emerald-500 hover:to-teal-500 transition-all duration-300 text-sm font-bold flex items-center justify-center gap-2 flex-1 min-w-[120px] disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        <button id="add-to-watchlist" class="glass-card text-white px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 flex-1 min-w-[150px] disabled:opacity-50 disabled:cursor-not-allowed">
+             <i class="fas fa-bookmark text-amber-500"></i>
              <span>واچ‌لیست</span>
-             <i class="fas fa-bookmark"></i>
          </button>
     `;
 
-
-    downloadLinksContainer.innerHTML = `<div class="flex flex-wrap justify-center gap-3">${downloadLinksHtml}</div>`; // Wrap in a div for better layout
+    downloadLinksContainer.innerHTML = `<div class="flex flex-wrap items-center gap-4 w-full">${downloadLinksHtml}</div>`; // Wrap in a div for better layout
     console.log("Download links generated.");
 }
 

@@ -51,12 +51,12 @@ async function loadWatchlist() {
     const moviePromises = normalizedWatchlist.movies.map(movieId =>
         fetchAndDisplayItem(movieId, 'movie', moviesContainer)
             .then(() => moviesCount++)
-            .catch(() => {})
+            .catch(() => { })
     );
     const seriesPromises = normalizedWatchlist.series.map(seriesId =>
         fetchAndDisplayItem(seriesId, 'series', seriesContainer)
             .then(() => seriesCount++)
-            .catch(() => {})
+            .catch(() => { })
     );
 
     await Promise.all([...moviePromises, ...seriesPromises]).catch(error => {
@@ -103,21 +103,38 @@ async function fetchAndDisplayItem(itemId, type, container) {
         let posterUrl = poster;
         posterUrl = posterUrl.replace(/300(?=\.jpg$)/i, '');
 
-        const item = {
-            id: itemId,
-            title: type === 'movie' ? (data.title || 'نامشخص') : (data.name || 'نامشخص'),
-            overview: data.overview || 'خلاصه‌ای در دسترس نیست.',
-            poster: posterUrl,
-        };
+        const itemTitle = type === 'movie' ? (data.title || 'نامشخص') : (data.name || 'نامشخص');
+        const overview = data.overview ? `${data.overview.slice(0, 80)}...` : 'بدون توضیحات';
+        const score = data.vote_average ? data.vote_average.toFixed(1) : '—';
+        const route = type === 'movie' ? 'movie' : 'series';
 
         const itemCard = `
-            <div class="group relative">
-                <img src="${item.poster}" alt="پوستر ${type === 'movie' ? 'فیلم' : 'سریال'} ${item.title}" class="w-full h-auto rounded-lg shadow-lg">
-                <div class="absolute inset-0 bg-black bg-opacity-75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center text-center p-4">
-                    <h3 class="text-lg font-bold text-white">${item.title}</h3>
-                    <p class="text-sm text-gray-200">${item.overview.slice(0, 100)}${item.overview.length > 100 ? '...' : ''}</p>
-                    <a href="/${type}/index.html?id=${item.id}" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">مشاهده</a>
-                    <button class="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" onclick="removeFromWatchlist('${item.id}', '${type}')">حذف از واچ‌لیست</button>
+            <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer">
+                <div class="aspect-[2/3] relative overflow-hidden" onclick="window.location.href='/${route}/index.html?id=${itemId}'">
+                    <img src="${posterUrl}" alt="${itemTitle}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                    <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
+                        <div class="movie-card-info">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    <i class="fas fa-star text-[8px]"></i> ${score}
+                                </span>
+                                <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${type}</span>
+                            </div>
+                            <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${itemTitle}</h3>
+                            <p class="text-xs text-gray-300 mb-4 line-clamp-2 opacity-80">${overview}</p>
+                            <div class="flex gap-2">
+                                <button onclick="window.location.href='/${route}/index.html?id=${itemId}'" class="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/10 text-[10px] font-black py-2 rounded-xl transition-all duration-300">
+                                    جزئیات
+                                </button>
+                                <button onclick="removeFromWatchlist('${itemId}', '${type}')" class="bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white backdrop-blur-md border border-red-500/20 text-[10px] font-black px-3 py-2 rounded-xl transition-all duration-300">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-20" onclick="window.location.href='/${route}/index.html?id=${itemId}'">
+                    <i class="fas fa-play text-[10px] text-amber-500"></i>
                 </div>
             </div>
         `;

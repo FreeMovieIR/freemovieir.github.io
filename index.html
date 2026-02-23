@@ -62,58 +62,57 @@
     <!-- هدر -->
     <div id="shared-header"></div>
 
-<!-- بخش فیلم‌های جدید -->
-<section class="container mx-auto py-8">
-    <!-- بیانیه سلب مسئولیت -->
-    <div id="disclaimer-notice" class="bg-base-800/80 backdrop-blur-sm border border-gray-700 text-gray-200 p-4 rounded-xl shadow-lg mb-6 mx-4 relative overflow-hidden group">
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="flex items-start gap-3">
-                <i class="fas fa-info-circle text-blue-400 mt-1 text-xl"></i>
-                <p class="text-sm md:text-base leading-relaxed">
-                    <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی را میزبانی نمی‌کند. لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" class="text-blue-400 hover:text-blue-300 font-bold transition-colors" rel="nofollow">الماس مووی</a> دریافت می‌شود. برای جزئیات، <a href="/pages/disclaimer/" class="text-blue-400 hover:text-blue-300 transition-colors">قوانین</a> را ببینید.
-                </p>
+    <!-- بخش هیرو (Featured Content) -->
+    <div id="hero-section" class="relative overflow-hidden mb-12 min-h-[500px] flex items-center">
+        <!-- Will be populated by main.js -->
+        <div class="container mx-auto px-6 relative z-10 animate-pulse">
+            <div class="h-8 bg-white/10 rounded-lg w-1/4 mb-4"></div>
+            <div class="h-16 bg-white/10 rounded-lg w-1/2 mb-6"></div>
+            <div class="h-24 bg-white/10 rounded-lg w-3/4 mb-8"></div>
+            <div class="flex gap-4">
+                <div class="h-12 bg-white/10 rounded-xl w-32"></div>
+                <div class="h-12 bg-white/10 rounded-xl w-32"></div>
             </div>
-            <button id="close-disclaimer" class="text-gray-400 hover:text-white transition-colors" aria-label="بستن اطلاعیه">
-                <i class="fas fa-times"></i>
-            </button>
         </div>
     </div>
 
-    <!-- اطلاعیه جدید با لینک درخواست -->
-    <div id="availability-notice" class="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-md border border-yellow-500/30 text-gray-100 p-4 rounded-xl shadow-[0_0_15px_rgba(234,179,8,0.1)] mb-6 mx-4 relative">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="flex items-start gap-3">
-                <i class="fas fa-exclamation-triangle text-accent mt-1 text-xl animate-pulse"></i>
-                <p class="text-sm md:text-base leading-relaxed">
-                    <strong>توجه:</strong> برخی از فیلم‌های جدید ممکن است هنوز برای دانلود در دسترس نباشند. می‌توانید فیلم‌های موجود را <a href="/pages/search/index.html" class="text-accent hover:text-yellow-300 font-bold transition-colors">جستجو کنید</a> یا از طریق <a href="https://github.com/FreeMovieIR/web/issues/new" target="_blank" class="text-accent hover:text-yellow-300 font-bold transition-colors">این لینک</a> درخواست اضافه کردن فیلم بدهید.
-                </p>
-            </div>
-            <button id="close-availability" class="text-gray-400 hover:text-white transition-colors" aria-label="بستن اطلاعیه">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+<!-- بخش فیلم‌های جدید -->
+<section class="container mx-auto py-12 relative">
+    <div class="absolute -top-24 right-0 w-64 h-64 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+    <div class="flex items-center justify-between mb-10 px-6">
+        <h2 class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-amber-500 pr-4">جدیدترین فیلم‌ها</h2>
+        <a href="/pages/search/" class="text-amber-500 hover:text-amber-400 transition-colors font-bold text-sm flex items-center gap-2">
+            مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
+        </a>
     </div>
-    
-    <h2 class="text-3xl font-extrabold mb-6 text-center tracking-tight text-white drop-shadow-md">جدیدترین فیلم‌ها</h2>
-    <div id="new-movies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 m-4">
+
+    <div id="new-movies" class="content-grid">
         <!-- Skeleton placeholders -->
-        <div class="skeleton w-full"></div>
-        <div class="skeleton w-full"></div>
-        <div class="skeleton w-full"></div>
-        <div class="skeleton w-full"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
     </div>
 </section>
 
     <!-- بخش سریال‌های پرطرفدار -->
-    <section class="container mx-auto py-8">
-        <h2 class="text-3xl font-extrabold mb-6 text-center tracking-tight text-white drop-shadow-md">سریال‌های پرطرفدار</h2>
-        <div id="trending-tv" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 m-4">
+    <section class="container mx-auto py-12 relative">
+        <div class="absolute -top-24 left-0 w-64 h-64 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="flex items-center justify-between mb-10 px-6">
+            <h2 class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-blue-500 pr-4">سریال‌های پرطرفدار</h2>
+            <a href="/pages/search/" class="text-blue-500 hover:text-blue-400 transition-colors font-bold text-sm flex items-center gap-2">
+                مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
+            </a>
+        </div>
+
+        <div id="trending-tv" class="content-grid">
             <!-- Skeleton placeholders -->
-            <div class="skeleton w-full"></div>
-            <div class="skeleton w-full"></div>
-            <div class="skeleton w-full"></div>
-            <div class="skeleton w-full"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
         </div>  
     </section>
 

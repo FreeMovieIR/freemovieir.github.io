@@ -54,22 +54,78 @@ async function initializeSwitcher() {
 function createContentCard(item, poster, type) {
   const title = item.title || item.name || 'نامشخص';
   const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
+  const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
   const route = type === 'movie' ? 'movie' : 'series';
 
   return `
-    <div class="group relative overflow-hidden rounded-xl shadow-lg transform transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl hover:shadow-accent/20 cursor-pointer" onclick="window.location.href='/${route}/index.html?id=${item.id}'">
-      <img src="${poster}" alt="${title}" class="w-full aspect-[2/3] object-cover transition-transform duration-700 group-hover:scale-110">
-      <div class="absolute inset-0 bg-gradient-to-t from-base-900 via-base-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-4 translate-y-4 group-hover:translate-y-0">
-        <h3 class="text-lg font-bold text-white mb-1 drop-shadow-md">${title}</h3>
-        <p class="text-xs text-gray-300 mb-4 line-clamp-3">${overview}</p>
-        <a href="/${route}/index.html?id=${item.id}" class="mt-auto w-full text-center bg-gradient-to-r from-accent to-yellow-500 text-base-900 font-bold py-2 rounded-lg hover:from-yellow-400 hover:to-yellow-300 transition-colors shadow-[0_0_10px_rgba(255,193,7,0.4)]">مشاهده</a>
+    <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" onclick="window.location.href='/${route}/index.html?id=${item.id}'">
+      <div class="aspect-[2/3] relative overflow-hidden">
+        <img src="${poster}" alt="${title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+        <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
+          <div class="movie-card-info">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                <i class="fas fa-star text-[8px]"></i> ${score}
+              </span>
+              <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${type}</span>
+            </div>
+            <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${title}</h3>
+            <p class="text-xs text-gray-300 mb-4 line-clamp-2 opacity-80">${overview}</p>
+            <button class="w-full bg-white/10 hover:bg-amber-500 hover:text-black hover:scale-105 backdrop-blur-md text-white border border-white/10 text-xs font-black py-2.5 rounded-xl transition-all duration-300">
+              مشاهده جزئیات
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="absolute top-2 right-2 bg-base-900/60 backdrop-blur-md rounded-md px-2 py-1 flex items-center gap-1 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-        <i class="fas fa-star text-accent text-xs"></i>
-        <span class="text-white text-xs font-bold">${item.vote_average ? item.vote_average.toFixed(1) : '—'}</span>
+      <div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-20">
+        <i class="fas fa-play text-[10px] text-amber-500"></i>
       </div>
     </div>
   `;
+}
+
+async function renderHero(movie) {
+  const heroContainer = document.getElementById('hero-section');
+  if (!heroContainer || !movie) return;
+
+  const poster = await resolvePoster(movie.id, 'movie');
+  const backdrop = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : poster;
+  const title = movie.title || 'فیری مووی';
+  const overview = movie.overview || 'مرجع دانلود فیلم و سریال';
+
+  heroContainer.classList.remove('animate-pulse');
+  heroContainer.innerHTML = `
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-t from-base-950 via-base-950/60 to-transparent z-10"></div>
+            <div class="absolute inset-0 bg-gradient-to-l from-base-950/80 via-transparent to-transparent z-10"></div>
+            <img src="${backdrop}" alt="${title}" class="w-full h-full object-cover">
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10 py-20">
+            <div class="max-w-2xl space-y-6">
+                <div class="flex items-center gap-3">
+                    <span class="bg-amber-500 text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-amber-500/20">پیشنهاد ویژه</span>
+                    <span class="text-white/60 text-sm font-bold flex items-center gap-2">
+                        <i class="fas fa-star text-amber-500"></i> ${movie.vote_average.toFixed(1)}
+                    </span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+                    ${title}
+                </h1>
+                <p class="text-lg md:text-xl text-gray-300 leading-relaxed max-w-xl drop-shadow-lg line-clamp-3 md:line-clamp-none">
+                    ${overview}
+                </p>
+                <div class="flex flex-wrap gap-4 pt-4">
+                    <a href="/movie/index.html?id=${movie.id}" class="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl shadow-amber-500/20">
+                        <i class="fas fa-play"></i> تماشا کنید
+                    </a>
+                    <button class="bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3">
+                        <i class="fas fa-bookmark"></i> واچ‌لیست
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 async function resolvePoster(itemId, type) {
@@ -136,10 +192,17 @@ async function fetchAndDisplayContent() {
     }
 
     const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
-    const seenIds = new Set();
+    const movies = movieData.results || [];
+    const featuredMovie = movies[0];
+    const otherMovies = movies.slice(1);
 
+    if (featuredMovie) {
+      await renderHero(featuredMovie);
+    }
+
+    const seenIds = new Set();
     await Promise.all([
-      renderItems(movieData.results || [], movieContainer, 'movie', seenIds),
+      renderItems(otherMovies, movieContainer, 'movie', seenIds),
       renderItems(tvData.results || [], tvContainer, 'tv', seenIds)
     ]);
   } catch (error) {

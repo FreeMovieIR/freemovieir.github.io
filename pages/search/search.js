@@ -14,8 +14,8 @@ let apiKeySwitcher; // Will hold the instance for OMDB key switching
 const searchInput = document.getElementById('search');
 const searchButton = document.getElementById('search-button');
 const searchTypeSelect = document.getElementById('search-type');
-const movieSection = document.getElementById('movie-results').closest('.search-column');
-const tvSection = document.getElementById('tv-results').closest('.search-column');
+const movieSection = document.getElementById('movie-section');
+const tvSection = document.getElementById('tv-section');
 const movieResultsContainer = document.getElementById('movie-results');
 const tvResultsContainer = document.getElementById('tv-results');
 const movieTitleElement = document.getElementById('movie-title');
@@ -94,15 +94,17 @@ async function getCachedOrFetchPoster(imdbId, itemTitle) {
 function showLoading() {
     if (document.getElementById('loading-overlay')) return;
     const loadingHtml = `
-         <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" aria-live="assertive">
-              <div class="flex flex-col items-center">
-                 <div class="popcorn mb-6">
-                     <svg width="80" height="80" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="32" width="32" height="24" rx="4" fill="#ffaa07" stroke="#1f2937" stroke-width="2"/><rect x="12" y="28" width="40" height="8" rx="2" fill="#ffaa07"/><path d="M16 32 L48 32" stroke="#1f2937" stroke-width="2"/><path d="M16 36 L48 36" stroke="#1f2937" stroke-width="1"/><circle cx="24" cy="24" r="6" fill="#ffaa07" class="popcorn-piece" style="animation: pop 1.5s infinite ease-in-out;"/><circle cx="32" cy="20" r="5" fill="#ffaa07" class="popcorn-piece" style="animation: pop 1.5s infinite ease-in-out 0.2s;"/><circle cx="40" cy="24" r="6" fill="#ffaa07" class="popcorn-piece" style="animation: pop 1.5s infinite ease-in-out 0.4s;"/></svg>
-                 </div>
-                 <p class="text-white text-lg font-semibold">در حال دریافت نتایج...</p>
-             </div>
-         </div>
-     `;
+          <div id="loading-overlay" class="fixed inset-0 bg-base-950/80 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-300">
+               <div class="flex flex-col items-center">
+                  <div class="inline-block relative w-20 h-20 mb-6">
+                      <div class="absolute top-0 left-0 w-full h-full border-4 border-amber-500/20 rounded-full"></div>
+                      <div class="absolute top-0 left-0 w-full h-full border-4 border-amber-500 rounded-full border-t-transparent animate-spin"></div>
+                      <i class="fas fa-film absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-amber-500 text-xl"></i>
+                  </div>
+                  <p class="text-white text-lg font-black tracking-tighter">در حال دریافت نتایج ...</p>
+              </div>
+          </div>
+      `;
     document.body.insertAdjacentHTML('beforeend', loadingHtml);
 }
 
@@ -121,34 +123,43 @@ function hideLoading() {
 function createResultCard(item, itemType) {
     const id = item.id;
     const title = itemType === 'movie' ? (item.title || 'نامشخص') : (item.name || 'نامشخص');
-    const date = itemType === 'movie' ? item.release_date : item.first_air_date;
-    const year = date ? date.substring(0, 4) : 'نامشخص';
-    const encodedTitle = title.replace(/"/g, '&quot;');
+    const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
+    const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
+    const route = itemType === 'movie' ? 'movie' : 'series';
 
     return `
-         <div class="group relative overflow-hidden rounded-lg shadow-lg bg-gray-800" data-item-id="${id}">
-             <img src="${defaultPoster}" alt="پوستر ${encodedTitle}" class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="this.onerror=null; this.src='${defaultPoster}';">
-             <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-100 group-hover:opacity-100 transition-opacity duration-300"></div>
-             <div class="absolute inset-0 bg-black bg-opacity-70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end items-center text-center p-3">
-                 <h3 class="text-base sm:text-lg font-bold text-white mb-1">${title}</h3>
-                 <p class="text-sm text-gray-300 mb-2">${year}</p>
-                 <a href="${itemType === 'movie' ? `../movie/index.html?id=${id}` : `../series/index.html?id=${id}`}" class="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors z-50">
-                     مشاهده جزئیات
-                 </a>
-             </div>
-              <div class="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-60 group-hover:opacity-0 transition-opacity duration-300">
-                  <h3 class="text-sm font-bold text-white truncate" title="${encodedTitle}">${title}</h3>
-                  <p class="text-xs text-gray-300">${year}</p>
-              </div>
-         </div>
-     `;
+        <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" data-item-id="${id}">
+            <div class="aspect-[2/3] relative overflow-hidden" onclick="window.location.href='/pages/${route}/index.html?id=${id}'">
+                <img src="${defaultPoster}" alt="${title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" onerror="this.onerror=null; this.src='${defaultPoster}';">
+                <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
+                    <div class="movie-card-info">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <i class="fas fa-star text-[8px]"></i> ${score}
+                            </span>
+                            <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${itemType}</span>
+                        </div>
+                        <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${title}</h3>
+                        <p class="text-xs text-gray-300 mb-4 line-clamp-2 opacity-80">${overview}</p>
+                        <button class="w-full bg-white/10 hover:bg-amber-500 hover:text-black hover:scale-105 backdrop-blur-md text-white border border-white/10 text-xs font-black py-2.5 rounded-xl transition-all duration-300">
+                            مشاهده جزئیات
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute top-3 right-3 glass-card px-2 py-1 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-20" onclick="window.location.href='/pages/${route}/index.html?id=${id}'">
+                <i class="fas fa-play text-[10px] text-amber-500"></i>
+            </div>
+        </div>
+    `;
 }
 
 /**
  * Displays initial results.
  */
 function displayInitialResults(container, sectionElement, titleElement, items, itemType, query, notFoundMessage) {
-    titleElement.textContent = `نتایج جستجو ${itemType === 'movie' ? 'فیلم' : 'سریال'} برای "${query}"`;
+    const typeLabel = itemType === 'movie' ? 'فیلم' : 'سریال';
+    titleElement.textContent = `نتایج ${typeLabel} برای "${query}"`;
 
     if (items && items.length > 0) {
         const resultsHtml = items.map(item => createResultCard(item, itemType)).join('');
