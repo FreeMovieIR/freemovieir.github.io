@@ -11,6 +11,61 @@ const apiUrls = {
 const imageCache = {};
 let apiKeySwitcher;
 
+// --- Watchlist Logic ---
+function getWatchlist() {
+  return JSON.parse(localStorage.getItem('watchlist')) || { movies: [], series: [] };
+}
+
+function saveWatchlist(watchlist) {
+  localStorage.setItem('watchlist', JSON.stringify(watchlist));
+}
+
+function isInWatchlist(id, type) {
+  const watchlist = getWatchlist();
+  const normalizedId = String(id);
+  const collection = type === 'movie' ? watchlist.movies : watchlist.series;
+  return collection.some(i => String(i) === normalizedId);
+}
+
+window.toggleWatchlist = function (id, type) {
+  const watchlist = getWatchlist();
+  const normalizedId = String(id);
+  const collection = type === 'movie' ? watchlist.movies : watchlist.series;
+  const index = collection.findIndex(i => String(i) === normalizedId);
+
+  if (index === -1) {
+    collection.push(normalizedId);
+  } else {
+    collection.splice(index, 1);
+  }
+
+  saveWatchlist(watchlist);
+
+  // Dispatch event so UI can update seamlessly
+  window.dispatchEvent(new CustomEvent('watchlistChanged', { detail: { id, type } }));
+
+  // Show small notification
+  const msg = index === -1 ? 'به واچ‌لیست اضافه شد!' : 'از واچ‌لیست حذف شد!';
+  showToast(msg, index === -1 ? 'success' : 'info');
+};
+
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-full font-bold shadow-2xl transition-all translate-y-[-100px] bg-base-800 text-white border border-white/10`;
+  toast.innerHTML = `<div class="flex items-center gap-3">
+    <i class="fas ${type === 'success' ? 'fa-check text-green-500' : 'fa-info-circle text-blue-500'}"></i>
+    <span>${message}</span>
+  </div>`;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.style.transform = 'translate(-50%, 0)', 100);
+  setTimeout(() => {
+    toast.style.transform = 'translate(-50%, -100px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+// -----------------------
+
 const proxify = (url) =>
   `https://odd-disk-9903.armin-apple816467.workers.dev/?url=${encodeURIComponent(url)}`;
 
@@ -119,13 +174,24 @@ async function renderHero(movie) {
                     <a href="/?m=${movie.id}" class="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl shadow-amber-500/20">
                         <i class="fas fa-play"></i> تماشا کنید
                     </a>
-                    <button class="bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                        <i class="fas fa-bookmark"></i> واچ‌لیست
+                    <button onclick="toggleWatchlist('${movie.id}', 'movie')" class="watchlist-btn-${movie.id} bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3">
+                        <i id="wl-icon-${movie.id}" class="${isInWatchlist(movie.id, 'movie') ? 'fas text-amber-500' : 'far text-white'} fa-bookmark"></i> واچ‌لیست
                     </button>
                 </div>
             </div>
         </div>
     `;
+
+  // Listen to watchlist updates and update button state
+  window.addEventListener('watchlistChanged', (e) => {
+    if (String(e.detail.id) === String(movie.id)) {
+      const icon = document.getElementById(`wl-icon-${movie.id}`);
+      if (icon) {
+        const added = isInWatchlist(movie.id, 'movie');
+        icon.className = `${added ? 'fas text-amber-500' : 'far text-white'} fa-bookmark`;
+      }
+    }
+  });
 }
 
 async function resolvePoster(itemId, type) {
@@ -395,6 +461,10 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
   document.querySelector('meta[name="description"]')?.setAttribute('content', metaDesc);
   document.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title);
   document.querySelector('meta[property="og:image"]')?.setAttribute('content', backdropUrl);
+  document.querySelector('meta[property="og:description"]')?.setAttribute('content', metaDesc);
+  document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', document.title);
+  document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', metaDesc);
+  document.querySelector('meta[name="twitter:image"]')?.setAttribute('content', backdropUrl);
 
   // Background and poster
   const detailsBg = document.getElementById('main-content-sections');
@@ -413,6 +483,19 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
 
   // Metadata Grid
   const metaGrid = document.getElementById('details-meta-grid');
+
+  // Watchlist Button setup for detail page
+  const wlBtn = document.getElementById('details-watchlist-btn');
+  if (wlBtn) {
+    const isAdded = isInWatchlist(data.id, type);
+    wlBtn.innerHTML = `<i class="${isAdded ? 'fas text-amber-500' : 'far text-white'} fa-bookmark text-xl"></i>`;
+    wlBtn.onclick = () => {
+      window.toggleWatchlist(data.id, type);
+      const newlyAdded = isInWatchlist(data.id, type);
+      wlBtn.innerHTML = `<i class="${newlyAdded ? 'fas text-amber-500' : 'far text-white'} fa-bookmark text-xl"></i>`;
+    };
+  }
+
   let metaHtml = `
         <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500"><i class="fas fa-tags"></i></div>
