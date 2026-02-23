@@ -116,7 +116,26 @@ body::before {
             transparent 100%);
 }
 
-/* Entrance Animations */
+/* Global Loading Bar */
+#loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(to right, #f59e0b, #fbbf24);
+    box-shadow: 0 0 10px var(--accent-glow);
+    width: 0;
+    z-index: 9999;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-gradient-amber {
+    background: linear-gradient(to l, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
 .reveal-on-scroll {
     opacity: 0;
     transform: translateY(30px);

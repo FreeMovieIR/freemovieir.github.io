@@ -96,14 +96,14 @@ async function getCachedOrFetchPoster(imdbId, itemTitle) {
 function showLoading() {
     if (document.getElementById('loading-overlay')) return;
     const loadingHtml = `
-          <div id="loading-overlay" class="fixed inset-0 bg-base-950/80 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-300">
-               <div class="flex flex-col items-center">
-                  <div class="inline-block relative w-20 h-20 mb-6">
-                      <div class="absolute top-0 left-0 w-full h-full border-4 border-amber-500/20 rounded-full"></div>
-                      <div class="absolute top-0 left-0 w-full h-full border-4 border-amber-500 rounded-full border-t-transparent animate-spin"></div>
-                      <i class="fas fa-film absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-amber-500 text-xl"></i>
+          <div id="loading-overlay" class="fixed inset-0 bg-base-950/40 backdrop-blur-xl flex items-center justify-center z-[100] transition-all duration-700">
+               <div class="flex flex-col items-center reveal-on-scroll active">
+                  <div class="inline-block relative w-24 h-24 mb-6">
+                      <div class="absolute top-0 left-0 w-full h-full border-4 border-amber-500/10 rounded-full"></div>
+                      <div class="absolute top-0 left-0 w-full h-full border-4 border-amber-500 rounded-full border-t-transparent animate-spin shadow-[0_0_20px_rgba(245,158,11,0.3)]"></div>
+                      <i class="fas fa-search absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-amber-500 text-2xl animate-pulse"></i>
                   </div>
-                  <p class="text-white text-lg font-black tracking-tighter">در حال دریافت نتایج ...</p>
+                  <p class="text-white text-2xl font-black tracking-tighter text-gradient-amber">در حال جستجوی هوشمند...</p>
               </div>
           </div>
       `;
@@ -165,7 +165,7 @@ function displayInitialResults(container, sectionElement, titleElement, items, i
     titleElement.textContent = `نتایج ${typeLabel} برای "${query}"`;
 
     if (items && items.length > 0) {
-        const resultsHtml = items.map(item => createResultCard(item, itemType)).join('');
+        const resultsHtml = items.map(item => window.createMovieCard(item, defaultPoster, itemType)).join('');
         container.innerHTML = resultsHtml;
         sectionElement.classList.remove('hidden');
     } else {

@@ -110,7 +110,7 @@ async function renderHero(movie) {
                         <i class="fas fa-star text-amber-500"></i> ${movie.vote_average.toFixed(1)}
                     </span>
                 </div>
-                <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+                <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl reveal-on-scroll">
                     ${title}
                 </h1>
                 <p class="text-lg md:text-xl text-gray-300 leading-relaxed max-w-xl drop-shadow-lg line-clamp-3 md:line-clamp-none">
@@ -428,6 +428,7 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     detailsBg.style.backgroundPosition = 'center top';
   }
   document.getElementById('details-poster').src = posterUrl;
+  document.getElementById('details-poster').classList.add('reveal-on-scroll');
 
   // Text Data
   document.getElementById('details-title').textContent = title;
@@ -451,11 +452,11 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
   }
 
   let metaHtml = `
-        <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+    <div class="glass-card-premium p-4 rounded-2xl border-white/5 flex items-center gap-4 reveal-on-scroll">
             <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500"><i class="fas fa-tags"></i></div>
             <div><span class="text-gray-400 text-xs block mb-1">ژانر</span><strong class="text-white text-sm">${genres}</strong></div>
         </div>
-        <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+        <div class="glass-card-premium p-4 rounded-2xl border-white/5 flex items-center gap-4 reveal-on-scroll">
             <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500"><i class="fas fa-calendar-alt"></i></div>
             <div><span class="text-gray-400 text-xs block mb-1">سال تولید</span><strong class="text-white text-sm">${year || 'نامشخص'}</strong></div>
         </div>
@@ -465,11 +466,11 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     const director = data.credits?.crew?.find(c => c.job === 'Director')?.name || 'نامشخص';
     const runtime = data.runtime ? `${data.runtime} دقیقه` : 'نامشخص';
     metaHtml += `
-            <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+            <div class="glass-card-premium p-4 rounded-2xl border-white/5 flex items-center gap-4 reveal-on-scroll">
                 <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i class="fas fa-video"></i></div>
                 <div><span class="text-gray-400 text-xs block mb-1">کارگردان</span><strong class="text-white text-sm">${director}</strong></div>
             </div>
-            <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+            <div class="glass-card-premium p-4 rounded-2xl border-white/5 flex items-center gap-4 reveal-on-scroll">
                 <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500"><i class="fas fa-clock"></i></div>
                 <div><span class="text-gray-400 text-xs block mb-1">مدت زمان</span><strong class="text-white text-sm">${runtime}</strong></div>
             </div>
@@ -477,7 +478,7 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
   } else {
     const seasons = data.number_of_seasons || 'نامشخص';
     metaHtml += `
-            <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+            <div class="glass-card-premium p-4 rounded-2xl border-white/5 flex items-center gap-4 reveal-on-scroll">
                 <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i class="fas fa-tv"></i></div>
                 <div><span class="text-gray-400 text-xs block mb-1">تعداد فصل‌ها</span><strong class="text-white text-sm">${seasons}</strong></div>
             </div>

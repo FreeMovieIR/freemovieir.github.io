@@ -14,14 +14,24 @@
   <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico">
   <style>
     .checkbox-label {
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
     }
 
     input[type="checkbox"]:checked+.checkbox-label {
-      background: #f59e0b;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
       color: black;
-      border-color: #f59e0b;
+      border-color: transparent;
       font-weight: 800;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+      transform: scale(1.05);
+    }
+
+    .input-premium-focus:focus-within {
+      border-color: rgba(245, 158, 11, 0.5);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+      transform: translateY(-2px);
     }
   </style>
 </head>
@@ -64,16 +74,20 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-              <label class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">حداقل امتیاز</label>
+            <div
+              class="p-4 bg-white/5 rounded-2xl border border-white/5 input-premium-focus transition-all duration-300">
+              <label class="block text-gray-500 text-[10px] font-black uppercase tracking-widest mb-3">حداقل
+                امتیاز</label>
               <input type="number" id="min-vote" min="0" max="10" step="0.1"
-                class="w-full bg-transparent border-none text-white text-lg font-black focus:ring-0 p-0"
+                class="w-full bg-transparent border-none text-white text-lg font-black focus:ring-0 p-0 placeholder:text-gray-700"
                 placeholder="0.0">
             </div>
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-              <label class="block text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">سال ساخت (از)</label>
+            <div
+              class="p-4 bg-white/5 rounded-2xl border border-white/5 input-premium-focus transition-all duration-300">
+              <label class="block text-gray-500 text-[10px] font-black uppercase tracking-widest mb-3">سال ساخت
+                (از)</label>
               <input type="number" id="release-year" min="1900" max="2026"
-                class="w-full bg-transparent border-none text-white text-lg font-black focus:ring-0 p-0"
+                class="w-full bg-transparent border-none text-white text-lg font-black focus:ring-0 p-0 placeholder:text-gray-700"
                 placeholder="2024">
             </div>
           </div>

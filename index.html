@@ -47,99 +47,11 @@
         data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
     <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js" defer></script>
     <style>
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            direction: rtl;
-        }
-
-        * {
-            box-sizing: border-box;
-            padding: 0;
-            margin: 0;
-            text-decoration: none;
-        }
-
-        .skeleton {
-            background: #333;
-            animation: pulse 1.5s infinite;
-            height: 16rem;
-            border-radius: 0.5rem;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 0.5;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.5;
-            }
-        }
-
-        .nav-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        #disclaimer-notice {
-            z-index: 10;
-            direction: rtl;
-        }
-
-        /* استایل نوار پیشرفت */
-        #loading-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 4px;
-            background-color: #FFC107;
-            width: 0;
-            z-index: 9999;
-            transition: width 0.3s ease;
-        }
-
-        /* استایل‌های لودینگ قدیمی (در صورت نیاز به حفظ یا حذف) */
-        .popcorn {
-            animation: bounce 1s infinite ease-in-out;
-        }
-
-        .popcorn-piece {
-            transform-origin: center;
-        }
-
-        @keyframes bounce {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        @keyframes pop {
-            0% {
-                transform: scale(0.8) translateY(0);
-                opacity: 0.8;
-            }
-
-            50% {
-                transform: scale(1.1) translateY(-15px);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(0.8) translateY(0);
-                opacity: 0.8;
-            }
+        /* Home Specific Header Overrides */
+        #hero-section {
+            background-size: cover;
+            background-position: center;
+            transition: all 1s ease;
         }
     </style>
 </head>
@@ -267,9 +179,10 @@
                     </button>
                 </div>
 
-                <article class="glass-card p-8 md:p-12 rounded-[2.5rem] relative z-10 overflow-hidden group">
+                <article
+                    class="glass-card-premium p-8 md:p-12 rounded-[2.5rem] relative z-10 overflow-hidden group border border-white/10 shadow-2xl shadow-black">
                     <div
-                        class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                        class="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-[2000ms]">
                     </div>
 
                     <div class="flex flex-col md:flex-row gap-12 relative z-10">
