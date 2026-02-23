@@ -1,7 +1,18 @@
 {
+  "scripts": {
+    "lint": "eslint . --ext .js,.html",
+    "format": "prettier --write .",
+    "fix": "npm run lint -- --fix && npm run format"
+  },
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.15",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.15"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.2.5",
+    "eslint-config-prettier": "^9.1.0"
   }
 }

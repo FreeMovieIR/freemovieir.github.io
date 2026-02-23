@@ -1,0 +1,36 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:import/errors",
+        "plugin:import/warnings",
+        "prettier"
+    ],
+    "plugins": [
+        "import"
+    ],
+    "rules": {
+        "no-console": "warn",
+        "no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_"
+            }
+        ],
+        "eqeqeq": [
+            "error",
+            "always"
+        ],
+        "curly": [
+            "error",
+            "all"
+        ],
+        "prefer-const": "error"
+    },
+    "parserOptions": {
+        "sourceType": "module"
+    }
+}
