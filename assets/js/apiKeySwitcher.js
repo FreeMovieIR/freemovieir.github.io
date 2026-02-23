@@ -5,9 +5,10 @@ class ApiKeySwitcher {
 
     getService(serviceName) {
         if (!this.services[serviceName]) {
+            const savedIndex = parseInt(localStorage.getItem(`apiKeyIndex_${serviceName}`)) || 0;
             this.services[serviceName] = {
                 keys: [],
-                currentIndex: 0,
+                currentIndex: savedIndex,
                 userToken: localStorage.getItem(`user${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Token`)
             };
         }
@@ -29,6 +30,7 @@ class ApiKeySwitcher {
         const s = this.getService(serviceName);
         if (s.userToken || !s.keys || s.keys.length === 0) return;
         s.currentIndex = (s.currentIndex + 1) % s.keys.length;
+        localStorage.setItem(`apiKeyIndex_${serviceName}`, s.currentIndex);
         console.log(`[${serviceName}] تعویض به کلید جدید: ${this.getCurrentKey(serviceName)}`);
     }
 
@@ -54,6 +56,12 @@ class ApiKeySwitcher {
                     throw new Error(`خطای سرور (${serviceName}): ${response.status}`);
                 }
                 const data = await response.json();
+
+                // Success! If we are multi-key, reward this key by keeping its index
+                if (!s.userToken && s.keys.length > 0) {
+                    localStorage.setItem(`apiKeyIndex_${serviceName}`, s.currentIndex);
+                }
+
                 // Special check for OMDB "False" response
                 if (serviceName === 'omdb' && data.Response === 'False') {
                     throw new Error(data.Error || 'فیلم یافت نشد');
@@ -92,8 +100,13 @@ async function loadApiKeys() {
     }
 
     // Initialize OMDB if not loaded
-    if (!switcher.services.omdb) {
-        switcher.services.omdb = { keys: ['38fa39d5'], currentIndex: 0, userToken: localStorage.getItem('userOmdbToken') };
+    if (!switcher.services.omdb || switcher.services.omdb.keys.length === 0) {
+        const savedIndex = parseInt(localStorage.getItem('apiKeyIndex_omdb')) || 0;
+        switcher.services.omdb = {
+            keys: [window.CONFIG ? window.CONFIG.OMDB_DEFAULT_KEY : '38fa39d5'],
+            currentIndex: savedIndex,
+            userToken: localStorage.getItem('userOmdbToken')
+        };
     }
 
     return switcher;

@@ -1,11 +1,12 @@
-const defaultApiKey = '1dc4cbf81f0accf4fa108820d551dafc';
+const defaultApiKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
 const userTmdbToken = localStorage.getItem('userTmdbToken');
 const apiKey = userTmdbToken || defaultApiKey;
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
+const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
 
+const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
 const apiUrls = {
-  now_playing: `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=fa`,
-  tv_trending: `https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}&language=fa`
+  now_playing: `${tmdbBase}/trending/movie/week?api_key=${apiKey}&language=fa`,
+  tv_trending: `${tmdbBase}/trending/tv/week?api_key=${apiKey}&language=fa`
 };
 
 // imageCache removed
@@ -86,9 +87,10 @@ async function renderHero(movie) {
   const heroContainer = document.getElementById('hero-section');
   if (!heroContainer || !movie) return;
 
+  const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
   const poster = await window.resolvePoster(movie.id, 'hero', movie.poster_path);
   // Backdrops should use w1280 for quality since it's a hero section
-  const backdrop = movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` : poster;
+  const backdrop = movie.backdrop_path ? `${tmdbImageBase}/w1280${movie.backdrop_path}` : poster;
   const title = movie.title || 'فیری مووی';
   const overview = movie.overview || 'مرجع دانلود فیلم و سریال';
 
@@ -404,7 +406,8 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
   const overview = data.overview || 'خلاصه داستانی در دسترس نیست.';
   const genres = data.genres?.map(g => g.name).join(', ') || 'نامشخص';
   const rating = data.vote_average?.toFixed(1) || '—';
-  const backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/original${data.backdrop_path}` : posterUrl;
+  const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+  const backdropUrl = data.backdrop_path ? `${tmdbImageBase}/original${data.backdrop_path}` : posterUrl;
 
   // Update Document Meta
   document.title = `${title} (${year || ''}) - فیری مووی`;
@@ -488,7 +491,7 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     imdbLinkEl.innerHTML = `
             <a href="https://www.imdb.com/title/${imdbId}/" target="_blank" class="glass-card flex items-center justify-between p-4 rounded-2xl border-white/5 hover:bg-white/10 transition-all duration-300">
                 <div class="flex items-center gap-3">
-                    <img src="https://m.media-amazon.com/images/G/01/imdb/images-ANDW73HA/favicon_desktop_32x32._CB1582158068_.png" class="w-6 h-6">
+                    <img src="${window.CONFIG ? window.CONFIG.ASSETS.FAVICON_IMDB : 'https://m.media-amazon.com/images/G/01/imdb/images-ANDW73HA/favicon_desktop_32x32._CB1582158068_.png'}" class="w-6 h-6">
                     <span class="text-white font-bold">مشاهده در IMDb</span>
                 </div>
                 <i class="fas fa-external-link-alt text-xs text-amber-500"></i>
