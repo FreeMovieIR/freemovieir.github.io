@@ -55,10 +55,10 @@ function createContentCard(item, poster, type) {
   const title = item.title || item.name || 'نامشخص';
   const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
   const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
-  const route = type === 'movie' ? 'movie' : 'series';
+  const paramText = type === 'movie' ? `m=${item.id}` : `s=${item.id}`;
 
   return `
-    <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" onclick="window.location.href='/${route}/index.html?id=${item.id}'">
+    <div class="movie-card group relative overflow-hidden rounded-2xl glass-card transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer" onclick="window.location.href='/?${paramText}'">
       <div class="aspect-[2/3] relative overflow-hidden">
         <img src="${poster}" alt="${title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
         <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
@@ -116,7 +116,7 @@ async function renderHero(movie) {
                     ${overview}
                 </p>
                 <div class="flex flex-wrap gap-4 pt-4">
-                    <a href="/movie/index.html?id=${movie.id}" class="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl shadow-amber-500/20">
+                    <a href="/?m=${movie.id}" class="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl shadow-amber-500/20">
                         <i class="fas fa-play"></i> تماشا کنید
                     </a>
                     <button class="bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3">
@@ -355,10 +355,177 @@ function manageThemeToggle() {
   }
 }
 
+// --- Routing and Details Fetch Logic ---
+
+async function fetchDetails(id, type) {
+  const isMovie = type === 'movie';
+  const baseUrl = `https://api.themoviedb.org/3/${isMovie ? 'movie' : 'tv'}/${id}?api_key=${apiKey}&language=fa-IR&append_to_response=credits,videos,external_ids`;
+
+  try {
+    startLoadingBar();
+    const res = await fetch(baseUrl);
+    if (!res.ok) throw new Error("Item not found");
+
+    const data = await res.json();
+    const imdbId = data.external_ids?.imdb_id || '';
+    const posterUrl = await resolvePoster(id, type);
+
+    renderDetailsView(data, posterUrl, imdbId, type);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('general-error-message').textContent = 'خطا در دریافت اطلاعات. لطفا دوباره تلاش کنید.';
+    document.getElementById('general-error-message').classList.remove('hidden');
+  } finally {
+    finishLoadingBar();
+  }
+}
+
+function renderDetailsView(data, posterUrl, imdbId, type) {
+  const isMovie = type === 'movie';
+  const title = data.title || data.name || 'بدون نام';
+  const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
+  const overview = data.overview || 'خلاصه داستانی در دسترس نیست.';
+  const genres = data.genres?.map(g => g.name).join(', ') || 'نامشخص';
+  const rating = data.vote_average?.toFixed(1) || '—';
+  const backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/original${data.backdrop_path}` : posterUrl;
+
+  // Update Document Meta
+  document.title = `${title} (${year || ''}) - فیری مووی`;
+  const metaDesc = overview.substring(0, 150) + '...';
+  document.querySelector('meta[name="description"]')?.setAttribute('content', metaDesc);
+  document.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title);
+  document.querySelector('meta[property="og:image"]')?.setAttribute('content', backdropUrl);
+
+  // Background and poster
+  const detailsBg = document.getElementById('main-content-sections');
+  if (detailsBg) {
+    detailsBg.style.backgroundImage = `url('${backdropUrl}')`;
+    detailsBg.style.backgroundSize = 'cover';
+    detailsBg.style.backgroundPosition = 'center top';
+  }
+  document.getElementById('details-poster').src = posterUrl;
+
+  // Text Data
+  document.getElementById('details-title').textContent = title;
+  document.getElementById('rating-text').textContent = rating;
+  document.getElementById('details-overview').textContent = overview;
+  document.getElementById('details-type-badge').textContent = isMovie ? 'فیلم' : 'سریال';
+
+  // Metadata Grid
+  const metaGrid = document.getElementById('details-meta-grid');
+  let metaHtml = `
+        <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500"><i class="fas fa-tags"></i></div>
+            <div><span class="text-gray-400 text-xs block mb-1">ژانر</span><strong class="text-white text-sm">${genres}</strong></div>
+        </div>
+        <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500"><i class="fas fa-calendar-alt"></i></div>
+            <div><span class="text-gray-400 text-xs block mb-1">سال تولید</span><strong class="text-white text-sm">${year || 'نامشخص'}</strong></div>
+        </div>
+    `;
+
+  if (isMovie) {
+    const director = data.credits?.crew?.find(c => c.job === 'Director')?.name || 'نامشخص';
+    const runtime = data.runtime ? `${data.runtime} دقیقه` : 'نامشخص';
+    metaHtml += `
+            <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i class="fas fa-video"></i></div>
+                <div><span class="text-gray-400 text-xs block mb-1">کارگردان</span><strong class="text-white text-sm">${director}</strong></div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500"><i class="fas fa-clock"></i></div>
+                <div><span class="text-gray-400 text-xs block mb-1">مدت زمان</span><strong class="text-white text-sm">${runtime}</strong></div>
+            </div>
+        `;
+  } else {
+    const seasons = data.number_of_seasons || 'نامشخص';
+    metaHtml += `
+            <div class="glass-card p-4 rounded-2xl border-white/5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><i class="fas fa-tv"></i></div>
+                <div><span class="text-gray-400 text-xs block mb-1">تعداد فصل‌ها</span><strong class="text-white text-sm">${seasons}</strong></div>
+            </div>
+         `;
+  }
+  metaGrid.innerHTML = metaHtml;
+
+  // IMDb Link
+  const imdbLinkEl = document.getElementById('imdb-link');
+  if (imdbId) {
+    imdbLinkEl.innerHTML = `
+            <a href="https://www.imdb.com/title/${imdbId}/" target="_blank" class="glass-card flex items-center justify-between p-4 rounded-2xl border-white/5 hover:bg-white/10 transition-all duration-300">
+                <div class="flex items-center gap-3">
+                    <img src="https://m.media-amazon.com/images/G/01/imdb/images-ANDW73HA/favicon_desktop_32x32._CB1582158068_.png" class="w-6 h-6">
+                    <span class="text-white font-bold">مشاهده در IMDb</span>
+                </div>
+                <i class="fas fa-external-link-alt text-xs text-amber-500"></i>
+            </a>
+        `;
+  } else {
+    imdbLinkEl.innerHTML = '';
+  }
+
+  // Trailer
+  let trailerUrl = null;
+  if (data.videos?.results) {
+    const trailer = data.videos.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+    if (trailer) trailerUrl = `https://www.youtube.com/embed/${trailer.key}`;
+  }
+
+  document.getElementById('trailer-container').innerHTML = trailerUrl
+    ? `<iframe src="${trailerUrl}" class="w-full aspect-video rounded-3xl" allowfullscreen></iframe>`
+    : `<p class="text-amber-500 text-center py-8">تریلر در دسترس نیست</p>`;
+
+  // Download Links
+  const downloadContainer = document.getElementById('download-links');
+  if (isMovie) {
+    const imdbShort = imdbId.replace('tt', '');
+    downloadContainer.innerHTML = `
+            <a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" target="_blank" class="bg-amber-500 text-black px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors"><i class="fas fa-download"></i> دانلود مستقیم</a>
+            <a href="http://subtitlestar.com/go-to.php?imdb-id=${imdbId}" target="_blank" class="glass-card text-white px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"><i class="fas fa-language"></i> زیرنویس</a>
+        `;
+  } else {
+    let dlHtml = '';
+    const seasons = data.number_of_seasons || 1;
+    for (let s = 1; s <= seasons; s++) {
+      dlHtml += `
+                <div class="w-full glass-card p-4 rounded-2xl text-center">
+                    <h3 class="font-bold text-amber-500 mb-2">فصل ${s}</h3>
+                    <div class="flex gap-2 flex-wrap justify-center">
+                        <a href="https://subtitle.saymyname.website/DL/filmgir/?i=${imdbId}&f=${s}&q=1" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 1</a>
+                        <a href="https://subtitle.saymyname.website/DL/filmgir/?i=${imdbId}&f=${s}&q=2" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 2</a>
+                    </div>
+                </div>
+            `;
+    }
+    downloadContainer.innerHTML = dlHtml;
+  }
+
+  // View Switch
+  document.getElementById('home-view').classList.add('hidden');
+  document.getElementById('details-view').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Check Routes via URL Search Params
+async function handleRouting() {
+  const params = new URLSearchParams(window.location.search);
+  const movieId = params.get('m');
+  const seriesId = params.get('s');
+
+  if (movieId) {
+    await fetchDetails(movieId, 'movie');
+  } else if (seriesId) {
+    await fetchDetails(seriesId, 'series');
+  } else {
+    // Only fetch main content if on home route
+    await fetchAndDisplayContent();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     await initializeSwitcher();
-    await fetchAndDisplayContent();
+    await handleRouting();
     manageFabButton();
     manageNotification();
     manageDisclaimerNotice();

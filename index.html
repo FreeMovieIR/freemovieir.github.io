@@ -138,65 +138,158 @@
     <!-- هدر -->
     <div id="shared-header"></div>
 
-    <!-- بخش هیرو (Featured Content) -->
-    <div id="hero-section" class="relative overflow-hidden mb-12 min-h-[500px] flex items-center">
-        <!-- Will be populated by main.js -->
-        <div class="container mx-auto px-6 relative z-10 animate-pulse">
-            <div class="h-8 bg-white/10 rounded-lg w-1/4 mb-4"></div>
-            <div class="h-16 bg-white/10 rounded-lg w-1/2 mb-6"></div>
-            <div class="h-24 bg-white/10 rounded-lg w-3/4 mb-8"></div>
-            <div class="flex gap-4">
-                <div class="h-12 bg-white/10 rounded-xl w-32"></div>
-                <div class="h-12 bg-white/10 rounded-xl w-32"></div>
+    <!-- Main Container for SPA -->
+    <main id="app-container" class="flex-1 w-full">
+
+        <!-- Home View -->
+        <div id="home-view" class="w-full transition-opacity duration-300">
+            <!-- بخش هیرو (Featured Content) -->
+            <div id="hero-section" class="relative overflow-hidden mb-12 min-h-[500px] flex items-center">
+                <!-- Will be populated by main.js -->
+                <div class="container mx-auto px-6 relative z-10 animate-pulse">
+                    <div class="h-8 bg-white/10 rounded-lg w-1/4 mb-4"></div>
+                    <div class="h-16 bg-white/10 rounded-lg w-1/2 mb-6"></div>
+                    <div class="h-24 bg-white/10 rounded-lg w-3/4 mb-8"></div>
+                    <div class="flex gap-4">
+                        <div class="h-12 bg-white/10 rounded-xl w-32"></div>
+                        <div class="h-12 bg-white/10 rounded-xl w-32"></div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- بخش فیلم‌های جدید -->
-    <section class="container mx-auto py-12 relative">
-        <div class="absolute -top-24 right-0 w-64 h-64 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none">
-        </div>
+            <!-- بخش فیلم‌های جدید -->
+            <section class="container mx-auto py-12 relative">
+                <div
+                    class="absolute -top-24 right-0 w-64 h-64 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none">
+                </div>
 
-        <div class="flex items-center justify-between mb-10 px-6">
-            <h2 class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-amber-500 pr-4">
-                جدیدترین فیلم‌ها</h2>
-            <a href="/pages/search/"
-                class="text-amber-500 hover:text-amber-400 transition-colors font-bold text-sm flex items-center gap-2">
-                مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
-            </a>
-        </div>
+                <div class="flex items-center justify-between mb-10 px-6">
+                    <h2
+                        class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-amber-500 pr-4">
+                        جدیدترین فیلم‌ها</h2>
+                    <a href="/pages/search/"
+                        class="text-amber-500 hover:text-amber-400 transition-colors font-bold text-sm flex items-center gap-2">
+                        مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
+                    </a>
+                </div>
 
-        <div id="new-movies" class="content-grid">
-            <!-- Skeleton placeholders -->
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-        </div>
-    </section>
+                <div id="new-movies" class="content-grid">
+                    <!-- Skeleton placeholders -->
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                </div>
+            </section>
 
-    <!-- بخش سریال‌های پرطرفدار -->
-    <section class="container mx-auto py-12 relative">
-        <div class="absolute -top-24 left-0 w-64 h-64 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none">
-        </div>
+            <!-- بخش سریال‌های پرطرفدار -->
+            <section class="container mx-auto py-12 relative">
+                <div
+                    class="absolute -top-24 left-0 w-64 h-64 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none">
+                </div>
 
-        <div class="flex items-center justify-between mb-10 px-6">
-            <h2 class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-blue-500 pr-4">
-                سریال‌های پرطرفدار</h2>
-            <a href="/pages/search/"
-                class="text-blue-500 hover:text-blue-400 transition-colors font-bold text-sm flex items-center gap-2">
-                مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
-            </a>
-        </div>
+                <div class="flex items-center justify-between mb-10 px-6">
+                    <h2
+                        class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-blue-500 pr-4">
+                        سریال‌های پرطرفدار</h2>
+                    <a href="/pages/search/"
+                        class="text-blue-500 hover:text-blue-400 transition-colors font-bold text-sm flex items-center gap-2">
+                        مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
+                    </a>
+                </div>
 
-        <div id="trending-tv" class="content-grid">
-            <!-- Skeleton placeholders -->
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-        </div>
-    </section>
+                <div id="trending-tv" class="content-grid">
+                    <!-- Skeleton placeholders -->
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                </div>
+            </section>
+        </div> <!-- End of Home View -->
+
+        <!-- Details View (Initially Hidden) -->
+        <div id="details-view" class="w-full hidden transition-opacity duration-300">
+            <div id="general-error-message"
+                class="container mx-auto my-4 p-4 bg-red-800 text-white rounded shadow-lg text-center hidden"></div>
+
+            <div class="container mx-auto flex-1 py-12 px-6 relative" id="main-content-sections">
+                <div class="absolute inset-0 bg-base-950/40 backdrop-blur-3xl pointer-events-none"></div>
+
+                <article class="glass-card p-8 md:p-12 rounded-[2.5rem] relative z-10 overflow-hidden group">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-12 relative z-10">
+                        <!-- Poster Section -->
+                        <div class="w-full md:w-[400px] shrink-0">
+                            <div class="relative group/poster">
+                                <div
+                                    class="absolute -inset-4 bg-amber-500/20 blur-2xl rounded-3xl opacity-0 group-hover/poster:opacity-100 transition-opacity duration-700">
+                                </div>
+                                <img id="details-poster" src="/images/default-freemovie-300.png" alt="پوستر"
+                                    class="w-full rounded-[2rem] shadow-2xl relative z-10 transition-transform duration-700 group-hover/poster:scale-[1.02]"
+                                    loading="lazy">
+                            </div>
+                            <div id="imdb-link" class="mt-8 flex flex-col gap-4"></div>
+                        </div>
+
+                        <!-- Info Section -->
+                        <div class="w-full md:w-2/3 flex flex-col">
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3 animate-fade-in">
+                                    <span id="details-type-badge"
+                                        class="bg-amber-500 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-amber-500/20">جزئیات</span>
+                                    <div id="rating-badge"
+                                        class="glass-card px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold">
+                                        <i class="fas fa-star text-amber-500"></i>
+                                        <span id="rating-text" class="text-white"></span>
+                                    </div>
+                                </div>
+                                <h1 id="details-title"
+                                    class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+                                    عنوان
+                                </h1>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-10" id="details-meta-grid">
+                                <!-- Dynamically populated based on type (movie/series) -->
+                            </div>
+
+                            <div class="mt-12">
+                                <h3 class="text-2xl font-black text-white mb-6 flex items-center gap-4 drop-shadow-lg">
+                                    <span class="w-10 h-[2px] bg-amber-500 rounded-full"></span>
+                                    خلاصه داستان
+                                </h3>
+                                <p id="details-overview"
+                                    class="text-gray-300 leading-relaxed text-lg md:text-xl text-opacity-90 glass-card p-8 rounded-3xl border-white/5 shadow-inner">
+                                    در حال بارگذاری...
+                                </p>
+                            </div>
+
+                            <div id="download-links" class="mt-12 flex flex-col md:flex-row gap-6 flex-wrap w-full">
+                                <!-- دانلود -->
+                            </div>
+
+                            <div id="trailer-container"
+                                class="mt-12 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 bg-black/40 aspect-video group/trailer relative">
+                                <!-- Trailer content -->
+                            </div>
+
+                            <!-- بخش سریال‌های مرتبط (فقط برای سریال‌ها) -->
+                            <div id="related-series-section" class="mt-12 hidden">
+                                <h2 class="text-2xl font-bold text-white mb-6">سریال‌های مرتبط</h2>
+                                <div id="related-series"
+                                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div> <!-- End of Details View -->
+
+    </main>
 
     <!-- دکمه گزارش باگ -->
     <div class="fixed bottom-5 right-5 z-50">
