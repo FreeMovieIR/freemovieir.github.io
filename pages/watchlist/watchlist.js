@@ -15,10 +15,17 @@ async function loadWatchlist() {
     const hasMovies = watchlist.movies.length > 0;
     const hasSeries = watchlist.series.length > 0;
 
+    const totalCount = watchlist.movies.length + watchlist.series.length;
+    const totalCountEl = document.getElementById('total-count');
+    if (totalCountEl) totalCountEl.textContent = totalCount.toLocaleString('fa-IR');
+
     if (!hasMovies && !hasSeries) {
         if (emptyMessage) emptyMessage.classList.remove('hidden');
     } else {
         if (emptyMessage) emptyMessage.classList.add('hidden');
+
+        if (hasMovies) document.getElementById('movies-heading')?.classList.remove('hidden');
+        if (hasSeries) document.getElementById('series-heading')?.classList.remove('hidden');
 
         if (typeof loadApiKeys === 'function' && !apiKeySwitcher) {
             apiKeySwitcher = await loadApiKeys();
@@ -58,8 +65,11 @@ async function fetchAndDisplayItem(itemId, type, container) {
         wrapper.innerHTML = itemCard;
 
         const trashBtn = document.createElement('button');
-        trashBtn.onclick = () => window.removeFromWatchlist(itemId, type);
-        trashBtn.className = 'absolute top-3 left-3 bg-red-500/80 hover:bg-red-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all opacity-0 group-hover/wrapper:opacity-100 z-30 shadow-lg';
+        trashBtn.onclick = (e) => {
+            e.stopPropagation();
+            window.removeFromWatchlist(itemId, type);
+        };
+        trashBtn.className = 'absolute top-3 left-3 bg-red-500/20 hover:bg-red-500 backdrop-blur-md text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 opacity-0 group-hover/wrapper:opacity-100 z-30 shadow-lg border border-red-500/30 hover:scale-110';
         trashBtn.innerHTML = '<i class="fas fa-trash-alt text-sm"></i>';
 
         wrapper.appendChild(trashBtn);

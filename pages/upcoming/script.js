@@ -1,15 +1,10 @@
-const apiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // کلید API TMDb
-const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
-let apiKeySwitcher;
-
-// تنظیمات صفحه‌بندی
-let moviePage = 1;
-let tvPage = 1;
-let isLoading = false;
+const tmdbKey = window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc';
+const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
+const language = 'fa-IR';
 
 const apiUrls = {
-    upcomingMovies: `https://zxcode.ir/3/movie/upcoming?api_key=${apiKey}&language=fa-IR&page=`,
-    upcomingTv: `https://zxcode.ir/3/tv/on_the_air?api_key=${apiKey}&language=fa-IR&page=`
+    upcomingMovies: `${tmdbBase}/movie/upcoming?api_key=${tmdbKey}&language=${language}&page=`,
+    upcomingTv: `${tmdbBase}/tv/on_the_air?api_key=${tmdbKey}&language=${language}&page=`
 };
 
 // کش تصاویر
@@ -20,17 +15,7 @@ async function initializeSwitcher() {
     console.log('سوئیچر کلید API مقداردهی شد');
 }
 
-// مدیریت نوار پیشرفت
-function startLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    loadingBar.style.width = '30%';
-}
-
-function finishLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    loadingBar.style.width = '100%';
-    setTimeout(() => loadingBar.style.width = '0', 300);
-}
+// Loading bar managed by main.js functions available globally
 
 // محاسبه روزهای باقی‌مانده
 function getDaysLeft(releaseDate) {
@@ -97,24 +82,7 @@ function handleInfiniteScroll() {
     }
 }
 
-// مدیریت تم
-function manageThemeToggle() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const body = document.body;
-
-    themeToggle.addEventListener('click', () => {
-        body.classList.toggle('dark');
-        const isDark = body.classList.contains('dark');
-        themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        body.classList.remove('dark');
-        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-    }
-}
+// Theme managed by main.js/layout-shared.js
 
 // اجرای اولیه
 document.addEventListener('DOMContentLoaded', async () => {

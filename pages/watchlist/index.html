@@ -55,14 +55,24 @@
         <div class="absolute -top-24 right-0 w-96 h-96 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none">
         </div>
 
-        <div class="flex items-center gap-6 mb-12">
-            <div
-                class="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-xl shadow-amber-500/5">
-                <i class="fas fa-bookmark text-2xl"></i>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8 mb-16 reveal-on-scroll">
+            <div class="flex items-center gap-6">
+                <div
+                    class="w-20 h-20 rounded-[2rem] bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.1)] border border-amber-500/20">
+                    <i class="fas fa-bookmark text-3xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-5xl font-black text-white tracking-tighter">قفسه <span
+                            class="text-gradient-amber">شخصی</span></h1>
+                    <p class="text-gray-400 font-medium text-lg mt-1">فیلم‌ها و سریال‌هایی که برای تماشا رزرو کرده‌اید
+                    </p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-4xl font-black text-white tracking-tighter">واچ‌لیست شما</h1>
-                <p class="text-gray-500 text-sm mt-1">فیلم‌ها و سریال‌هایی که قصد تماشا دارید</p>
+            <div class="flex gap-4">
+                <div class="glass-card-premium px-6 py-3 rounded-2xl flex items-center gap-3 border-white/5">
+                    <span class="text-gray-500 text-xs font-black uppercase tracking-widest">تعداد کل</span>
+                    <span id="total-count" class="text-white font-black text-xl">۰</span>
+                </div>
             </div>
         </div>
 
@@ -82,22 +92,31 @@
             <div id="series-watchlist" class="content-grid"></div>
         </section>
 
-        <div id="empty-watchlist" class="hidden relative overflow-hidden" role="alert">
-            <div class="glass-card p-12 rounded-[2.5rem] border-white/5 text-center space-y-6 max-w-2xl mx-auto">
-                <div class="w-24 h-24 bg-base-900 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                    <i class="fas fa-folder-open text-4xl text-gray-700"></i>
+        <div id="empty-watchlist" class="hidden relative overflow-hidden py-20 reveal-on-scroll" role="alert">
+            <div
+                class="glass-card-premium p-16 rounded-[3rem] border border-white/10 text-center space-y-8 max-w-2xl mx-auto shadow-2xl relative group">
+                <div
+                    class="absolute -inset-1 bg-gradient-to-r from-amber-500/20 to-blue-500/20 rounded-[3.1rem] blur opacity-20 group-hover:opacity-40 transition-opacity duration-500">
                 </div>
-                <div class="space-y-2">
-                    <h3 class="text-2xl font-bold text-white">واچ‌لیست شما خالی است</h3>
-                    <p class="text-gray-400 leading-relaxed">
-                        هنوز هیچ فیلم یا سریالی به لیست تماشای خود اضافه نکرده‌اید. با جستجو در سایت، موارد دلخواه خود
-                        را پیدا کنید!
-                    </p>
+                <div class="relative z-10">
+                    <div
+                        class="w-32 h-32 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto shadow-inner mb-8 border border-amber-500/20">
+                        <i class="fas fa-layer-group text-5xl text-amber-500/50"></i>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-3xl font-black text-white">قفسه شما هنوز خالی است!</h3>
+                        <p class="text-gray-400 leading-relaxed text-lg font-medium">
+                            هنوز هیچ اثری را برای تماشای در آینده نشان‌گذاری نکرده‌اید.
+                            ما هزاران پیشنهاد جذاب در انتظار شما داریم.
+                        </p>
+                    </div>
+                    <div class="pt-8">
+                        <a href="/pages/search/"
+                            class="inline-flex items-center gap-3 bg-white text-black px-10 py-5 rounded-2xl font-black text-xl transition-all duration-500 hover:scale-110 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                            <i class="fas fa-search"></i> شروع جستجو و کشف
+                        </a>
+                    </div>
                 </div>
-                <a href="/pages/search/"
-                    class="inline-flex items-center gap-3 bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 shadow-xl shadow-amber-500/20">
-                    <i class="fas fa-search"></i> جستجوی فیلم و سریال
-                </a>
             </div>
         </div>
     </main>
@@ -105,21 +124,6 @@
     <div id="shared-footer"></div>
     <script src="/assets/js/apiKeySwitcher.js"></script>
     <script src="watchlist.js" defer></script>
-    <script>
-        const themeToggle = document.getElementById('theme-toggle');
-        const body = document.body;
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark');
-            const isDark = body.classList.contains('dark');
-            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        });
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'light') {
-            body.classList.remove('dark');
-            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-        }
-    </script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>
 

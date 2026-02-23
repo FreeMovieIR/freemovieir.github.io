@@ -18,74 +18,16 @@
     <script defer src="https://cloud.umami.is/script.js"
         data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
     <style>
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            direction: rtl;
-        }
-
-        .skeleton {
-            background: #333;
-            animation: pulse 1.5s infinite;
-            height: 16rem;
-            border-radius: 0.5rem;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 0.5;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.5;
-            }
-        }
-
-        #loading-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 4px;
-            background-color: #FFC107;
-            width: 0;
-            z-index: 9999;
-            transition: width 0.3s ease;
-        }
-
-        .content-container {
-            display: flex;
-            justify-content: space-between;
-            gap: 2rem;
-        }
-
-        .movies-column,
-        .tv-column {
-            width: 48%;
-        }
-
+        /* Upcoming Specific Styles */
         .days-left {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 193, 7, 0.9);
-            color: #1a1a2e;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .content-container {
-                flex-direction: column;
-            }
-
-            .movies-column,
-            .tv-column {
-                width: 100%;
-            }
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
+            padding: 0.4rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.7rem;
+            font-weight: 900;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+            letter-spacing: -0.025em;
         }
     </style>
 </head>
@@ -98,23 +40,34 @@
     <div id="shared-header"></div>
 
     <!-- بخش اصلی -->
-    <main class="container mx-auto py-8 flex-1">
-        <h1 class="text-3xl font-bold mb-8 text-center">فیلم‌ها و سریال‌های آینده</h1>
+    <main class="container mx-auto py-12 px-6 flex-1 relative z-10">
+        <div class="text-center mb-16 reveal-on-scroll">
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter drop-shadow-2xl">
+                محتوای <span class="text-gradient-amber">آینده</span>
+            </h1>
+            <p class="text-gray-400 mt-4 text-lg">فیلم‌ها و سریال‌هایی که به زودی منتشر می‌شوند</p>
+        </div>
 
-        <div class="content-container m-4">
-            <!-- سریال‌ها (چپ) -->
-            <section class="tv-column">
-                <h2 class="text-2xl font-bold mb-4 text-center">سریال‌های آینده</h2>
-                <div id="upcoming-tv" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- سریال‌ها (راست) -->
+            <section class="reveal-on-scroll">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="w-2 h-10 bg-blue-500 rounded-full"></span>
+                    <h2 class="text-3xl font-black text-white">سریال‌های مورد انتظار</h2>
+                </div>
+                <div id="upcoming-tv" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div class="skeleton w-full"></div>
                     <div class="skeleton w-full"></div>
                 </div>
             </section>
 
-            <!-- فیلم‌ها (راست) -->
-            <section class="movies-column">
-                <h2 class="text-2xl font-bold mb-4 text-center">فیلم‌های آینده</h2>
-                <div id="upcoming-movies" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- فیلم‌ها (چپ) -->
+            <section class="reveal-on-scroll" style="transition-delay: 200ms;">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="w-2 h-10 bg-amber-500 rounded-full"></span>
+                    <h2 class="text-3xl font-black text-white">فیلم‌های مورد انتظار</h2>
+                </div>
+                <div id="upcoming-movies" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div class="skeleton w-full"></div>
                     <div class="skeleton w-full"></div>
                 </div>
@@ -132,6 +85,7 @@
 
     <script src="/assets/js/apiKeySwitcher.js"></script>
     <script src="/assets/js/main.js" defer></script>
+    <script src="script.js" defer></script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>
 
