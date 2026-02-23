@@ -239,8 +239,40 @@
   if (footerTarget) {
     footerTarget.innerHTML = footerHtml;
   }
-  // --- Global Performance Helpers ---
-  function setupGlobalPreload() {
+  // --- Global Interactions & Performance ---
+  function setupGlobalInteractions() {
+    // 1. Reveal on Scroll (Intersection Observer)
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const observeNewElements = () => {
+      document.querySelectorAll('.reveal-on-scroll:not(.observed)').forEach(el => {
+        observer.observe(el);
+        el.classList.add('observed');
+      });
+    };
+
+    observeNewElements();
+    // Re-run periodically to catch dynamically added items
+    const dynamicObserver = new MutationObserver(observeNewElements);
+    dynamicObserver.observe(document.body, { childList: true, subtree: true });
+
+    // 3. Mouse Glow Effect
+    const glow = document.createElement('div');
+    glow.id = 'mouse-glow';
+    document.body.prepend(glow);
+
+    window.addEventListener('mousemove', (e) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    }, { passive: true });
+
+    // 4. Global Preload
     document.addEventListener('mouseover', async (e) => {
       const card = e.target.closest('.movie-card');
       if (card && card.dataset.id && card.dataset.type) {
@@ -248,20 +280,15 @@
         const type = card.dataset.type;
         const tmdbKey = localStorage.getItem('userTmdbToken') || (window.CONFIG ? window.CONFIG.TMDB_DEFAULT_KEY : '1dc4cbf81f0accf4fa108820d551dafc');
         const tmdbBase = window.CONFIG ? window.CONFIG.API.TMDB : 'https://api.themoviedb.org/3';
-
-        // Pre-fetch detail API for instant transitions
-        const isMovie = type === 'movie' || type === 'hero' || type === 'detail';
         const url = `${tmdbBase}/${type === 'series' ? 'tv' : 'movie'}/${id}?api_key=${tmdbKey}&language=fa-IR&append_to_response=credits,videos,external_ids`;
-
-        // Use high priority for hover-initiated fetch
         fetch(url, { priority: 'low' }).catch(() => { });
       }
     }, { passive: true });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupGlobalPreload);
+    document.addEventListener('DOMContentLoaded', setupGlobalInteractions);
   } else {
-    setupGlobalPreload();
+    setupGlobalInteractions();
   }
 })();
