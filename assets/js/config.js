@@ -28,6 +28,7 @@ window.CONFIG = {
     LINKS: {
         TWITTER: 'https://twitter.com/freemovie_ir',
         INSTAGRAM: 'https://instagram.com/freemovie_ir',
+        LINKEDIN: 'https://www.linkedin.com/company/freemoviez/',
         TWITTER_INTENT: 'https://twitter.com/intent/tweet?text=',
         DEFAULT_SUPPORT_TEXT: 'من از فیری مووی حمایت می‌کنم! یک سایت عالی برای تماشای فیلم و سریال: https://b2n.ir/freemovie',
         DOWNLOAD_PROXY: 'https://berlin.saymyname.website/Movies',
@@ -46,4 +47,5 @@ window.CONFIG = {
     OMDB_DEFAULT_KEY: '38fa39d5',
     MOVIE_DATA_KEY: '4F5A9C3D9A86FA54EACEDDD635185'
 };
+
 
