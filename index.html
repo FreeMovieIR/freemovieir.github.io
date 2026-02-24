@@ -5,21 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- تغییرات سئو -->
-    <title>فیری مووی - دانلود و تماشای جدیدترین فیلم‌ها و سریال‌ها</title>
+    <!-- تغییرات سئو -->
+    <title>فیری مووی - دانلود و تماشای بزرگترین آرشیو فیلم و سریال رایگان</title>
     <meta name="description"
-        content="فیری مووی - اطلاعات جدیدترین فیلم‌ها و سریال‌های پرطرفدار را ببینید و از لینک‌های دانلود الماس مووی استفاده کنید;">
-    <meta name="keywords" content="فیری مووی, دانلود فیلم, سریال پرطرفدار, اطلاعات فیلم, الماس مووی">
+        content="فیری مووی - دسترسی به هزاران فیلم و سریال روز دنیا با کیفیت عالی و لینک‌های مستقیم. آرشیو هوشمند و قابلیت تماشای آنلاین.">
+    <meta name="keywords" content="فیری مووی, دانلود فیلم, سریال رایگان, تماشای آنلاین, AI Movie Search">
     <meta name="robots" content="index, follow">
-    <meta name="author" content="تیم فیری مووی">
+    <meta name="author" content="FreeMovieIR Team">
     <link rel="canonical" href="https://freemovieir.github.io/">
-    <meta property="og:title" content="فیری مووی - صفحه اصلی">
-    <meta property="og:description" content="اطلاعات جدیدترین فیلم‌ها و سریال‌ها را در فیری مووی ببینید;">
+    <meta property="og:title" content="فیری مووی - مرجع فیلم و سریال">
+    <meta property="og:description" content="جدیدترین‌های سینما و تلویزیون را در فیری مووی تجربه کنید;">
     <meta property="og:image" content="https://freemovieir.github.io/assets/images/tweet2.png">
     <meta property="og:url" content="https://freemovieir.github.io/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="فیری مووی - صفحه اصلی">
-    <meta name="twitter:description" content="اطلاعات فیلم‌ها و سریال‌ها با لینک دانلود از الماس مووی;">
+    <meta name="twitter:description" content="اطلاعات فیلم‌ها و سریال‌ها با لینک دانلود مستقیم;">
     <meta name="twitter:image" content="https://freemovieir.github.io/assets/images/tweet2.png">
     <!-- Resource Preprocessing -->
     <link rel="preconnect" href="https://api.themoviedb.org">
@@ -69,87 +70,88 @@
 
         <!-- Home View -->
         <div id="home-view" class="w-full transition-opacity duration-300">
-            <!-- بخش هیرو (Featured Content) -->
-            <div id="hero-section" class="relative overflow-hidden mb-12 min-h-[500px] flex items-center">
-                <!-- Will be populated by main.js -->
-                <div class="container mx-auto px-6 relative z-10 animate-pulse">
-                    <div class="h-8 bg-white/10 rounded-lg w-1/4 mb-4"></div>
-                    <div class="h-16 bg-white/10 rounded-lg w-1/2 mb-6"></div>
-                    <div class="h-24 bg-white/10 rounded-lg w-3/4 mb-8"></div>
-                    <div class="flex gap-4">
-                        <div class="h-12 bg-white/10 rounded-xl w-32"></div>
-                        <div class="h-12 bg-white/10 rounded-xl w-32"></div>
+            <!-- Advanced Slider Section -->
+            <section id="slider-wrapper" class="relative w-full h-[600px] md:h-[750px] overflow-hidden bg-black mb-12">
+                <div id="hero-slider" class="w-full h-full relative">
+                    <!-- Dynamic Items will be injected here -->
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div
+                            class="w-20 h-20 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin">
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- بخش فیلم‌های جدید -->
-            <section class="container mx-auto py-12 relative">
-                <div
-                    class="absolute -top-24 right-0 w-64 h-64 bg-amber-500/5 blur-[120px] rounded-full pointer-events-none">
+                <!-- Slider Controls -->
+                <div class="absolute bottom-10 left-10 z-30 flex gap-3">
+                    <button id="slider-prev"
+                        class="w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-white hover:bg-amber-500 hover:text-black transition-all">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button id="slider-next"
+                        class="w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-white hover:bg-amber-500 hover:text-black transition-all">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
                 </div>
 
-                <div class="flex items-center justify-between mb-10 px-6">
-                    <h2
-                        class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-amber-500 pr-4">
-                        جدیدترین فیلم‌ها</h2>
+                <!-- Slider Navigation Dots -->
+                <div id="slider-dots" class="absolute bottom-12 right-10 z-30 flex gap-2"></div>
+            </section>
+
+            <!-- بخش فیلم‌های جدید -->
+            <section class="container mx-auto py-12 relative px-6">
+                <div class="flex items-center justify-between mb-10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-2 h-10 bg-amber-500 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
+                        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tighter">فیلم‌های <span
+                                class="text-amber-500">تازه</span></h2>
+                    </div>
                     <a href="/pages/search/"
-                        class="text-amber-500 hover:text-amber-400 transition-colors font-bold text-sm flex items-center gap-2">
-                        مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
+                        class="group flex items-center gap-3 bg-white/5 hover:bg-white/10 px-6 py-3 rounded-2xl border border-white/5 transition-all">
+                        <span class="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">مشاهده
+                            آرشیو</span>
+                        <i
+                            class="fas fa-arrow-left text-xs text-amber-500 group-hover:-translate-x-1 transition-transform"></i>
                     </a>
                 </div>
 
                 <div id="new-movies" class="content-grid">
-                    <!-- Skeleton placeholders -->
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
+                    <!-- Skeleton -->
                 </div>
             </section>
 
             <!-- بخش سریال‌های پرطرفدار -->
-            <section class="container mx-auto py-12 relative">
-                <div
-                    class="absolute -top-24 left-0 w-64 h-64 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none">
-                </div>
-
-                <div class="flex items-center justify-between mb-10 px-6">
-                    <h2
-                        class="text-3xl md:text-4xl font-black text-white tracking-tighter border-r-8 border-blue-500 pr-4">
-                        سریال‌های پرطرفدار</h2>
+            <section class="container mx-auto py-12 relative px-6">
+                <div class="flex items-center justify-between mb-10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-2 h-10 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tighter">سریال‌های <span
+                                class="text-blue-500">برتر</span></h2>
+                    </div>
                     <a href="/pages/search/"
-                        class="text-blue-500 hover:text-blue-400 transition-colors font-bold text-sm flex items-center gap-2">
-                        مشاهده همه <i class="fas fa-arrow-left text-xs"></i>
+                        class="group flex items-center gap-3 bg-white/5 hover:bg-white/10 px-6 py-3 rounded-2xl border border-white/5 transition-all">
+                        <span class="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">آرشیو
+                            کامل</span>
+                        <i
+                            class="fas fa-arrow-left text-xs text-blue-500 group-hover:-translate-x-1 transition-transform"></i>
                     </a>
                 </div>
 
                 <div id="trending-tv" class="content-grid">
-                    <!-- Skeleton placeholders -->
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
-                    <div class="skeleton"></div>
+                    <!-- Skeleton -->
                 </div>
             </section>
 
-            <!-- Ultra-Fast DOM Caching Injection -->
             <script>
                 (function () {
                     const params = new URLSearchParams(window.location.search);
                     if (params.has('m') || params.has('s')) return;
                     try {
                         const head = localStorage.getItem('homeCache_header');
-                        const h = localStorage.getItem('homeCache_hero');
                         const m = localStorage.getItem('homeCache_movies');
                         const t = localStorage.getItem('homeCache_tv');
                         if (head) {
                             const heal = document.getElementById('shared-header');
                             if (heal) heal.innerHTML = head;
-                        }
-                        if (h) {
-                            const he = document.getElementById('hero-section');
-                            if (he) { he.innerHTML = h; he.classList.remove('animate-pulse'); }
                         }
                         if (m) {
                             const me = document.getElementById('new-movies');

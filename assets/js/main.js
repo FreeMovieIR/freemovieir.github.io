@@ -83,60 +83,118 @@ async function initializeSwitcher() {
 
 // Shared createMovieCard is used via window.createMovieCard alias above
 
-async function renderHero(movie) {
-  const heroContainer = document.getElementById('hero-section');
-  if (!heroContainer || !movie) return;
+// --- Advanced Slider Logic ---
+let sliderItems = [];
+let sliderIndex = 0;
+let sliderInterval;
 
-  const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
-  const poster = await window.resolvePoster(movie.id, 'hero', movie.poster_path);
-  // Backdrops should use w1280 for quality since it's a hero section
-  const backdrop = movie.backdrop_path ? `${tmdbImageBase}/w1280${movie.backdrop_path}` : poster;
-  const title = movie.title || 'فیری مووی';
-  const overview = movie.overview || 'مرجع دانلود فیلم و سریال';
+async function renderSlider() {
+  const sliderContainer = document.getElementById('hero-slider');
+  const dotsContainer = document.getElementById('slider-dots');
+  if (!sliderContainer || sliderItems.length === 0) return;
 
-  heroContainer.classList.remove('animate-pulse');
-  heroContainer.innerHTML = `
-        <div class="absolute inset-0 z-0">
-            <div class="absolute inset-0 bg-gradient-to-t from-base-950 via-base-950/60 to-transparent z-10"></div>
-            <div class="absolute inset-0 bg-gradient-to-l from-base-950/80 via-transparent to-transparent z-10"></div>
-            <img src="${backdrop}" alt="${title}" class="w-full h-full object-cover">
-        </div>
-        
-        <div class="container mx-auto px-6 relative z-10 py-20">
-            <div class="max-w-2xl space-y-6">
-                <div class="flex items-center gap-3">
-                    <span class="bg-amber-500 text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg shadow-amber-500/20">پیشنهاد ویژه</span>
-                    <span class="text-white/60 text-sm font-bold flex items-center gap-2">
-                        <i class="fas fa-star text-amber-500"></i> ${movie.vote_average.toFixed(1)}
-                    </span>
-                </div>
-                <h1 class="text-5xl md:text-7xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl reveal-on-scroll">
-                    ${title}
-                </h1>
-                <p class="text-lg md:text-xl text-gray-300 leading-relaxed max-w-xl drop-shadow-lg line-clamp-3 md:line-clamp-none">
-                    ${overview}
-                </p>
-                <div class="flex flex-wrap gap-4 pt-4">
-                    <a href="/?m=${movie.id}" class="bg-amber-500 hover:bg-amber-400 text-black px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3 shadow-xl shadow-amber-500/20">
-                        <i class="fas fa-play"></i> تماشا کنید
-                    </a>
-                    <button onclick="toggleWatchlist('${movie.id}', 'movie')" class="watchlist-btn-${movie.id} bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 text-white px-8 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                        <i id="wl-icon-${movie.id}" class="${isInWatchlist(movie.id, 'movie') ? 'fas text-amber-500' : 'far text-white'} fa-bookmark"></i> واچ‌لیست
-                    </button>
+  const renderItem = async (index) => {
+    const item = sliderItems[index];
+    const isMovie = item.title !== undefined;
+    const type = isMovie ? 'movie' : 'series';
+    const title = item.title || item.name;
+    const overview = item.overview || 'مرجع دانلود فیلم و سریال رایگان';
+    const poster = await window.resolvePoster(item.id, 'hero', item.poster_path);
+    const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+    const backdrop = item.backdrop_path ? `${tmdbImageBase}/w1280${item.backdrop_path}` : poster;
+
+    return `
+            <div class="absolute inset-0 transition-all duration-1000 opacity-0 transform scale-110 slider-item" data-index="${index}">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
+                <div class="absolute inset-0 bg-gradient-to-l from-black/80 via-transparent to-transparent z-10"></div>
+                <img src="${backdrop}" alt="${title}" class="w-full h-full object-cover transition-transform duration-[10s] scale-100 group-hover:scale-110">
+                
+                <div class="container mx-auto px-6 h-full flex items-center relative z-20">
+                    <div class="max-w-3xl space-y-8 translate-y-10 transition-all duration-1000 opacity-0 content-box">
+                        <div class="flex items-center gap-4">
+                            <span class="bg-amber-500 text-black text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl shadow-amber-500/20">پیشنهاد ویژه</span>
+                            <div class="flex items-center gap-2 text-white/80 font-bold backdrop-blur-md bg-white/5 px-3 py-1 rounded-lg border border-white/10">
+                                <i class="fas fa-star text-amber-500 text-xs"></i>
+                                ${item.vote_average.toFixed(1)}
+                            </div>
+                            <span class="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">${isMovie ? 'Movie' : 'TV Series'}</span>
+                        </div>
+                        <h1 class="text-6xl md:text-8xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+                            ${title}
+                        </h1>
+                        <p class="text-lg md:text-2xl text-gray-300 leading-relaxed max-w-2xl line-clamp-3 drop-shadow-lg">
+                            ${overview}
+                        </p>
+                        <div class="flex flex-wrap gap-5 pt-6">
+                            <a href="/?${isMovie ? 'm' : 's'}=${item.id}" class="bg-white text-black px-10 py-5 rounded-[2rem] font-black text-xl transition-all duration-500 hover:scale-110 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center gap-4 group">
+                                <i class="fas fa-play text-sm group-hover:scale-125 transition-transform"></i> تماشای جزئیات
+                            </a>
+                            <button onclick="window.toggleWatchlist('${item.id}', '${type}')" class="glass-card-premium text-white px-10 py-5 rounded-[2rem] font-black text-xl transition-all duration-500 hover:bg-white/10 hover:scale-110 flex items-center gap-4 border-white/10">
+                                <i class="${isInWatchlist(item.id, type) ? 'fas text-amber-500' : 'far'} fa-bookmark"></i> واچ‌لیست
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+  };
 
-  // Listen to watchlist updates and update button state
-  window.addEventListener('watchlistChanged', (e) => {
-    if (String(e.detail.id) === String(movie.id)) {
-      const icon = document.getElementById(`wl-icon-${movie.id}`);
-      if (icon) {
-        const added = isInWatchlist(movie.id, 'movie');
-        icon.className = `${added ? 'fas text-amber-500' : 'far text-white'} fa-bookmark`;
+  // Pre-render all items
+  const itemsHtml = await Promise.all(sliderItems.map((_, i) => renderItem(i)));
+  sliderContainer.innerHTML = itemsHtml.join('');
+
+  // Render Dots
+  if (dotsContainer) {
+    dotsContainer.innerHTML = sliderItems.map((_, i) => `
+            <button class="w-3 h-3 rounded-full bg-white/20 transition-all duration-500 slider-dot" data-index="${i}"></button>
+        `).join('');
+  }
+
+  const showSlide = (index) => {
+    const slides = document.querySelectorAll('.slider-item');
+    const dots = document.querySelectorAll('.slider-dot');
+
+    slides.forEach((slide, i) => {
+      if (i === index) {
+        slide.classList.remove('opacity-0', 'scale-110', 'pointer-events-none');
+        slide.classList.add('opacity-100', 'scale-100');
+        slide.querySelector('.content-box').classList.remove('opacity-0', 'translate-y-10');
+      } else {
+        slide.classList.add('opacity-0', 'scale-110', 'pointer-events-none');
+        slide.classList.remove('opacity-100', 'scale-100');
+        slide.querySelector('.content-box').classList.add('opacity-0', 'translate-y-10');
       }
-    }
+    });
+
+    dots.forEach((dot, i) => {
+      if (i === index) {
+        dot.classList.add('bg-amber-500', 'w-10');
+        dot.classList.remove('bg-white/20', 'w-3');
+      } else {
+        dot.classList.remove('bg-amber-500', 'w-10');
+        dot.classList.add('bg-white/20', 'w-3');
+      }
+    });
+
+    sliderIndex = index;
+  };
+
+  // Initial show
+  showSlide(0);
+
+  // Auto rotate
+  clearInterval(sliderInterval);
+  sliderInterval = setInterval(() => {
+    const next = (sliderIndex + 1) % sliderItems.length;
+    showSlide(next);
+  }, 8000);
+
+  // Controls
+  document.getElementById('slider-next')?.addEventListener('click', () => {
+    showSlide((sliderIndex + 1) % sliderItems.length);
+  });
+  document.getElementById('slider-prev')?.addEventListener('click', () => {
+    showSlide((sliderIndex - 1 + sliderItems.length) % sliderItems.length);
   });
 }
 
