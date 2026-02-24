@@ -202,60 +202,33 @@ body::before {
 
 /* --- Slider Stage Styles --- */
 .slider-container {
-    perspective: 1200px;
     overflow: hidden;
     position: relative;
     height: clamp(500px, 75vh, 750px);
     margin-bottom: 4rem;
 }
 
-.slider-item {
-    transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
-    transform-style: preserve-3d;
-    position: absolute;
-    inset: 0;
-    will-change: transform, opacity, filter;
-}
-
 .slider-item.active {
-    z-index: 30;
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    pointer-events: auto;
-}
-
-.slider-item.prev {
-    z-index: 20;
-    opacity: 0.35;
-    transform: translateX(-48%) scale(0.8) rotateY(15deg);
-    filter: blur(4px) grayscale(50%);
-    pointer-events: auto;
-}
-
-.slider-item.next {
-    z-index: 20;
-    opacity: 0.35;
-    transform: translateX(48%) scale(0.8) rotateY(-15deg);
-    filter: blur(4px) grayscale(50%);
-    pointer-events: auto;
-}
-
-.slider-item.hidden-item {
+    opacity: 1 !important;
     z-index: 10;
-    opacity: 0;
-    transform: scale(0.6) translateY(50px);
-    pointer-events: none;
-}
-
-.slider-item .content-box {
-    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.2s;
-    opacity: 0;
-    transform: translateY(40px);
 }
 
 .slider-item.active .content-box {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.content-box {
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+[dir="rtl"] .content-box {
+    text-align: right;
+}
+
+[dir="ltr"] .content-box {
+    text-align: left;
 }
 
 /* --- Search UI Refinement --- */

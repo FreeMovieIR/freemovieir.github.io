@@ -15,6 +15,23 @@ const apiUrls = {
   tv_trending: `${tmdbBase}/trending/tv/week?api_key=${apiKey}&language=${apiLang}`
 };
 
+function translateStaticElements() {
+  const elements = {
+    'new-movies-heading': t('new_movies'),
+    'trending-tv-heading': t('top_series'),
+    'view-archive-btn-text': t('view_archive'),
+    'all-archive-btn-text': t('all_archive'),
+    'go-back-btn-text': t('back'),
+    'details-overview-heading': t('storyline'),
+    'details-type-badge': t('site_title'), // fallback
+  };
+
+  for (const [id, value] of Object.entries(elements)) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = value;
+  }
+}
+
 const proxify = (url) => (window.proxify ? window.proxify(url) : url);
 
 // --- Advanced Slider Logic ---
@@ -177,6 +194,7 @@ async function fetchAndDisplayContent() {
 
 // Routing logic
 function handleRouting() {
+  translateStaticElements();
   const params = new URLSearchParams(window.location.search);
   const movieId = params.get('m');
   const seriesId = params.get('s');
@@ -205,11 +223,20 @@ async function fetchDetails(id, type) {
 }
 
 function renderDetails(data, poster, type) {
-  const title = data.title || data.name;
-  document.getElementById('details-title').textContent = title;
+  const isMovie = type === 'movie';
+  const titleFa = data.title || data.name || 'Untitled';
+  const titleEn = data.original_title || data.original_name || '';
+  const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
+  const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` / ${titleEn}` : '') + (year ? ` (${year})` : '');
+
+  document.getElementById('details-title').textContent = displayTitle;
   document.getElementById('details-poster').src = poster;
+  document.getElementById('details-type-badge').textContent = isMovie ? t('cinema') : t('tv_archive');
   document.getElementById('details-overview').textContent = data.overview || t('not_found');
-  // ... Additional detail fields could be added here using t()
+  document.getElementById('details-overview-heading').textContent = t('storyline');
+  document.getElementById('rating-text').textContent = data.vote_average ? data.vote_average.toFixed(1) : '—';
+
+  document.title = `${displayTitle} | ${t('site_title')}`;
 }
 
 window.onload = handleRouting;

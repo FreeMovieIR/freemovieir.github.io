@@ -52,15 +52,13 @@
             font-family: "Vazirmatn", sans-serif;
             direction: rtl;
         }
+
+        #hero-section {
+            background-size: cover;
+            background-position: center;
+            transition: all 1s ease;
+        }
     </style>
-</head>
-/* Home Specific Header Overrides */
-#hero-section {
-background-size: cover;
-background-position: center;
-transition: all 1s ease;
-}
-</style>
 </head>
 
 <body
@@ -109,13 +107,13 @@ transition: all 1s ease;
                 <div class="flex items-center justify-between mb-10">
                     <div class="flex items-center gap-4">
                         <div class="w-2 h-10 bg-amber-500 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
-                        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tighter">فیلم‌های <span
-                                class="text-amber-500">تازه</span></h2>
+                        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tighter" id="new-movies-heading">
+                            فیلم‌های <span class="text-amber-500">تازه</span></h2>
                     </div>
                     <a href="/pages/search/"
                         class="group flex items-center gap-3 bg-white/5 hover:bg-white/10 px-6 py-3 rounded-2xl border border-white/5 transition-all">
-                        <span class="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">مشاهده
-                            آرشیو</span>
+                        <span class="text-sm font-bold text-gray-400 group-hover:text-white transition-colors"
+                            id="view-archive-btn-text">مشاهده آرشیو</span>
                         <i
                             class="fas fa-arrow-left text-xs text-amber-500 group-hover:-translate-x-1 transition-transform"></i>
                     </a>
@@ -131,13 +129,13 @@ transition: all 1s ease;
                 <div class="flex items-center justify-between mb-10">
                     <div class="flex items-center gap-4">
                         <div class="w-2 h-10 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
-                        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tighter">سریال‌های <span
-                                class="text-blue-500">برتر</span></h2>
+                        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tighter"
+                            id="trending-tv-heading">سریال‌های <span class="text-blue-500">برتر</span></h2>
                     </div>
                     <a href="/pages/search/"
                         class="group flex items-center gap-3 bg-white/5 hover:bg-white/10 px-6 py-3 rounded-2xl border border-white/5 transition-all">
-                        <span class="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">آرشیو
-                            کامل</span>
+                        <span class="text-sm font-bold text-gray-400 group-hover:text-white transition-colors"
+                            id="all-archive-btn-text">آرشیو کامل</span>
                         <i
                             class="fas fa-arrow-left text-xs text-blue-500 group-hover:-translate-x-1 transition-transform"></i>
                     </a>
@@ -182,9 +180,9 @@ transition: all 1s ease;
                 <div class="absolute inset-0 bg-base-950/40 backdrop-blur-3xl pointer-events-none"></div>
 
                 <div class="mb-6 relative z-10 w-full flex justify-between items-center">
-                    <button onclick="goBackHome()"
+                    <button onclick="goBackHome()" id="go-back-btn"
                         class="glass-card text-white hover:text-amber-500 hover:bg-white/10 px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all hover:scale-105 shadow-lg border border-white/5">
-                        <i class="fas fa-arrow-right"></i> بازگشت
+                        <i class="fas fa-arrow-right"></i> <span id="go-back-btn-text">بازگشت</span>
                     </button>
                 </div>
 
@@ -239,7 +237,7 @@ transition: all 1s ease;
                             <div class="mt-12">
                                 <h3 class="text-2xl font-black text-white mb-6 flex items-center gap-4 drop-shadow-lg">
                                     <span class="w-10 h-[2px] bg-amber-500 rounded-full"></span>
-                                    خلاصه داستان
+                                    <span id="details-overview-heading">خلاصه داستان</span>
                                 </h3>
                                 <p id="details-overview"
                                     class="text-gray-300 leading-relaxed text-lg md:text-xl text-opacity-90 glass-card p-8 rounded-3xl border-white/5 shadow-inner">
