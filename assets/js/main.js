@@ -155,6 +155,7 @@ async function renderSlider() {
   showSlide(0);
   clearInterval(sliderInterval);
   sliderInterval = setInterval(() => showSlide((sliderIndex + 1) % sliderItems.length), 10000);
+  if (window.refreshRevealObserver) window.refreshRevealObserver();
 }
 
 async function fetchAndDisplayContent() {
@@ -188,6 +189,8 @@ async function fetchAndDisplayContent() {
     }));
     tvContainer.innerHTML = tvHtml.join('');
 
+    if (window.refreshRevealObserver) window.refreshRevealObserver();
+
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -219,7 +222,18 @@ async function fetchDetails(id, type) {
     const res = await fetch(proxify(url));
     const data = await res.json();
     const poster = await window.resolvePoster(id, 'detail', data.poster_path);
+
+    // Fallback for missing Persian overview
+    if (!data.overview && window.i18n && window.i18n.current === 'fa') {
+      try {
+        const enRes = await fetch(proxify(`${tmdbBase}/${type}/${id}?api_key=${apiKey}&language=en-US`));
+        const enData = await enRes.json();
+        if (enData.overview) data.overview = enData.overview;
+      } catch (e) { console.warn('EN fallback failed', e); }
+    }
+
     renderDetails(data, poster, type);
+    if (window.refreshRevealObserver) window.refreshRevealObserver();
   } catch (e) { console.error(e); }
 }
 

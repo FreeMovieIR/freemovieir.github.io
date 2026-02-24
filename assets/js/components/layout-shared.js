@@ -5,7 +5,7 @@
   const t = (key) => window.i18n ? window.i18n.t(key) : key;
 
   // Shared Utils
-  window.defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'https://freemovieir.github.io/images/default-freemovie-300.png';
+  window.defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : '/assets/images/default-freemovie-300.png';
 
   window.proxify = function (url) {
     if (!window.CONFIG) return url;
@@ -281,5 +281,9 @@
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); });
   }, { threshold: 0.1 });
 
-  document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+  window.refreshRevealObserver = function () {
+    document.querySelectorAll('.reveal-on-scroll:not(.active)').forEach(el => observer.observe(el));
+  };
+
+  window.refreshRevealObserver();
 })();
