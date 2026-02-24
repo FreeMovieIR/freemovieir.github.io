@@ -24,6 +24,7 @@ function translateStaticElements() {
     'go-back-btn-text': t('back'),
     'details-overview-heading': t('storyline'),
     'details-type-badge': t('site_title'), // fallback
+    'download-links-heading': t('download_links')
   };
 
   for (const [id, value] of Object.entries(elements)) {
@@ -236,10 +237,126 @@ function renderDetails(data, poster, type) {
   document.getElementById('details-overview-heading').textContent = t('storyline');
   document.getElementById('rating-text').textContent = data.vote_average ? data.vote_average.toFixed(1) : '—';
 
+  // Render Download Links
+  renderDownloadSection(data, type);
+
   document.title = `${displayTitle} | ${t('site_title')}`;
 }
 
-window.onload = handleRouting;
+async function renderDownloadSection(data, type) {
+  const container = document.getElementById('download-links');
+  if (!container) return;
+  container.innerHTML = `<div class="w-full flex justify-center py-10"><div class="w-10 h-10 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div></div>`;
+
+  const links = await generateDownloadLinks(data, type);
+
+  if (links.length === 0) {
+    container.innerHTML = `<p class="text-gray-500 font-bold text-center w-full py-10">${t('not_found')}</p>`;
+    return;
+  }
+
+  container.innerHTML = links.map(link => `
+        <a href="${link.url}" target="_blank" class="flex-1 min-w-[300px] glass-card-premium p-6 rounded-3xl border border-white/5 hover:border-amber-500/30 transition-all hover:scale-[1.02] group relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="flex items-center justify-between relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                        <i class="fas ${link.icon || 'fa-download'} text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-black text-sm uppercase tracking-wider">${link.label}</h4>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-1 italic">${link.source || 'General Source'}</p>
+                    </div>
+                </div>
+                <i class="fas fa-external-link-alt text-gray-700 group-hover:text-amber-500 transition-colors"></i>
+            </div>
+        </a>
+    `).join('');
+}
+
+async function generateDownloadLinks(data, type) {
+  const links = [];
+  const isMovie = type === 'movie';
+  const titleEn = (data.original_title || data.original_name || '').replace(/[^a-zA-Z0-9]/g, '.');
+  const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
+
+  // 1. Almas Movie Logic
+  if (isMovie) {
+    ["dl1", "dl2", "dl3"].forEach(sub => {
+      links.push({
+        label: `Direct Link ${sub.toUpperCase()}`,
+        url: `https://${sub}.almasmovie.xyz/Movies/${year}/${titleEn}/${titleEn}.mkv`,
+        source: "Almas Movie",
+        icon: "fa-bolt"
+      });
+    });
+  } else {
+    // Series logic - Season 1 Quality example
+    links.push({
+      label: "S01 - 720p WEB-DL",
+      url: `https://dl1.almasmovie.xyz/Series/${titleEn}/S01/720p/${titleEn}.S01E01.720p.mkv`,
+      source: "Almas Movie",
+      icon: "fa-tv"
+    });
+  }
+
+  // 2. Hi-Speed API Logic (Fallback/Secondary)
+  if (window.CONFIG && window.CONFIG.API.MOVIE_DATA) {
+    links.push({
+      label: "High Speed Server",
+      url: `${window.CONFIG.API.MOVIE_DATA}/download?id=${data.id}&type=${type}`,
+      source: "Hi-Speed IR",
+      icon: "fa-cloud-download-alt"
+    });
+  }
+
+  return links;
+}
+
+// Quotes System
+async function initQuotes() {
+  const quoteText = document.getElementById('quote-text');
+  const quoteAuthor = document.getElementById('quote-author');
+  const quoteMovie = document.getElementById('quote-movie');
+  if (!quoteText) return;
+
+  try {
+    const res = await fetch('/assets/data/quotes.json');
+    const quotes = await res.json();
+    const random = quotes[Math.floor(Math.random() * quotes.length)];
+
+    quoteText.textContent = random.text;
+    quoteAuthor.textContent = random.author;
+    quoteMovie.textContent = random.movie;
+  } catch (e) { console.error('Quotes error:', e); }
+}
+
+// Announcements System
+function initAnnouncements() {
+  const bar = document.getElementById('announcement-bar');
+  const text = document.getElementById('notification-text');
+  if (!bar || !text) return;
+
+  const news = [
+    "به فیری مووی خوش آمدید! بخش جدید دیالوگ‌های ماندگار اضافه شد.",
+    "نسخه جدید مترجم زیرنویس به زودی منتشر می‌شود.",
+    "امکان تماشای آنلاین فیلم‌ها به زودی فعال خواهد شد."
+  ];
+  let i = 0;
+  setInterval(() => {
+    text.style.opacity = 0;
+    setTimeout(() => {
+      text.textContent = news[++i % news.length];
+      text.style.opacity = 1;
+    }, 500);
+  }, 10000);
+}
+
+window.onload = () => {
+  handleRouting();
+  initQuotes();
+  initAnnouncements();
+};
 window.onpopstate = handleRouting;
 
 function goBackHome() {

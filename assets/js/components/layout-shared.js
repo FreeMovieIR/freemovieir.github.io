@@ -78,95 +78,111 @@
   };
 
   const headerHtml = `
+    <!-- Top Announcement Bar -->
+    <div id="announcement-bar" class="bg-gradient-to-r from-amber-600 to-amber-400 py-1.5 px-6 text-center overflow-hidden relative group cursor-pointer h-8 flex items-center justify-center">
+      <div class="flex items-center gap-3 animate-marquee whitespace-nowrap">
+        <span class="text-[10px] font-black text-black tracking-widest uppercase">${t('announcement')}</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-black/20"></span>
+        <span class="text-[10px] font-bold text-black opacity-80" id="notification-text">به فیری مووی خوش آمدید! بخش جدید دیالوگ‌های ماندگار اضافه شد.</span>
+      </div>
+    </div>
+
     <div class="fixed top-0 left-1/4 w-[600px] h-[200px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none z-[101]"></div>
-    <header class="sticky top-0 z-[100] transition-all duration-700 border-b border-white/5 bg-[#07090f]/60 backdrop-blur-2xl" id="site-header">
-      <div class="container mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-6">
-        <div class="flex items-center gap-10">
+    
+    <header class="sticky top-0 z-[100] transition-all duration-500 border-b border-white/5 bg-[#07090f]/80 backdrop-blur-3xl" id="site-header">
+      <div class="container mx-auto px-6 py-3 flex items-center justify-between">
+        <!-- Logo & Branding -->
+        <div class="flex items-center gap-12">
           <a href="/" class="flex items-center gap-4 group">
-            <div class="relative w-14 h-14 flex items-center justify-center">
-                <div class="absolute inset-0 bg-amber-500/30 blur-2xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
-                <img src="/assets/images/logo.png" alt="Logo" class="w-10 h-10 object-contain relative transform group-hover:scale-110 transition-all duration-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+            <div class="relative w-12 h-12 flex items-center justify-center">
+                <div class="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
+                <img src="/assets/images/logo.png" alt="Logo" class="w-9 h-9 object-contain relative transform group-hover:scale-110 transition-all duration-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
             </div>
-            <div class="flex flex-col">
-              <h1 class="text-3xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter leading-none py-1">${t('site_title')}</h1>
-              <span class="text-[11px] text-gray-500 font-black tracking-[0.3em] uppercase mt-1">${t('site_subtitle')}</span>
+            <div class="hidden sm:flex flex-col">
+              <h1 class="text-2xl font-black bg-gradient-to-l from-amber-500 via-yellow-100 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter leading-none py-1">${t('site_title')}</h1>
+              <span class="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase mt-0.5">${t('site_subtitle')}</span>
             </div>
           </a>
+
+          <!-- Navigation Links (Desktop) -->
+          <nav class="hidden lg:flex items-center gap-2">
+            <a href="/" class="header-nav-link active">
+              <i class="fas fa-home text-sm"></i> <span>${t('home')}</span>
+            </a>
+            <a href="/pages/finder/" class="header-nav-link">
+              <i class="fas fa-filter text-sm"></i> <span>${t('advanced_search')}</span>
+            </a>
+            <a href="/pages/watchlist/" class="header-nav-link">
+              <i class="fas fa-bookmark text-sm"></i> <span>${t('watchlist')}</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- System Actions & Search -->
+        <div class="flex items-center gap-4">
           <div class="hidden xl:flex items-center relative group">
-            <i class="fas fa-search absolute right-4 text-gray-600 group-focus-within:text-amber-500 transition-colors"></i>
+            <i class="fas fa-search absolute right-4 text-gray-500 group-focus-within:text-amber-500 transition-colors"></i>
             <input type="text" id="header-search-input" 
-                   class="bg-white/5 border border-white/10 text-white text-sm pr-12 pl-6 py-3 rounded-2xl w-80 focus:w-[450px] focus:bg-white/10 focus:border-amber-500/50 outline-none transition-all duration-700 placeholder:text-gray-600"
+                   class="bg-white/5 border border-white/10 text-white text-xs pr-11 pl-5 py-2.5 rounded-2xl w-56 focus:w-80 outline-none transition-all duration-500 placeholder:text-gray-600"
                    placeholder="${t('search_placeholder')}">
           </div>
-        </div>
-        <nav class="flex items-center gap-4">
-          <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-[1.5rem] border border-white/5">
-            <a href="/" class="nav-btn group"><i class="fas fa-home"></i><span class="nav-tooltip">${t('home')}</span></a>
-            <a href="/pages/finder/" class="nav-btn group"><i class="fas fa-filter"></i><span class="nav-tooltip">${t('advanced_search')}</span></a>
-            <a href="/pages/watchlist/" class="nav-btn group"><i class="fas fa-clapperboard"></i><span class="nav-tooltip">${t('watchlist')}</span></a>
-            <button id="open-settings-modal" class="nav-btn group"><i class="fas fa-sliders-h"></i><span class="nav-tooltip">${t('settings')}</span></button>
+
+          <div class="flex items-center gap-2">
+            <button id="open-settings-modal" class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-amber-500 hover:bg-white/10 transition-all">
+              <i class="fas fa-sliders-h"></i>
+            </button>
+            <!-- Language Quick Switcher -->
+            <button onclick="window.i18n.setLanguage(window.i18n.current === 'fa' ? 'en' : 'fa')" 
+                    class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-black text-xs hover:bg-amber-500 hover:text-black transition-all">
+              ${window.i18n.current === 'fa' ? 'EN' : 'FA'}
+            </button>
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-toggle" class="lg:hidden w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-gray-400">
+              <i class="fas fa-bars"></i>
+            </button>
           </div>
-          <a href="/pages/isegaro/" class="hidden md:flex items-center gap-3 bg-gradient-to-r from-amber-600 to-amber-500 text-black px-6 py-3 rounded-2xl font-black text-sm hover:scale-105 transition-all shadow-xl shadow-amber-500/20">
-            <i class="fas fa-language"></i> ${t('subtitle_translator')}
-          </a>
-        </nav>
+        </div>
+      </div>
+      
+      <!-- Mobile Navigation Drawer -->
+      <div id="mobile-menu" class="lg:hidden fixed inset-x-0 top-[116px] bg-[#07090f]/95 backdrop-blur-2xl border-b border-white/5 py-8 px-6 transform -translate-y-full opacity-0 pointer-events-none transition-all duration-500 z-50">
+        <div class="flex flex-col gap-4">
+          <a href="/" class="mobile-nav-link"><i class="fas fa-home"></i> ${t('home')}</a>
+          <a href="/pages/finder/" class="mobile-nav-link"><i class="fas fa-filter"></i> ${t('advanced_search')}</a>
+          <a href="/pages/watchlist/" class="mobile-nav-link"><i class="fas fa-bookmark"></i> ${t('watchlist')}</a>
+        </div>
       </div>
     </header>
 
-    <div class="fixed bottom-8 right-8 z-[150] group" id="fab-container">
-      <div class="absolute bottom-full right-0 mb-6 flex flex-col items-end gap-3 opacity-0 translate-y-10 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 scale-90 group-hover:scale-100 origin-bottom-right">
-        <a href="https://feedback.onl/fa/b/freemovie" target="_blank" class="flex items-center gap-4 bg-white/10 backdrop-blur-xl border border-white/10 text-white px-5 py-3 rounded-2xl hover:bg-white/20 transition-all">
-          <span class="text-xs font-black">${t('feedback')}</span>
-          <i class="fas fa-comment text-blue-400"></i>
-        </a>
-        <a href="https://github.com/freemovieir/freemovieir.github.io/issues" target="_blank" class="flex items-center gap-4 bg-white/10 backdrop-blur-xl border border-white/10 text-white px-5 py-3 rounded-2xl hover:bg-white/20 transition-all">
-          <span class="text-xs font-black">${t('report_bug')}</span>
-          <i class="fas fa-bug text-amber-400"></i>
-        </a>
-      </div>
-      <button class="w-16 h-16 rounded-[2rem] bg-gradient-to-tr from-amber-600 to-amber-400 text-[#07090f] flex items-center justify-center shadow-2xl shadow-amber-500/30 transform transition-all duration-500 hover:rotate-12 hover:scale-110 border-4 border-[#07090f]">
-        <i class="fas fa-bolt text-2xl"></i>
-      </button>
-    </div>
-
-    <div id="settings-modal" class="fixed inset-0 z-[200] flex items-center justify-center opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md bg-black/60">
-      <div class="glass-card-premium w-full max-w-lg mx-4 rounded-[2.5rem] overflow-hidden border border-white/10 transform scale-90 transition-all duration-500 shadow-2xl" id="settings-modal-content">
-        <div class="p-8">
-          <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black text-white">${t('user_settings')}</h2>
-            <button id="close-settings-modal" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-          </div>
-          <div class="space-y-6">
-            <div>
-              <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">${t('language')}</label>
-              <select id="modal-lang-select" class="w-full bg-white/5 border border-white/10 text-white px-5 py-3 rounded-2xl outline-none focus:border-amber-500/50 appearance-none cursor-pointer">
-                <option value="fa" ${window.i18n.current === 'fa' ? 'selected' : ''}>فارسی (Persian)</option>
-                <option value="en" ${window.i18n.current === 'en' ? 'selected' : ''}>English</option>
-                <option value="es" ${window.i18n.current === 'es' ? 'selected' : ''}>Español (Spanish)</option>
-                <option value="fr" ${window.i18n.current === 'fr' ? 'selected' : ''}>Français (French)</option>
-                <option value="ar" ${window.i18n.current === 'ar' ? 'selected' : ''}>العربية (Arabic)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">${t('tmdb_token')}</label>
-              <input type="password" id="modal-tmdb-token" class="w-full bg-white/5 border border-white/10 text-white px-5 py-3 rounded-2xl outline-none focus:border-amber-500/50">
-            </div>
-            <button id="save-settings-btn" class="w-full bg-amber-500 text-black py-4 rounded-2xl font-black hover:scale-[1.02] transition-all shadow-xl shadow-amber-500/20">${t('save_changes')}</button>
-            <button id="clear-settings-btn" class="w-full text-gray-500 text-sm hover:text-red-500 transition-colors uppercase font-black">${t('clear_cache')}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <style>
-      .nav-btn { @apply w-12 h-12 rounded-2xl flex items-center justify-center text-gray-500 hover:text-amber-500 hover:bg-white/10 transition-all duration-500 relative border border-transparent hover:border-white/5; }
-      .nav-tooltip { @apply absolute -bottom-14 left-1/2 -translate-x-1/2 glass-card-premium text-[11px] text-white px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap pointer-events-none scale-50 group-hover:scale-100 shadow-2xl border border-white/10 z-[110] font-black; }
-      @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-      .animate-textShimmer { animation: shimmer 5s infinite linear; }
+      .header-nav-link { @apply flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-gray-500 transition-all hover:text-white hover:bg-white/5; }
+      .header-nav-link.active { @apply text-amber-500 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.1)]; }
+      .mobile-nav-link { @apply flex items-center gap-4 p-4 rounded-2xl bg-white/5 text-white font-bold text-lg hover:bg-amber-500 hover:text-black transition-all; }
+      @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+      .animate-marquee { display: inline-block; padding-left: 100%; animation: marquee 30s linear infinite; }
+      [dir="rtl"] .animate-marquee { padding-left: 0; padding-right: 100%; animation: marquee-rtl 30s linear infinite; }
+      @keyframes marquee-rtl { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
     </style>
   `;
 
   const footerHtml = `
+    <!-- Top Quote Section -->
+    <section class="container mx-auto px-6 py-16 border-t border-white/5" id="quote-section">
+      <div class="glass-card-premium p-12 rounded-[2.5rem] relative overflow-hidden group">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[100px] pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col items-center text-center space-y-8">
+          <div class="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <i class="fas fa-quote-right text-3xl text-amber-500"></i>
+          </div>
+          <p id="quote-text" class="text-2xl md:text-3xl font-black text-white leading-relaxed max-w-4xl italic drop-shadow-2xl">...</p>
+          <div class="flex flex-col items-center">
+            <span id="quote-author" class="text-amber-500 font-bold tracking-widest uppercase text-sm mb-2"></span>
+            <span id="quote-movie" class="text-gray-500 text-xs font-black uppercase tracking-[0.3em]"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <footer class="bg-[#07090f] pt-24 pb-12 border-t border-white/5 relative overflow-hidden">
         <div class="container mx-auto px-6 relative z-10">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16">
@@ -183,9 +199,9 @@
                 </div>
                 <div>
                     <h3 class="text-white font-black mb-6 uppercase tracking-widest text-sm text-gray-500">${t('language')}</h3>
-                    <div class="flex flex-col gap-4">
-                        <button onclick="window.i18n.setLanguage('fa')" class="text-right text-gray-400 hover:text-amber-500 transition-colors">فارسی</button>
-                        <button onclick="window.i18n.setLanguage('en')" class="text-right text-gray-400 hover:text-amber-500 transition-colors">English</button>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="window.i18n.setLanguage('fa')" class="flex items-center justify-between text-gray-400 hover:text-amber-500 transition-colors w-full"><span>Persian</span> <span>فارسی</span></button>
+                        <button onclick="window.i18n.setLanguage('en')" class="flex items-center justify-between text-gray-400 hover:text-amber-500 transition-colors w-full"><span>English</span> <span>انگلیسی</span></button>
                     </div>
                 </div>
             </div>
@@ -213,12 +229,29 @@
   };
   handleSearch('header-search-input');
 
+  // Mobile Menu Logic
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    toggle.onclick = () => {
+      const isOpen = !menu.classList.contains('opacity-0');
+      if (isOpen) {
+        menu.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+        toggle.innerHTML = '<i class="fas fa-bars"></i>';
+      } else {
+        menu.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
+        toggle.innerHTML = '<i class="fas fa-times"></i>';
+      }
+    };
+  }
+
   // Modal interaction
   const modal = document.getElementById('settings-modal');
   const modalContent = document.getElementById('settings-modal-content');
   const langSelect = document.getElementById('modal-lang-select');
 
   document.getElementById('open-settings-modal').onclick = () => {
+    document.getElementById('modal-tmdb-token').value = localStorage.getItem('userTmdbToken') || '';
     modal.classList.remove('opacity-0', 'pointer-events-none');
     modalContent.classList.remove('scale-90');
   };
@@ -232,6 +265,7 @@
     const lang = langSelect.value;
     const tmdb = document.getElementById('modal-tmdb-token').value.trim();
     if (tmdb) localStorage.setItem('userTmdbToken', tmdb);
+    else localStorage.removeItem('userTmdbToken');
     window.i18n.setLanguage(lang);
   };
 

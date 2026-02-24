@@ -43,7 +43,12 @@ const i18nData = {
         tv_archive: "آرشیو تلویزیون",
         not_found: "داده‌ای یافت نشد!",
         error_connection: "خطا در اتصال به سرور",
-        error_desc: "متأسفانه امکان دریافت اطلاعات در این لحظه میسر نیست."
+        error_desc: "متأسفانه امکان دریافت اطلاعات در این لحظه میسر نیست.",
+        announcement: "اطلاعیه و اخبار",
+        latest_quote: "دیالوگ‌های ماندگار",
+        quote_desc: "جملاتی که در حافظه سینما جاودانه شدند.",
+        tmdb_desc: "برای دسترسی به ویژگی‌های اختصاصی، توکن TMDB خود را وارد کنید.",
+        omdb_desc: "برای بارگذاری پوسترها با کیفیت بالاتر، توکن OMDB نیاز است."
     },
     en: {
         site_title: "FreeMovieIR",
@@ -89,7 +94,12 @@ const i18nData = {
         tv_archive: "TV Archive",
         not_found: "No data found!",
         error_connection: "Connection Error",
-        error_desc: "Unfortunately, data cannot be retrieved at this time."
+        error_desc: "Unfortunately, data cannot be retrieved at this time.",
+        announcement: "News & Updates",
+        latest_quote: "Famous Quotes",
+        quote_desc: "Lines that lived forever in cinema history.",
+        tmdb_desc: "Enter your TMDB token to access exclusive features.",
+        omdb_desc: "OMDB token is required for higher quality posters."
     },
     es: {
         site_title: "FreeMovieIR",
