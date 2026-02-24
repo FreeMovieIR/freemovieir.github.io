@@ -473,7 +473,7 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
   const titleEn = data.original_title || data.original_name || '';
   const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
   const displayYear = year ? ` (${year})` : '';
-  const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` | ${titleEn}` : '') + displayYear;
+  const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` / ${titleEn}` : '') + displayYear;
 
   const overview = data.overview || 'خلاصه داستانی در دسترس نیست.';
   const genres = data.genres?.map(g => g.name).join(', ') || 'نامشخص';

@@ -1,5 +1,18 @@
 const changelogData = [
     {
+        version: "2.1.0",
+        date: "۱۴۰۲/۱۲/۰۵",
+        type: "major",
+        changes: [
+            { feature: "بازطراحی انقلابی هدر سایت با تم Glassmorphism 2.0 و افکت‌های نوری", contributor: "Antigravity" },
+            { feature: "ارتقای دکمه گزارش باگ به منوی شناور (FAB) حرفه‌ای و تعاملی", contributor: "Antigravity" },
+            { feature: "نمایش هوشمند عناوین دوگانه (فارسی/انگلیسی) و سال تولید در تمامی بخش‌ها", contributor: "Antigravity" },
+            { feature: "بازطراحی کامل صفحه تيم با کارت‌های مدرن و لینک‌های شبکه‌های اجتماعی", contributor: "Antigravity" },
+            { feature: "رفع باگ بحرانی عدم نمایش تصاویر در بخش جستجو", contributor: "Antigravity" },
+            { feature: "بهینه‌سازی سئو و متاتگ‌های داینامیک برای بهبود رتبه در موتورهای جستجو", contributor: "Antigravity" }
+        ]
+    },
+    {
         version: "2.0.0",
         date: "۱۴۰۲/۱۲/۰۴",
         type: "major",

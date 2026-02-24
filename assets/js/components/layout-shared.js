@@ -33,7 +33,7 @@
     const titleEn = item.original_title || item.original_name || '';
     const year = (item.release_date || item.first_air_date || '').split('-')[0];
     const displayYear = year ? ` (${year})` : '';
-    const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` | ${titleEn}` : '') + displayYear;
+    const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` / ${titleEn}` : '') + displayYear;
 
     const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
     const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
@@ -128,69 +128,99 @@
   };
 
   const headerHtml = `
-    <header class="sticky top-0 z-[100] glass-nav transition-all duration-500 border-b border-white/5">
-      <div class="container mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+    <!-- Top Glow Effect -->
+    <div class="fixed top-0 left-1/4 w-[600px] h-[200px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none z-[101]"></div>
+    
+    <header class="sticky top-0 z-[100] transition-all duration-700 border-b border-white/5 bg-[#07090f]/60 backdrop-blur-2xl" id="site-header">
+      <div class="container mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-6">
         <!-- Logo Section -->
-        <div class="flex items-center gap-8">
-          <a href="/" class="flex items-center gap-3 group">
-            <div class="relative w-12 h-12 flex items-center justify-center">
-                <div class="absolute inset-0 bg-amber-500/20 blur-xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <img src="/assets/images/logo.png" alt="FreeMovieIR Logo" class="w-full h-full object-contain relative transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+        <div class="flex items-center gap-10">
+          <a href="/" class="flex items-center gap-4 group">
+            <div class="relative w-14 h-14 flex items-center justify-center">
+                <div class="absolute inset-0 bg-amber-500/30 blur-2xl rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-tr from-amber-600 to-yellow-400 rounded-2xl rotate-3 group-hover:rotate-12 transition-transform duration-500 opacity-20"></div>
+                <img src="/assets/images/logo.png" alt="FreeMovieIR Logo" class="w-10 h-10 object-contain relative transform group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
             </div>
             <div class="flex flex-col">
-              <span class="text-2xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter leading-none">فیری مووی</span>
-              <span class="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase mt-1">FreeMovieIR</span>
+              <h1 class="text-3xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter leading-none py-1">فیری مووی</h1>
+              <span class="text-[11px] text-gray-500 font-black tracking-[0.3em] uppercase mt-1">THE DIGITAL ARCHIVE</span>
             </div>
           </a>
           
           <!-- Desktop Search -->
-          <div class="hidden lg:flex items-center relative group">
+          <div class="hidden xl:flex items-center relative group">
+            <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none z-10">
+              <i class="fas fa-search text-gray-600 group-focus-within:text-amber-500 transition-colors"></i>
+            </div>
             <input type="text" id="header-search-input" 
-                   class="bg-white/5 border border-white/10 text-white text-sm px-12 py-2.5 rounded-2xl w-64 focus:w-80 focus:bg-white/10 focus:border-amber-500/50 outline-none transition-all duration-500 placeholder:text-gray-600"
-                   placeholder="جستجو در بین هزاران فیلم...">
-            <i class="fas fa-search absolute right-4 text-gray-600 group-focus-within:text-amber-500 transition-colors"></i>
-            <div class="absolute inset-0 rounded-2xl bg-amber-500/5 blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+                   class="bg-white/5 border border-white/10 text-white text-sm pr-12 pl-6 py-3 rounded-2xl w-80 focus:w-[450px] focus:bg-white/10 focus:border-amber-500/50 outline-none transition-all duration-700 placeholder:text-gray-600 shadow-inner"
+                   placeholder="عنوان فیلم، سریال یا نام هنرمند مورد نظر...">
+            <div class="absolute inset-0 rounded-2xl bg-amber-500/5 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
           </div>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex items-center gap-2 md:gap-3">
-          <a href="/" class="nav-btn group" title="خانه">
-            <i class="fas fa-home"></i>
-            <span class="nav-tooltip">خانه</span>
-          </a>
-          <a href="/pages/finder/" class="nav-btn group" title="ژانرها">
-            <i class="fas fa-th-large"></i>
-            <span class="nav-tooltip">جستجوی پیشرفته</span>
-          </a>
-          <a href="/pages/watchlist/" class="nav-btn group" title="واچ‌لیست">
-            <i class="fas fa-bookmark"></i>
-            <span class="nav-tooltip">واچ‌لیست</span>
-          </a>
-          <button id="open-settings-modal" class="nav-btn group" title="تنظیمات">
-            <i class="fas fa-cog"></i>
-            <span class="nav-tooltip">تنظیمات</span>
-          </button>
+        <!-- Navigation & Actions -->
+        <nav class="flex items-center gap-4">
+          <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-[1.5rem] border border-white/5">
+            <a href="/" class="nav-btn group" title="صفحه اصلی">
+              <i class="fas fa-home"></i>
+              <span class="nav-tooltip">پیشخوان</span>
+            </a>
+            <a href="/pages/finder/" class="nav-btn group" title="جستجوی پیشرفته">
+              <i class="fas fa-filter"></i>
+              <span class="nav-tooltip">فیلتر هوشمند</span>
+            </a>
+            <a href="/pages/watchlist/" class="nav-btn group" title="لیست تماشا">
+              <i class="fas fa-clapperboard"></i>
+              <span class="nav-tooltip">آرشیو شخصی</span>
+            </a>
+            <button id="open-settings-modal" class="nav-btn group" title="تنظیمات سیستم">
+              <i class="fas fa-sliders-h"></i>
+              <span class="nav-tooltip">تنظیمات</span>
+            </button>
+          </div>
           
-          <div class="h-8 w-px bg-white/10 mx-2 hidden md:block"></div>
+          <div class="h-10 w-px bg-white/10 mx-1 hidden md:block"></div>
           
-          <a href="/pages/isegaro/" class="hidden md:flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-xl font-black text-sm transition-all duration-300 transform hover:scale-105 shadow-lg shadow-amber-500/20">
-            <i class="fas fa-language text-xs"></i>
+          <a href="/pages/isegaro/" class="hidden md:flex items-center gap-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black px-6 py-3 rounded-2xl font-black text-sm transition-all duration-300 transform hover:scale-105 shadow-xl shadow-amber-500/20 active:scale-95">
+            <i class="fas fa-language"></i>
             مترجم زیرنویس
           </a>
         </nav>
       </div>
 
-      <!-- Mobile Search (Visible on small screens) -->
-      <div class="lg:hidden container mx-auto px-6 pb-3 overflow-hidden transition-all duration-300" id="mobile-search-bar">
+      <!-- Mobile Search Bar -->
+      <div class="lg:hidden container mx-auto px-6 pb-4 overflow-hidden transition-all duration-500" id="mobile-search-bar">
         <div class="relative flex items-center">
           <input type="text" id="header-search-input-mobile" 
-                 class="w-full bg-white/5 border border-white/10 text-white text-sm px-10 py-2.5 rounded-xl focus:bg-white/10 focus:border-amber-500/50 outline-none transition-all"
-                 placeholder="فیلم، سریال یا بازیگر...">
-          <i class="fas fa-search absolute right-3.5 text-gray-500"></i>
+                 class="w-full bg-white/5 border border-white/10 text-white text-sm pr-12 pl-4 py-3 rounded-2xl focus:bg-white/10 focus:border-amber-500/50 outline-none transition-all"
+                 placeholder="جستجوی سریع اثر...">
+          <i class="fas fa-search absolute right-4 text-gray-500"></i>
         </div>
       </div>
     </header>
+
+    <!-- Professional Bug Report FAB -->
+    <div class="fixed bottom-8 right-8 z-[150] group" id="fab-container">
+      <div class="absolute bottom-full right-0 mb-6 flex flex-col items-end gap-3 opacity-0 translate-y-10 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 scale-90 group-hover:scale-100 origin-bottom-right" id="fab-menu">
+        <a href="https://feedback.onl/fa/b/freemovie" target="_blank" class="flex items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 text-white px-5 py-3 rounded-2xl hover:bg-white/10 transition-all">
+          <span class="text-xs font-black">ارسال بازخورد</span>
+          <div class="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+            <i class="fas fa-comment"></i>
+          </div>
+        </a>
+        <a href="https://github.com/freemovieir/freemovieir.github.io/issues" target="_blank" class="flex items-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 text-white px-5 py-3 rounded-2xl hover:bg-white/10 transition-all">
+          <span class="text-xs font-black">گزارش مشکل سیستمی</span>
+          <div class="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+            <i class="fas fa-triangle-exclamation"></i>
+          </div>
+        </a>
+      </div>
+      <button id="main-fab" class="w-16 h-16 rounded-[2rem] bg-gradient-to-tr from-amber-600 to-amber-400 text-[#07090f] flex items-center justify-center shadow-2xl shadow-amber-500/30 transform transition-all duration-500 hover:rotate-12 hover:scale-110 active:scale-75 group/btn border-4 border-[#07090f]">
+        <i class="fas fa-bug text-2xl group-hover/btn:animate-bounce"></i>
+        <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-[#07090f] animate-ping opacity-75"></div>
+      </button>
+    </div>
 
     <!-- Settings Modal Structure -->
     <div id="settings-modal" class="fixed inset-0 z-[200] flex items-center justify-center opacity-0 pointer-events-none transition-all duration-500 backdrop-blur-md bg-black/60">
@@ -249,14 +279,13 @@
     </div>
 
     <style>
+      #site-header.py-1 { @apply py-2 bg-[#07090f]/90; }
       .nav-btn {
-        @apply w-10 h-10 md:w-11 md:h-11 rounded-2xl glass-card flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all duration-300 relative border border-white/5;
+        @apply w-12 h-12 rounded-2xl flex items-center justify-center text-gray-500 hover:text-amber-500 hover:bg-white/10 transition-all duration-500 relative border border-transparent hover:border-white/5;
       }
-      .nav-btn i {
-        @apply transition-all duration-300 group-hover:scale-110 group-hover:text-amber-500;
-      }
+      .nav-btn i { @apply text-xl; }
       .nav-tooltip {
-        @apply absolute -bottom-10 right-0 glass-card-premium text-[10px] text-white px-2 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none scale-90 group-hover:scale-100 origin-top-right border border-white/10 z-[110] shadow-xl font-bold;
+        @apply absolute -bottom-14 left-1/2 -translate-x-1/2 glass-card-premium text-[11px] text-white px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap pointer-events-none scale-50 group-hover:scale-100 shadow-2xl border border-white/10 z-[110] font-black;
       }
       @keyframes shimmer {
         0% { background-position: -200% center; }
