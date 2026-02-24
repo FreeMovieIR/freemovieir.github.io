@@ -1,143 +1,198 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مترجم زیرنویس - طراحی‌شده توسط iSegaro</title>
+    <title>مترجم زیرنویس هوشمند - فیری مووی</title>
+    <meta name="description"
+        content="ترجمه هوشمند زیرنویس با استفاده از هوش مصنوعی گوگل. ابزاری رایگان و سریع برای همراهان فیری مووی.">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- اضافه کردن کتابخانه franc برای تشخیص زبان -->
+    <script src="/assets/js/config.js"></script>
     <script src="https://unpkg.com/franc-min@6.2.0/franc-min.js"></script>
-	<script src="/assets/js/analytics.js" defer></script>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+    <script src="/assets/js/analytics.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
-<body class="bg-[#1a1a2e] min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-6xl w-full mx-auto glass-card rounded-3xl p-8 transition-all duration-500">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">مترجم زیرنویس</h1>
-            <div class="flex gap-4">
-                <button id="clearProgressBtn" class="bg-red-500/10 text-red-500 border border-red-500/20 px-6 py-3 rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 font-bold hidden">پاکسازی حافظه موقت</button>
-            </div>
+
+<body class="bg-base-950 min-h-screen flex flex-col font-sans">
+    <div id="shared-header"></div>
+
+    <main class="flex-1 flex items-center justify-center p-4 md:p-12 relative overflow-hidden">
+        <div class="absolute -top-24 right-0 w-96 h-96 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none">
+        </div>
+        <div
+            class="absolute -bottom-24 left-0 w-96 h-96 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none">
         </div>
 
-        <div class="mb-10 space-y-6">
-            <div id="apiKeySection" class="bg-white/5 p-6 rounded-2xl border border-white/10">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-white">مدیریت کلیدهای API</h3>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm transition-colors flex items-center gap-1">
-                        دریافت کلید API رایگان <i class="fas fa-external-link-alt text-xs"></i>
-                    </a>
+        <div
+            class="max-w-6xl w-full mx-auto glass-card-premium rounded-[2.5rem] p-8 md:p-12 relative z-10 border border-white/10 shadow-2xl">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+                <h1
+                    class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                    مترجم زیرنویس</h1>
+                <div class="flex gap-4">
+                    <button id="clearProgressBtn"
+                        class="bg-red-500/10 text-red-500 border border-red-500/20 px-6 py-3 rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 font-bold hidden">پاکسازی
+                        حافظه موقت</button>
                 </div>
-                <div id="apiKeyList" class="space-y-3">
-                    <div class="flex items-center space-x-2 space-x-reverse">
-                        <input type="password" placeholder="کلید API خود را وارد کنید" class="api-key-input block w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" dir="ltr">
-                        <button class="add-api-key-btn bg-blue-500 text-white w-12 h-12 rounded-xl hover:bg-blue-600 transition-all duration-300 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">+</button>
+            </div>
+
+            <div class="mb-10 space-y-6">
+                <div id="apiKeySection" class="bg-white/5 p-6 rounded-2xl border border-white/10">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-white">مدیریت کلیدهای API</h3>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                            class="text-blue-400 hover:text-blue-300 text-sm transition-colors flex items-center gap-1">
+                            دریافت کلید API رایگان <i class="fas fa-external-link-alt text-xs"></i>
+                        </a>
+                    </div>
+                    <div id="apiKeyList" class="space-y-3">
+                        <div class="flex items-center space-x-2 space-x-reverse">
+                            <input type="password" placeholder="کلید API خود را وارد کنید"
+                                class="api-key-input block w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                dir="ltr">
+                            <button
+                                class="add-api-key-btn bg-blue-500 text-white w-12 h-12 rounded-xl hover:bg-blue-600 transition-all duration-300 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
+                        <label for="modelSelector" class="block text-sm font-bold text-gray-400 mb-2">انتخاب مدل هوش
+                            مصنوعی:</label>
+                        <select id="modelSelector"
+                            class="w-full bg-[#1a1a2e] border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash (سریع و دقیق)</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro (بسیار هوشمند)</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
+                        <button id="advancedOptionsToggle"
+                            class="w-full h-full flex items-center justify-between text-gray-400 hover:text-white transition-colors">
+                            <span class="font-bold flex items-center gap-2"><i class="fas fa-cog"></i> تنظیمات پیشرفته
+                                ترجمه</span>
+                            <svg id="toggleIcon" class="w-5 h-5 transform transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div id="advancedOptionsContent" class="hidden space-y-4 mt-6 pt-6 border-t border-white/10">
+                            <div>
+                                <label for="waitTimeInput" class="block text-sm font-medium text-gray-400 mb-2">زمان
+                                    انتظار در صورت محدودیت (ثانیه):</label>
+                                <input type="number" id="waitTimeInput" min="5" max="300" value="60"
+                                    class="w-full bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg"
+                                    dir="ltr">
+                            </div>
+                            <div>
+                                <label for="contextCountInput"
+                                    class="block text-sm font-medium text-gray-400 mb-2">تعداد بلوک‌های زمینه (دقت
+                                    بیشتر):</label>
+                                <input type="number" id="contextCountInput" min="1" max="10" value="3"
+                                    class="w-full bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg"
+                                    dir="ltr">
+                            </div>
+                            <div>
+                                <label for="customPrompt" class="block text-sm font-medium text-gray-400 mb-2">دستور
+                                    سفارشی (Prompt):</label>
+                                <textarea id="customPrompt"
+                                    class="w-full bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg text-xs"
+                                    rows="5" dir="ltr"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="progressContainer" class="hidden bg-white/5 p-6 rounded-2xl border border-white/10 fade-in">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full">
+                            </div>
+                            <span class="text-sm font-bold text-white">در حال ترجمه هوشمند...</span>
+                        </div>
+                        <span id="progressText" class="text-lg font-black text-blue-400">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
-                    <label for="modelSelector" class="block text-sm font-bold text-gray-400 mb-2">انتخاب مدل هوش مصنوعی:</label>
-                    <select id="modelSelector" class="w-full bg-[#1a1a2e] border border-white/10 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (سریع و دقیق)</option>
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (بسیار هوشمند)</option>
-                    </select>
-                </div>
+            <div
+                class="flex flex-col items-center py-10 border-2 border-dashed border-white/10 rounded-3xl hover:border-blue-500/50 transition-all duration-300 group">
+                <input type="file" id="subtitleFile" accept=".srt" class="hidden" />
+                <label for="subtitleFile"
+                    class="bg-gradient-to-br from-blue-500 to-blue-700 text-white px-10 py-4 rounded-2xl cursor-pointer hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-300 font-black flex items-center gap-3 transform group-hover:scale-105">
+                    <i class="fas fa-file-upload text-xl"></i> بارگذاری فایل SRT
+                </label>
+                <p id="fileName" class="mt-4 text-sm text-gray-400 italic hidden"></p>
+            </div>
 
-                <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
-                    <button id="advancedOptionsToggle" class="w-full h-full flex items-center justify-between text-gray-400 hover:text-white transition-colors">
-                        <span class="font-bold flex items-center gap-2"><i class="fas fa-cog"></i> تنظیمات پیشرفته ترجمه</span>
-                        <svg id="toggleIcon" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    <div id="advancedOptionsContent" class="hidden space-y-4 mt-6 pt-6 border-t border-white/10">
-                        <div>
-                            <label for="waitTimeInput" class="block text-sm font-medium text-gray-400 mb-2">زمان انتظار در صورت محدودیت (ثانیه):</label>
-                            <input type="number" id="waitTimeInput" min="5" max="300" value="60" class="w-full bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg" dir="ltr">
-                        </div>
-                        <div>
-                            <label for="contextCountInput" class="block text-sm font-medium text-gray-400 mb-2">تعداد بلوک‌های زمینه (دقت بیشتر):</label>
-                            <input type="number" id="contextCountInput" min="1" max="10" value="3" class="w-full bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg" dir="ltr">
-                        </div>
-                        <div>
-                            <label for="customPrompt" class="block text-sm font-medium text-gray-400 mb-2">دستور سفارشی (Prompt):</label>
-                            <textarea id="customPrompt" class="w-full bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg text-xs" rows="5" dir="ltr"></textarea>
-                        </div>
+            <div id="subtitleSections" class="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-12 hidden fade-in">
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-black text-white flex items-center gap-3"><i
+                            class="fas fa-align-right text-gray-500"></i> متن اصلی</h2>
+                    <div id="originalSubtitleContainer"
+                        class="bg-black/20 rounded-3xl p-6 h-[500px] overflow-y-auto border border-white/5 shadow-inner">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-black text-white flex items-center gap-3"><i
+                                class="fas fa-language text-blue-400"></i> ترجمه فارسی</h2>
+                        <button id="editToggle"
+                            class="text-xs bg-white/5 text-white border border-white/10 px-4 py-2 rounded-xl hover:bg-white/10 transition-all">ویرایش</button>
+                    </div>
+                    <div id="translatedSubtitleContainer"
+                        class="bg-black/20 rounded-3xl p-6 h-[500px] overflow-y-auto border border-white/5 shadow-inner">
                     </div>
                 </div>
             </div>
 
-            <div id="progressContainer" class="hidden bg-white/5 p-6 rounded-2xl border border-white/10 fade-in">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-3">
-                        <div class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                        <span class="text-sm font-bold text-white">در حال ترجمه هوشمند...</span>
-                    </div>
-                    <span id="progressText" class="text-lg font-black text-blue-400">0%</span>
+            <div id="actionButtons"
+                class="flex flex-col md:flex-row justify-between items-center mt-12 gap-6 hidden fade-in">
+                <div class="flex gap-4 w-full md:w-auto">
+                    <button id="translateButton"
+                        class="bg-emerald-500 text-white px-10 py-5 rounded-2xl hover:bg-emerald-600 transition-all font-black flex-1 md:flex-none shadow-lg shadow-emerald-500/20">شروع
+                        ترجمه</button>
+                    <button id="continueButton"
+                        class="bg-blue-500 text-white px-10 py-5 rounded-2xl hover:bg-blue-600 transition-all font-black flex-1 md:flex-none hidden">ادامه
+                        از نقطه قبل</button>
                 </div>
-                <div class="progress-bar">
-                    <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex flex-col items-center py-10 border-2 border-dashed border-white/10 rounded-3xl hover:border-blue-500/50 transition-all duration-300 group">
-            <input type="file" id="subtitleFile" accept=".srt" class="hidden" />
-            <label for="subtitleFile" class="bg-gradient-to-br from-blue-500 to-blue-700 text-white px-10 py-4 rounded-2xl cursor-pointer hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-300 font-black flex items-center gap-3 transform group-hover:scale-105">
-                <i class="fas fa-file-upload text-xl"></i> بارگذاری فایل SRT
-            </label>
-            <p id="fileName" class="mt-4 text-sm text-gray-400 italic hidden"></p>
-        </div>
-
-        <div id="subtitleSections" class="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-12 hidden fade-in">
-            <div class="space-y-4">
-                <h2 class="text-2xl font-black text-white flex items-center gap-3"><i class="fas fa-align-right text-gray-500"></i> متن اصلی</h2>
-                <div id="originalSubtitleContainer" class="bg-black/20 rounded-3xl p-6 h-[500px] overflow-y-auto border border-white/5 shadow-inner"></div>
-            </div>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-black text-white flex items-center gap-3"><i class="fas fa-language text-blue-400"></i> ترجمه فارسی</h2>
-                    <button id="editToggle" class="text-xs bg-white/5 text-white border border-white/10 px-4 py-2 rounded-xl hover:bg-white/10 transition-all">ویرایش</button>
-                </div>
-                <div id="translatedSubtitleContainer" class="bg-black/20 rounded-3xl p-6 h-[500px] overflow-y-auto border border-white/5 shadow-inner"></div>
-            </div>
-        </div>
-
-        <div id="actionButtons" class="flex flex-col md:flex-row justify-between items-center mt-12 gap-6 hidden fade-in">
-            <div class="flex gap-4 w-full md:w-auto">
-                <button id="translateButton" class="bg-emerald-500 text-white px-10 py-5 rounded-2xl hover:bg-emerald-600 transition-all font-black flex-1 md:flex-none shadow-lg shadow-emerald-500/20">شروع ترجمه</button>
-                <button id="continueButton" class="bg-blue-500 text-white px-10 py-5 rounded-2xl hover:bg-blue-600 transition-all font-black flex-1 md:flex-none hidden">ادامه از نقطه قبل</button>
-            </div>
-            <button id="saveButton" class="w-full md:w-auto bg-purple-500 text-white px-10 py-5 rounded-2xl hover:bg-purple-600 transition-all font-black disabled:opacity-30 disabled:cursor-not-allowed group" disabled>
-                <i class="fas fa-download group-hover:bounce"></i> دریافت فایل نهایی
-            </button>
-        </div>
-
-        <div class="flex flex-col lg:flex-row justify-between items-center text-sm mt-16 pt-8 border-t border-white/10 gap-8">
-            <div class="text-gray-500 flex flex-col md:flex-row items-center gap-4">
-                <span>&copy; 1404 طراحی‌شده توسط iSegaro برای FreeMovieIR</span>
-                <div class="flex items-center gap-4">
-                    <a href="https://x.com/iSegar0" target="_blank" class="text-gray-400 hover:text-white transition-colors text-xl"><i class="fab fa-twitter"></i></a>
-                    <a href="https://github.com/iSegaro" target="_blank" class="text-gray-400 hover:text-white transition-colors text-xl"><i class="fab fa-github"></i></a>
-                </div>
-            </div>
-            <div class="flex items-center gap-6">
-                <span class="text-gray-400 font-bold">حمایت از پروژه:</span>
-                <button onclick="copyWallet()" class="flex items-center gap-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-6 py-3 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all duration-300 font-bold">
-                    <i class="fab fa-ethereum text-xl"></i> USDT (TRC20)
+                <button id="saveButton"
+                    class="w-full md:w-auto bg-purple-500 text-white px-10 py-5 rounded-2xl hover:bg-purple-600 transition-all font-black disabled:opacity-30 disabled:cursor-not-allowed group"
+                    disabled>
+                    <i class="fas fa-download group-hover:bounce"></i> دریافت فایل نهایی
                 </button>
             </div>
+
         </div>
-    </div>
-    
+    </main>
+
+    <div id="shared-footer"></div>
+
     <div id="flashMessageContainer"></div>
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="scripts.js" defer></script>
+    <script src="/assets/js/components/layout-shared.js" defer></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('worker.js').then(reg => {
+                    console.log('Worker registered', reg);
+                }).catch(err => {
+                    console.error('Worker failed', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

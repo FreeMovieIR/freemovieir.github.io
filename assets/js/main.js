@@ -222,24 +222,17 @@ async function fetchAndDisplayContent() {
   const tvContainer = document.getElementById('trending-tv');
   if (!movieContainer || !tvContainer) return;
 
-  // Ultra-fast DOM caching: Inject previously rendered HTML before fetching
+  // Ultra-fast DOM caching
   const cachedMovies = localStorage.getItem('homeCache_movies');
   const cachedTv = localStorage.getItem('homeCache_tv');
-  const cachedHero = localStorage.getItem('homeCache_hero');
-  const heroContainer = document.getElementById('hero-section');
 
-  const skeletonHTML = '<div class="animate-pulse bg-base-800 rounded-xl aspect-[2/3] w-full shadow-lg border border-gray-700/50"></div>'.repeat(4);
+  const skeletonHTML = '<div class="animate-pulse bg-white/5 rounded-3xl aspect-[2/3] w-full border border-white/5"></div>'.repeat(4);
 
   if (cachedMovies) movieContainer.innerHTML = cachedMovies;
   else movieContainer.innerHTML = skeletonHTML;
 
   if (cachedTv) tvContainer.innerHTML = cachedTv;
   else tvContainer.innerHTML = skeletonHTML;
-
-  if (cachedHero && heroContainer) {
-    heroContainer.classList.remove('animate-pulse');
-    heroContainer.innerHTML = cachedHero;
-  }
 
   try {
     startLoadingBar();
@@ -250,27 +243,26 @@ async function fetchAndDisplayContent() {
       fetch(proxify(apiUrls.tv_trending))
     ]);
 
-    if (!movieRes.ok || !tvRes.ok) {
-      throw new Error('خطا در دریافت داده‌ها');
-    }
+    if (!movieRes.ok || !tvRes.ok) throw new Error('Network response was not ok');
 
     const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
-    const movies = movieData.results || [];
-    const featuredMovie = movies[0];
-    const otherMovies = movies.slice(1);
 
-    if (featuredMovie) {
-      await renderHero(featuredMovie);
-      if (heroContainer) localStorage.setItem('homeCache_hero', heroContainer.innerHTML);
-    }
+    const movies = movieData.results || [];
+    const series = tvData.results || [];
+
+    // sliderItems: 2 movies and 2 series
+    sliderItems = [...movies.slice(0, 2), ...series.slice(0, 2)];
+    renderSlider();
+
+    const otherMovies = movies.slice(2);
+    const otherSeries = series.slice(2);
 
     const seenIds = new Set();
     const [movieHtml, tvHtml] = await Promise.all([
       buildItemsHtml(otherMovies, 'movie', seenIds),
-      buildItemsHtml(tvData.results || [], 'tv', seenIds)
+      buildItemsHtml(otherSeries, 'tv', seenIds)
     ]);
 
-    // Update DOM only if data changed (avoids reflow if nothing changed)
     if (movieContainer.innerHTML !== movieHtml) {
       movieContainer.innerHTML = movieHtml;
       localStorage.setItem('homeCache_movies', movieHtml);
@@ -280,15 +272,14 @@ async function fetchAndDisplayContent() {
       localStorage.setItem('homeCache_tv', tvHtml);
     }
   } catch (error) {
-    console.error('خطا در دریافت داده‌ها:', error);
-    // Only show error if we have no cached content
+    console.error('Fetch error:', error);
     if (!cachedMovies || !cachedTv) {
       const errorHTML = `
-          <div class="col-span-full flex flex-col items-center justify-center p-8 bg-red-900/20 border border-red-500/30 rounded-xl backdrop-blur-sm">
-            <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"></i>
-            <h3 class="text-xl font-bold text-red-400 mb-2">خطا در دریافت اطلاعات</h3>
-            <p class="text-gray-300 text-center">متأسفانه در حال حاضر امکان دریافت اطلاعات از سرور وجود ندارد. لطفاً ارتباط خود را بررسی کرده و صفحه را رفرش کنید.</p>
-            <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-600/40 transition-colors">تلاش مجدد</button>
+          <div class="col-span-full py-20 text-center glass-card-premium rounded-[2.5rem] border border-red-500/20">
+            <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-6 shadow-xl shadow-red-500/20"></i>
+            <h3 class="text-2xl font-black text-white mb-2">خطا در اتصال به سرور</h3>
+            <p class="text-gray-400">متأسفانه امکان دریافت اطلاعات در این لحظه میسر نیست.</p>
+            <button onclick="location.reload()" class="mt-8 px-8 py-3 bg-red-500/10 text-red-500 border border-red-500/30 rounded-2xl hover:bg-red-500 hover:text-white transition-all">تلاش دوباره</button>
           </div>
         `;
       movieContainer.innerHTML = errorHTML;

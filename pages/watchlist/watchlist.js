@@ -3,9 +3,9 @@ const defaultPoster = window.CONFIG ? window.CONFIG.ASSETS.DEFAULT_POSTER : 'htt
 let apiKeySwitcher;
 
 async function loadWatchlist() {
-    const movieContainer = document.getElementById('movie-watchlist');
-    const tvContainer = document.getElementById('tv-watchlist');
-    const emptyMessage = document.getElementById('empty-watchlist-message');
+    const movieContainer = document.getElementById('movies-watchlist');
+    const tvContainer = document.getElementById('series-watchlist');
+    const emptyMessage = document.getElementById('empty-watchlist');
 
     const watchlist = JSON.parse(localStorage.getItem('watchlist')) || { movies: [], series: [] };
 

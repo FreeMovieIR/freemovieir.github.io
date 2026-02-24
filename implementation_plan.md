@@ -2,41 +2,45 @@
 
 ## Phase 1: Branding & Cleanup
 - [x] Remove all mentions of "Raha" and "Rahamovie".
-- [ ] Centralize site name and branding in `config.js`.
+- [x] Centralize site name and branding in `config.js`.
 
 ## Phase 2: Core UI Components (Shared)
-- [ ] **Professional Header**
-    - [ ] Redesign for a more "premium" and modern look.
-    - [ ] Ensure full responsiveness.
-    - [ ] Add glassmorphic effects.
-- [ ] **Settings Modal**
-    - [ ] Convert the settings page into a modal accessible from the header.
-    - [ ] Update `layout-shared.js` to handle the modal logic.
-- [ ] **Developer Page Fix**
-    - [ ] Ensure the developer page correctly imports and uses the shared header and footer.
+- [x] **Professional Header**
+    - [x] Redesign for a more "premium" and modern look.
+    - [x] Ensure full responsiveness.
+    - [x] Add glassmorphic effects.
+- [x] **Settings Modal**
+    - [x] Convert the settings page into a modal accessible from the header.
+    - [x] Update `layout-shared.js` to handle the modal logic.
+- [x] **Developer Page & Isegaro Shared Layout**
+    - [x] Ensure the developer page correctly imports and uses the shared header and footer.
+    - [x] Integrate shared header/footer into the subtitle translator page.
 
 ## Phase 3: Home Page Enhancements
-- [ ] **Advanced Slider**
-    - [ ] Display 4 items (2 movies, 2 series) simultaneously.
-    - [ ] Featured item (largest) with auto-rotation every few seconds.
-    - [ ] Smooth transitions and high-quality posters.
+- [x] **Advanced Slider**
+    - [x] Display 4 items (2 movies, 2 series) in rotation.
+    - [x] Auto-rotation every few seconds.
+    - [x] Smooth transitions and high-quality backdrops.
 
-## Phase 5: Functional Fixes
-- [ ] **Watchlist Fix**
-    - [ ] Debug and fix `pages/watchlist/watchlist.js`.
-    - [ ] Ensure items are correctly added, removed, and displayed.
+## Phase 4: Watchlist Restoration
+- [x] **Watchlist Fix**
+    - [x] Debug and fix `pages/watchlist/watchlist.js`.
+    - [x] Fix container ID mismatches in `index.html`.
+    - [x] Ensure items are correctly added, removed, and displayed.
 
-## Phase 6: Subtitle Translator (Isegaro) Enhancements
+## Phase 5: Subtitle Translator (Isegaro) Enhancements
 - [ ] **API Key Management**
     - [ ] Add a "Verify" button for each key.
     - [ ] Show status (Working, Rate Limited, Invalid).
 - [ ] **Credit Blocks & Gap Detection**
     - [ ] Add starting and ending credit blocks.
     - [ ] Improve natural placement of credits.
-- [ ] **UI/UX Refinement**
-    - [ ] Finalize the progress bar and flash messages.
+- [x] **UI/UX Refinement**
+    - [x] Finalize the glassmorphic card design.
+    - [x] Add header/footer navigation.
 
-## Phase 7: Final Polish
-- [ ] SEO optimization for all pages.
-- [ ] Performance check (caching, asset loading).
+## Phase 6: Final Polish
+- [x] SEO optimization for all pages.
+- [x] LinkedIn link integration (Footer & Config).
+- [x] Performance check (caching, asset loading).
 
