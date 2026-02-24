@@ -328,10 +328,10 @@
             <!-- Bottom Copyright -->
             <div class="mt-24 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
               <div class="flex items-center gap-4 text-gray-500 text-sm font-bold">
-                <span>© ۲۰۲۴ حقوق مادی و معنوی برای فیری مووی محفوظ است</span>
+                <span>© ۲۰۲۴ کلیه حقوق مادی و معنوی برای پلتفرم فیری مووی محفوظ است.</span>
               </div>
               <div class="flex items-center gap-3 text-gray-600 text-[10px] font-bold uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
-                ساخته شده با <i class="fas fa-heart text-red-500/50 animate-pulse"></i> توسط <span class="text-white">تیم توسعه فیری مووی</span>
+                طراحی شده با <i class="fas fa-heart text-amber-500/50 animate-pulse"></i> جهت ارتقای فرهنگ سینما
               </div>
             </div>
         </div>
