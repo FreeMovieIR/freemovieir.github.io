@@ -46,7 +46,7 @@ window.toggleWatchlist = function (id, type) {
   window.dispatchEvent(new CustomEvent('watchlistChanged', { detail: { id, type } }));
 
   // Show small notification
-  const msg = index === -1 ? 'به واچ‌لیست اضافه شد!' : 'از واچ‌لیست حذف شد!';
+  const msg = index === -1 ? 'اثر مورد نظر به لیست تماشای شما افزوده شد.' : 'اثر مورد نظر از لیست تماشای شما حذف گردید.';
   if (window.showToast) window.showToast(msg, index === -1 ? 'success' : 'info');
 };
 
@@ -104,32 +104,32 @@ async function renderSlider() {
     const backdrop = item.backdrop_path ? `${tmdbImageBase}/w1280${item.backdrop_path}` : poster;
 
     return `
-            <div class="absolute inset-0 transition-all duration-1000 opacity-0 transform scale-110 slider-item" data-index="${index}">
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10"></div>
-                <div class="absolute inset-0 bg-gradient-to-l from-black/80 via-transparent to-transparent z-10"></div>
-                <img src="${backdrop}" alt="${title}" class="w-full h-full object-cover transition-transform duration-[10s] scale-100 group-hover:scale-110">
+            <div class="absolute inset-0 slider-item" data-index="${index}">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#07090f] via-transparent to-transparent z-10"></div>
+                <div class="absolute inset-0 bg-gradient-to-l from-black/60 via-transparent to-transparent z-10"></div>
+                <img src="${backdrop}" alt="${title}" class="w-full h-full object-cover transition-transform duration-[15s] ease-linear scale-100">
                 
-                <div class="container mx-auto px-6 h-full flex items-center relative z-20">
-                    <div class="max-w-3xl space-y-8 translate-y-10 transition-all duration-1000 opacity-0 content-box">
-                        <div class="flex items-center gap-4">
-                            <span class="bg-amber-500 text-black text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl shadow-amber-500/20">پیشنهاد ویژه</span>
-                            <div class="flex items-center gap-2 text-white/80 font-bold backdrop-blur-md bg-white/5 px-3 py-1 rounded-lg border border-white/10">
-                                <i class="fas fa-star text-amber-500 text-xs"></i>
+                <div class="container mx-auto px-10 h-full flex items-center relative z-20">
+                    <div class="max-w-3xl space-y-10 content-box">
+                        <div class="flex items-center gap-5">
+                            <span class="bg-amber-500 text-black text-[10px] font-black px-5 py-2 rounded-full uppercase tracking-widest shadow-2xl shadow-amber-500/30">برگزیده هفته</span>
+                            <div class="flex items-center gap-3 text-white font-bold backdrop-blur-xl bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10">
+                                <i class="fas fa-star text-amber-500 text-sm"></i>
                                 ${item.vote_average.toFixed(1)}
                             </div>
-                            <span class="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">${isMovie ? 'Movie' : 'TV Series'}</span>
+                            <span class="text-white/30 text-[10px] font-black uppercase tracking-[0.4em]">${isMovie ? 'Cinema' : 'TV Archive'}</span>
                         </div>
-                        <h1 class="text-6xl md:text-8xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+                        <h1 class="text-7xl md:text-9xl font-black text-white leading-[1.1] tracking-tighter drop-shadow-2xl">
                             ${title}
                         </h1>
-                        <p class="text-lg md:text-2xl text-gray-300 leading-relaxed max-w-2xl line-clamp-3 drop-shadow-lg">
+                        <p class="text-xl md:text-2xl text-gray-300 leading-relaxed max-w-2xl line-clamp-2 font-medium opacity-90">
                             ${overview}
                         </p>
-                        <div class="flex flex-wrap gap-5 pt-6">
-                            <a href="/?${isMovie ? 'm' : 's'}=${item.id}" class="bg-white text-black px-10 py-5 rounded-[2rem] font-black text-xl transition-all duration-500 hover:scale-110 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center gap-4 group">
-                                <i class="fas fa-play text-sm group-hover:scale-125 transition-transform"></i> تماشای جزئیات
+                        <div class="flex flex-wrap gap-6 pt-10">
+                            <a href="/?${isMovie ? 'm' : 's'}=${item.id}" class="bg-white text-black px-12 py-5 rounded-[2.5rem] font-black text-2xl transition-all duration-500 hover:scale-110 hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] flex items-center gap-4 group">
+                                <i class="fas fa-circle-play text-xl group-hover:scale-125 transition-transform"></i> مشاهده جزئیات
                             </a>
-                            <button onclick="window.toggleWatchlist('${item.id}', '${type}')" class="glass-card-premium text-white px-10 py-5 rounded-[2rem] font-black text-xl transition-all duration-500 hover:bg-white/10 hover:scale-110 flex items-center gap-4 border-white/10">
+                            <button onclick="window.toggleWatchlist('${item.id}', '${type}')" class="glass-card-premium text-white px-12 py-5 rounded-[2.5rem] font-black text-2xl transition-all duration-500 hover:bg-white/10 hover:scale-110 flex items-center gap-4 border border-white/10">
                                 <i class="${isInWatchlist(item.id, type) ? 'fas text-amber-500' : 'far'} fa-bookmark"></i> واچ‌لیست
                             </button>
                         </div>
@@ -641,8 +641,8 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     if (sources && sources.length > 0) {
       dlHtml += `
             <div class="w-full mb-4">
-                <h4 class="text-amber-500 font-bold text-sm mb-4 flex items-center gap-2">
-                    <i class="fas fa-bolt"></i> دانلود مستقیم پرسرعت (رایگان)
+                <h4 class="text-amber-500 font-black text-lg mb-6 flex items-center gap-3">
+                    <i class="fas fa-bolt-lightning"></i> منابع دانلود پرسرعت و رایگان
                 </h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     ${renderDownloadSources(sources)}
@@ -655,12 +655,13 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     if (isMovie) {
       const imdbShort = imdbId.replace('tt', '');
       dlHtml += `
-            <div class="w-full flex flex-col md:flex-row gap-4 mt-4">
-                <a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" target="_blank" class="bg-amber-500 text-black px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"><i class="fas fa-download"></i> لینک کمکی</a>
-                <a href="http://subtitlestar.com/go-to.php?imdb-id=${imdbId}" target="_blank" class="glass-card text-white px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-white/10 transition-colors border border-white/5"><i class="fas fa-language"></i> زیرنویس</a>
+            <div class="w-full flex flex-col md:flex-row gap-4 mt-8">
+                <a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" target="_blank" class="bg-amber-500 text-black px-8 py-5 rounded-[2rem] font-black flex-1 flex items-center justify-center gap-3 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/20"><i class="fas fa-server"></i> لینک کمکی پشتیبان</a>
+                <a href="http://subtitlestar.com/go-to.php?imdb-id=${imdbId}" target="_blank" class="glass-card text-white px-8 py-5 rounded-[2.5rem] font-black flex-1 flex items-center justify-center gap-3 hover:bg-white/10 transition-all border border-white/5"><i class="fas fa-closed-captioning"></i> دریافت زیرنویس</a>
             </div>
         `;
-    } else {
+    }
+    else {
       const seasons = data.number_of_seasons || 1;
       for (let s = 1; s <= seasons; s++) {
         const subProxy = window.CONFIG ? window.CONFIG.LINKS.SUBTITLE_PROXY : 'https://subtitle.saymyname.website/DL/filmgir';
