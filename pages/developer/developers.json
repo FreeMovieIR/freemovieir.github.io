@@ -2,40 +2,49 @@
   "developers": [
     {
       "name": "ریک سانچز",
-      "subtitle": "Wubba lubba dub dub",
+      "subtitle": "Lead Architect",
+      "bio": "متخصص معماری سیستم‌های توزیع شده و مدیریت زیرساخت فیری مووی.",
       "photo": "https://avatars.githubusercontent.com/u/101627789?v=4",
+      "github": "https://github.com/m4tinbeigi-official",
       "twitter": "https://twitter.com/m4tinbeigi",
       "instagram": "https://instagram.com/m4tinbeigi",
       "linkedin": "https://linkedin.com/in/matinbeigi"
     },
     {
       "name": "ارمین جوان",
-      "subtitle": "Web Developer",
+      "subtitle": "Full Stack Developer",
+      "bio": "توسعه‌دهنده ارشد بخش فرانت‌اند و متخصص تجربه کاربری (UX).",
       "photo": "https://avatars.githubusercontent.com/u/186399251?v=4",
+      "github": "https://github.com/arminjvn",
       "twitter": "https://twitter.com/armin_np_",
       "instagram": "https://instagram.com/armin_javaan"
-	},
-	{
+    },
+    {
       "name": "امیرحسین کمندلو",
-      "subtitle": "Developer",
+      "subtitle": "Backend Engineering",
+      "bio": "مسئول پیاده‌سازی سرویس‌های پشتیبان و بهینه‌سازی دیتابیس‌ها.",
       "photo": "https://avatars.githubusercontent.com/u/77993374?v=4",
+      "github": "https://github.com/a-kamandlou",
       "twitter": "https://x.com/a_kamandlou",
       "instagram": "https://instagram.com/a.kamandlou",
       "linkedin": "https://linkedin.com/in/kamandlou"
     },
     {
       "name": "علی رحیمی",
-      "subtitle": "Designer",
+      "subtitle": "Product Designer",
+      "bio": "خالق هویت بصری و طراح رابط کاربری مدرن فیری مووی.",
       "photo": "https://avatars.githubusercontent.com/u/189226337?v=4",
+      "github": "https://github.com/iimiharila",
       "twitter": "https://twitter.com/imiharila",
       "instagram": "https://instagram.com/imiharila",
       "linkedin": "https://linkedin.com/in/iimiharila"
     },
     {
-      "name": " آریا آزادهـ",
-      "subtitle": "Developer",
+      "name": "آریا آزاده",
+      "subtitle": "Core Contributor",
+      "bio": "توسعه‌دهنده بخش هسته و مدیریت ماژول‌های امنیتی پروژه.",
       "photo": "https://avatars.githubusercontent.com/u/56971831?v=4",
-      "twitter": "",
+      "github": "https://github.com/aryaazadeh",
       "instagram": "https://instagram.com/arya__azadeh",
       "linkedin": "https://www.linkedin.com/in/arya-azadeh/"
     }

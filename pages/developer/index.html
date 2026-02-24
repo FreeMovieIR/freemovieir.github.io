@@ -4,94 +4,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معرفی توسعه‌دهندگان - فیری مووی</title>
+    <title>تیم توسعه‌دهندگان - فیری مووی</title>
     <script src="/assets/js/config.js"></script>
-    <script src="/assets/js/config/tailwind-config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/dist/font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <script src="/assets/js/analytics.js" defer></script>
-    <script defer src="https://cloud.umami.is/script.js"
-        data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
             direction: rtl;
         }
 
-        .skeleton {
-            background: #333;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 0.5;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.5;
-            }
+        .dev-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(245, 158, 11, 0.06), transparent 40%);
+            z-index: 0;
+            transition: opacity 0.5s;
         }
     </style>
 </head>
 
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
-    <!-- Header -->
-    <div id="shared-header"></div>
+<body class="bg-[#07090f] text-white min-h-screen flex flex-col items-center selection:bg-amber-500/30">
+    <!-- Glow Background -->
+    <div
+        class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none">
+    </div>
+    <div
+        class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none">
+    </div>
 
-    <!-- Developers Section -->
-    <section class="container mx-auto py-8 text-center">
-        <h2 class="text-2xl font-bold mb-8">معرفی توسعه‌دهندگان</h2>
-        <div id="developers" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 m-4 justify-items-center">
-            <div class="skeleton w-64 h-64 rounded-lg"></div>
-            <div class="skeleton w-64 h-64 rounded-lg"></div>
-            <div class="skeleton w-64 h-64 rounded-lg"></div>
+    <div id="shared-header" class="w-full"></div>
+
+    <main class="container mx-auto py-24 px-6 relative z-10">
+        <div class="text-center mb-20 reveal-on-scroll">
+            <h1
+                class="text-5xl md:text-7xl font-black bg-gradient-to-l from-amber-500 via-yellow-200 to-amber-500 bg-clip-text text-transparent mb-6 tracking-tighter">
+                تیم توسعه‌دهندگان</h1>
+            <p class="text-gray-400 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">قلب تپنده فیری
+                مووی؛ افرادی که با عشق و تکنولوژی، این پلتفرم را برای شما خلق کرده‌اند.</p>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <div id="shared-footer"></div>
+        <div id="developers" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- Skeletons -->
+            <div class="h-[450px] rounded-[2.5rem] bg-white/5 animate-pulse border border-white/5"></div>
+            <div class="h-[450px] rounded-[2.5rem] bg-white/5 animate-pulse border border-white/5"></div>
+            <div class="h-[450px] rounded-[2.5rem] bg-white/5 animate-pulse border border-white/5"></div>
+        </div>
+    </main>
 
-    <!-- JavaScript -->
-    <script src="https://buttons.github.io/buttons.js" async defer></script>
+    <div id="shared-footer" class="w-full"></div>
+
     <script>
         async function fetchData() {
             try {
                 const response = await fetch('./developers.json');
-                if (!response.ok) throw new Error('خطا در دریافت اطلاعات از سرور');
                 const data = await response.json();
-
-                const developersContainer = document.getElementById('developers');
-                developersContainer.innerHTML = ''; // Clear skeleton placeholders
+                const container = document.getElementById('developers');
+                container.innerHTML = '';
 
                 data.developers.forEach(dev => {
                     const card = document.createElement('div');
-                    card.className = 'glass-card p-6 rounded-2xl shadow-xl w-64 text-center hover-lift';
+                    card.className = 'dev-card relative group p-8 rounded-[2.5rem] glass-card-premium border border-white/5 hover:border-amber-500/30 overflow-hidden transition-all duration-500 hover:scale-[1.02] flex flex-col items-center text-center';
                     card.innerHTML = `
-                        <img src="${dev.photo}" alt="${dev.name}" class="w-24 h-24 rounded-full mx-auto" loading="lazy">
-                        <h3 class="text-lg font-bold mt-4">${dev.name}</h3>
-                        <p class="text-sm text-gray-400">${dev.subtitle}</p>
-                        <div class="flex justify-center space-x-4 mt-4 space-x-reverse">
-                            ${dev.twitter ? `<a href="${dev.twitter}" target="_blank" class="text-blue-400 hover:text-blue-300" aria-label="توییتر"><i class="fab fa-twitter"></i></a>` : ''}
-                            ${dev.instagram ? `<a href="${dev.instagram}" target="_blank" class="text-blue-400 hover:text-blue-300" aria-label="اینستاگرام"><i class="fab fa-instagram"></i></a>` : ''}
-                            ${dev.linkedin ? `<a href="${dev.linkedin}" target="_blank" class="text-blue-400 hover:text-blue-300" aria-label="لینکدین"><i class="fab fa-linkedin"></i></a>` : ''}
+                        <div class="relative w-32 h-32 mb-8">
+                            <div class="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full scale-125 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <img src="${dev.photo}" alt="${dev.name}" class="w-full h-full rounded-full object-cover relative z-10 border-4 border-white/5 group-hover:border-amber-500/30 transition-colors duration-500" loading="lazy">
+                        </div>
+                        <h2 class="text-2xl font-black text-white mb-2 group-hover:text-amber-500 transition-colors">${dev.name}</h2>
+                        <span class="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 py-1.5 px-4 bg-white/5 rounded-full border border-white/5 group-hover:bg-amber-500/10 group-hover:text-amber-400 transition-all">${dev.subtitle}</span>
+                        
+                        <p class="text-gray-400 text-sm leading-relaxed mb-10 h-12 line-clamp-2">${dev.bio || 'توسعه‌دهنده خلاق و عضو تیم فنی فیری مووی'}</p>
+
+                        <div class="flex items-center gap-4 mt-auto relative z-10">
+                            ${dev.github ? `<a href="${dev.github}" target="_blank" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white hover:text-black transition-all" aria-label="Github"><i class="fab fa-github"></i></a>` : ''}
+                            ${dev.twitter ? `<a href="${dev.twitter}" target="_blank" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-[#1DA1F2] hover:text-white transition-all" aria-label="Twitter"><i class="fab fa-twitter"></i></a>` : ''}
+                            ${dev.instagram ? `<a href="${dev.instagram}" target="_blank" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-[#f9ce34] hover:via-[#ee2a7b] hover:to-[#6228d7] hover:text-white transition-all" aria-label="Instagram"><i class="fab fa-instagram"></i></a>` : ''}
+                            ${dev.linkedin ? `<a href="${dev.linkedin}" target="_blank" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-[#0077b5] hover:text-white transition-all" aria-label="Linkedin"><i class="fab fa-linkedin-in"></i></a>` : ''}
                         </div>
                     `;
-                    developersContainer.appendChild(card);
+
+                    card.addEventListener('mousemove', (e) => {
+                        const { left, top } = card.getBoundingClientRect();
+                        card.style.setProperty('--mouse-x', `${e.clientX - left}px`);
+                        card.style.setProperty('--mouse-y', `${e.clientY - top}px`);
+                    });
+
+                    container.appendChild(card);
                 });
-            } catch (error) {
-                console.error('خطا در بارگذاری اطلاعات:', error);
-                document.getElementById('developers').innerHTML = '<p class="text-red-400 text-center">خطا در بارگذاری اطلاعات توسعه‌دهندگان</p>';
+            } catch (e) {
+                console.error(e);
             }
         }
-
-        window.addEventListener('DOMContentLoaded', fetchData);
+        document.addEventListener('DOMContentLoaded', fetchData);
     </script>
     <script src="/assets/js/components/layout-shared.js" defer></script>
 </body>

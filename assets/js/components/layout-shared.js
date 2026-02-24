@@ -29,7 +29,12 @@
 
   // Shared Card Generator
   window.createMovieCard = function (item, poster, type) {
-    const title = item.title || item.name || 'نامشخص';
+    const titleFa = item.title || item.name || 'نامشخص';
+    const titleEn = item.original_title || item.original_name || '';
+    const year = (item.release_date || item.first_air_date || '').split('-')[0];
+    const displayYear = year ? ` (${year})` : '';
+    const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` | ${titleEn}` : '') + displayYear;
+
     const overview = item.overview ? `${item.overview.slice(0, 80)}...` : 'بدون توضیحات';
     const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
     const paramText = type === 'movie' ? `m=${item.id}` : `s=${item.id}`;
@@ -41,18 +46,18 @@
          data-id="${item.id}"
          data-type="${type}">
       <div class="aspect-[2/3] relative overflow-hidden">
-        <img src="${poster}" alt="${title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" onerror="this.src=window.defaultPoster">
-        <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5">
+        <img src="${poster}" alt="${displayTitle}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" onerror="this.src=window.defaultPoster">
+        <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5 text-right">
           <div class="movie-card-info">
-            <div class="flex items-center gap-2 mb-2">
+            <div class="flex items-center gap-2 mb-2 justify-end">
               <span class="bg-amber-500 text-black text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
                 <i class="fas fa-star text-[8px]"></i> ${score}
               </span>
               <span class="text-white/40 text-[10px] font-bold uppercase tracking-widest">${routeLabel}</span>
             </div>
-            <h3 class="text-lg font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${item.title || item.name}</h3>
-            <p class="text-xs text-gray-300 mb-4 line-clamp-1 opacity-80">${overview}</p>
-            <button class="w-full bg-white/10 hover:bg-amber-500 hover:text-black hover:scale-105 backdrop-blur-md text-white border border-white/10 text-xs font-black py-2.5 rounded-xl transition-all duration-300">
+            <h3 class="text-sm md:text-base font-black text-white mb-2 leading-tight line-clamp-2 drop-shadow-lg">${displayTitle}</h3>
+            <p class="text-[10px] text-gray-300 mb-4 line-clamp-1 opacity-80">${overview}</p>
+            <button class="w-full bg-white/10 hover:bg-amber-500 hover:text-black hover:scale-105 backdrop-blur-md text-white border border-white/10 text-[10px] font-black py-2 rounded-xl transition-all duration-300">
               مشاهده جزئیات
             </button>
           </div>

@@ -182,32 +182,15 @@ function displayInitialResults(container, sectionElement, titleElement, items, i
 async function fetchAndSetPoster(item, itemType) {
     const itemId = item.id;
     const itemTitle = itemType === 'movie' ? item.title : item.name;
-    const externalIdsUrl = `https://api.themoviedb.org/3/${itemType}/${itemId}/external_ids?api_key=${tmdbApiKey}`;
-    let imdbId = null;
 
     try {
-        const response = await fetch(externalIdsUrl);
-        if (response.ok) {
-            const idsData = await response.json();
-            imdbId = idsData.imdb_id;
-        } else {
-            console.warn(`Failed to fetch external IDs for ${itemType} ${itemId}: ${response.status}`);
-            return; // If no external IDs, can't fetch from OMDB
+        const posterUrl = await window.resolvePoster(itemId, itemType, item.poster_path);
+        const imgElement = document.querySelector(`div[data-id="${itemId}"] img`);
+        if (imgElement) {
+            imgElement.src = posterUrl;
         }
-
-        if (imdbId) {
-            const posterUrl = await getCachedOrFetchPoster(imdbId, itemTitle);
-            const imgElement = document.querySelector(`div[data-item-id="${itemId}"] img`);
-            if (imgElement) {
-                imgElement.src = posterUrl;
-            }
-        } else {
-            console.warn(`No IMDb ID found for ${itemTitle} (ID: ${itemId}), using default poster.`);
-            // Default poster is already set, no need to change
-        }
-
     } catch (error) {
-        console.error(`Error fetching and setting poster for ${itemType} ${itemTitle} (ID: ${itemId}):`, error);
+        console.error(`Error updating poster for ${itemId}:`, error);
     }
 }
 

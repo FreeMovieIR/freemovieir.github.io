@@ -469,22 +469,28 @@ async function fetchDetails(id, type) {
 
 function renderDetailsView(data, posterUrl, imdbId, type) {
   const isMovie = type === 'movie';
-  const title = data.title || data.name || 'بدون نام';
+  const titleFa = data.title || data.name || 'بدون نام';
+  const titleEn = data.original_title || data.original_name || '';
   const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
+  const displayYear = year ? ` (${year})` : '';
+  const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` | ${titleEn}` : '') + displayYear;
+
   const overview = data.overview || 'خلاصه داستانی در دسترس نیست.';
   const genres = data.genres?.map(g => g.name).join(', ') || 'نامشخص';
   const rating = data.vote_average?.toFixed(1) || '—';
   const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
   const backdropUrl = data.backdrop_path ? `${tmdbImageBase}/original${data.backdrop_path}` : posterUrl;
 
-  // Update Document Meta
-  document.title = `${title} (${year || ''}) - فیری مووی`;
-  const metaDesc = overview.substring(0, 150) + '...';
+  // Update Document Meta for SEO
+  const pageTitle = `دانلود ${isMovie ? 'فیلم' : 'سریال'} ${displayTitle} - فیری مووی`;
+  document.title = pageTitle;
+
+  const metaDesc = overview.substring(0, 150) + '... ' + (isMovie ? 'تماشا و دانلود رایگان فیلم' : 'تماشا و دانلود رایگان سریال') + ` ${titleFa}`;
   document.querySelector('meta[name="description"]')?.setAttribute('content', metaDesc);
-  document.querySelector('meta[property="og:title"]')?.setAttribute('content', document.title);
+  document.querySelector('meta[property="og:title"]')?.setAttribute('content', pageTitle);
   document.querySelector('meta[property="og:image"]')?.setAttribute('content', backdropUrl);
   document.querySelector('meta[property="og:description"]')?.setAttribute('content', metaDesc);
-  document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', document.title);
+  document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', pageTitle);
   document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', metaDesc);
   document.querySelector('meta[name="twitter:image"]')?.setAttribute('content', backdropUrl);
 
@@ -499,7 +505,7 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
   document.getElementById('details-poster').classList.add('reveal-on-scroll');
 
   // Text Data
-  document.getElementById('details-title').textContent = title;
+  document.getElementById('details-title').textContent = displayTitle;
   document.getElementById('rating-text').textContent = rating;
   document.getElementById('details-overview').textContent = overview;
   document.getElementById('details-type-badge').textContent = isMovie ? 'فیلم' : 'سریال';
