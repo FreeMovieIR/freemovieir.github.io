@@ -13,7 +13,7 @@ window.CONFIG = {
         TMDB_IMAGE: 'https://image.tmdb.org/t/p',
         OMDB: 'https://www.omdbapi.com',
         TVMAZE: 'https://api.tvmaze.com',
-        RAHAMOVIE: 'https://server-hi-speed-iran.info/api'
+        MOVIE_DATA: 'https://server-hi-speed-iran.info/api'
     },
 
     // Assets
@@ -44,5 +44,6 @@ window.CONFIG = {
     // Global Constants
     TMDB_DEFAULT_KEY: '1dc4cbf81f0accf4fa108820d551dafc',
     OMDB_DEFAULT_KEY: '38fa39d5',
-    RAHAMOVIE_DEFAULT_KEY: '4F5A9C3D9A86FA54EACEDDD635185'
+    MOVIE_DATA_KEY: '4F5A9C3D9A86FA54EACEDDD635185'
 };
+

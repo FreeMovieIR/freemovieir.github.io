@@ -1,31 +1,42 @@
-# Subtitle Translation & Download Link Enhancement Plan
+# Implementation Plan: FreeMovieIR Enhancements
 
-## Phase 1: Subtitle Translator (Isegaro) Enhancements
+## Phase 1: Branding & Cleanup
+- [x] Remove all mentions of "Raha" and "Rahamovie".
+- [ ] Centralize site name and branding in `config.js`.
+
+## Phase 2: Core UI Components (Shared)
+- [ ] **Professional Header**
+    - [ ] Redesign for a more "premium" and modern look.
+    - [ ] Ensure full responsiveness.
+    - [ ] Add glassmorphic effects.
+- [ ] **Settings Modal**
+    - [ ] Convert the settings page into a modal accessible from the header.
+    - [ ] Update `layout-shared.js` to handle the modal logic.
+- [ ] **Developer Page Fix**
+    - [ ] Ensure the developer page correctly imports and uses the shared header and footer.
+
+## Phase 3: Home Page Enhancements
+- [ ] **Advanced Slider**
+    - [ ] Display 4 items (2 movies, 2 series) simultaneously.
+    - [ ] Featured item (largest) with auto-rotation every few seconds.
+    - [ ] Smooth transitions and high-quality posters.
+
+## Phase 5: Functional Fixes
+- [ ] **Watchlist Fix**
+    - [ ] Debug and fix `pages/watchlist/watchlist.js`.
+    - [ ] Ensure items are correctly added, removed, and displayed.
+
+## Phase 6: Subtitle Translator (Isegaro) Enhancements
 - [ ] **API Key Management**
-    - [ ] Add a "Verify" button for each key to check if it's working.
-    - [ ] Show status of each key (Working, Rate Limited, Invalid).
-    - [ ] Persist the last used key.
+    - [ ] Add a "Verify" button for each key.
+    - [ ] Show status (Working, Rate Limited, Invalid).
 - [ ] **Credit Blocks & Gap Detection**
-    - [ ] Add a starting credit block (at 00:00:01,000).
-    - [ ] Add an ending credit block.
-    - [ ] Improve gap detection to ensure credits are placed naturally.
-- [ ] **Context-Aware Translation**
-    - [ ] Improve the prompt for better Persian flow.
-    - [ ] Use a more robust language detection.
-- [ ] **UI/UX Improvements**
-    - [ ] Add a "Clear Cache/Progress" button.
-    - [ ] Improve the progress bar (vibrant gradients, smooth transitions).
-    - [ ] Enhance the Flash Message system with better styles.
-    - [ ] Add tooltips or help text for settings.
+    - [ ] Add starting and ending credit blocks.
+    - [ ] Improve natural placement of credits.
+- [ ] **UI/UX Refinement**
+    - [ ] Finalize the progress bar and flash messages.
 
-## Phase 2: Download Link Integration (Rahamovie)
-- [ ] **API Integration**
-    - [ ] Modify `fetchDetails` in `assets/js/main.js` to call Rahamovie API for download links.
-    - [ ] Handle failures by falling back to the default `DOWNLOAD_PROXY`.
-- [ ] **UI Update**
-    - [ ] Render multiple links (480p, 720p, 1080p, etc.) nicely in the details view.
-    - [ ] Add a "Copy Link" button for each quality.
+## Phase 7: Final Polish
+- [ ] SEO optimization for all pages.
+- [ ] Performance check (caching, asset loading).
 
-## Phase 3: Final Polish
-- [ ] Refactor `main.js` and `scripts.js` for better modularity.
-- [ ] Ensure SEO best practices are met for the new content.
