@@ -1,56 +1,90 @@
+/* Main Container */
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: radial-gradient(circle at top right, #1a1a2e 0%, #16213e 100%);
+    color: #e2e8f0;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
 /* Progress Bar */
 .progress-bar {
     width: 100%;
-    height: 4px;
-    background-color: #eee;
-    border-radius: 2px;
-    margin: 10px 0;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin: 15px 0;
+    overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background-color: #4CAF50;
-    border-radius: 2px;
-    transition: width 0.3s ease;
-}
-
-/* Editor Toolbar */
-.editor-toolbar {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 5px;
-}
-
-.editor-toolbar button {
-    padding: 2px 8px;
-    font-size: 12px;
-}
-
-/* Contenteditable Focus */
-[contenteditable="true"]:focus {
-    outline: 2px solid #4CAF50;
+    background: linear-gradient(90deg, #3b82f6, #10b981);
     border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 /* Flash Message */
 .flash-message {
     position: fixed;
     top: 20px;
-    left: 20px; /* تغییر به چپ برای RTL */
-    padding: 15px 25px;
-    border-radius: 5px;
+    left: 20px;
+    padding: 12px 24px;
+    border-radius: 12px;
     color: white;
-    animation: fadeInOut 3s ease-in-out;
+    font-weight: 600;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    animation: flashSlideIn 0.3s ease-out, flashFadeOut 0.3s ease-in 2.7s forwards;
 }
 
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(-20px); }
-    10% { opacity: 1; transform: translateY(0); }
-    90% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-20px); }
+@keyframes flashSlideIn {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
-/* فونت پیش‌فرض برای فارسی */
-body {
-    font-family: 'Vazirmatn', sans-serif;
+@keyframes flashFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Contenteditable Focus */
+[contenteditable="true"]:focus {
+    outline: 2px solid #3b82f6;
+    background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
