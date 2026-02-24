@@ -26,14 +26,14 @@
   <script src="/assets/js/config/tailwind-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/assets/css/style.css">
-  <link href="https://cdn.gh/rastikerdar/vazirmatn@latest/dist/font-face.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/dist/font-face.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
   <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico" />
   <script src="/assets/js/analytics.js"></script>
   <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
   <style>
     body {
-      font-family: "Vazir", sans-serif;
+      font-family: "Vazirmatn", sans-serif;
       direction: rtl;
     }
   </style>
@@ -49,39 +49,27 @@
     <div class="max-w-4xl mx-auto space-y-12 mb-20 relative z-10">
       <div class="text-center space-y-4">
         <h1 class="text-6xl font-black text-white tracking-tighter drop-shadow-2xl">جستجوی <span
-            class="text-gradient-amber">هوشمند</span></h1>
-        <p class="text-gray-400 text-lg font-medium">فیلم یا سریال مورد علاقه خود را در یک چشم به هم زدن پیدا کنید</p>
+            class="text-gradient-amber">پیشرفته</span></h1>
+        <p class="text-gray-400 text-lg font-medium">دسترسی سریع به آرشیو بزرگ فیلم‌ها و سریال‌های جهان</p>
       </div>
 
       <div
-        class="glass-card-premium p-4 md:p-6 rounded-[2.5rem] border-white/10 flex flex-col md:flex-row items-stretch gap-4 shadow-2xl relative group">
+        class="glass-card-premium p-4 md:p-6 rounded-[2.5rem] border-white/10 flex items-stretch gap-4 shadow-2xl relative group">
         <div
           class="absolute -inset-1 bg-gradient-to-r from-amber-500/20 to-blue-500/20 rounded-[2.6rem] blur opacity-20 group-hover:opacity-40 transition-opacity duration-500">
         </div>
-        <div class="relative min-w-[140px]">
-          <select id="search-type"
-            class="w-full h-full bg-base-900/50 text-white rounded-2xl px-6 py-4 appearance-none outline-none border border-white/5 focus:border-amber-500/50 transition-all font-bold">
-            <option value="all">همه نتایج</option>
-            <option value="movie">فقط فیلم</option>
-            <option value="tv">فقط سریال</option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-4 text-gray-500">
-            <i class="fas fa-chevron-down text-xs"></i>
-          </div>
-        </div>
+
+        <input type="hidden" id="search-type" value="all">
 
         <div class="flex-1 relative">
-          <input type="text" id="search" placeholder="نام اثر را اینجا وارد کنید..."
-            class="w-full bg-base-900/50 text-white rounded-2xl px-8 py-4 outline-none border border-white/5 focus:border-amber-500/50 transition-all text-lg placeholder:text-gray-600">
-          <div class="absolute inset-y-0 left-0 flex items-center px-6 text-gray-400">
-            <!-- Shortcut or Icon indicator if needed -->
-          </div>
+          <input type="text" id="search" placeholder="نام فیلم یا سریال مورد نظر..."
+            class="w-full bg-base-900/10 text-white rounded-2xl px-8 py-4 outline-none border border-white/5 focus:border-amber-500/50 transition-all text-lg placeholder:text-gray-600">
         </div>
 
         <button id="search-button"
-          class="bg-amber-500 hover:bg-amber-400 text-black px-10 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-102 flex items-center justify-center gap-3 shadow-xl shadow-amber-500/20">
+          class="bg-amber-500 hover:bg-amber-400 text-black px-10 py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 shadow-xl shadow-amber-500/20">
           <i class="fas fa-search"></i>
-          <span>جستجو</span>
+          <span>بگرد</span>
         </button>
       </div>
     </div>

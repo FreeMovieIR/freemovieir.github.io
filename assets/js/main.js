@@ -153,18 +153,27 @@ async function renderSlider() {
   const showSlide = (index) => {
     const slides = document.querySelectorAll('.slider-item');
     const dots = document.querySelectorAll('.slider-dot');
+    const total = slides.length;
 
-    slides.forEach((slide, i) => {
-      if (i === index) {
-        slide.classList.remove('opacity-0', 'scale-110', 'pointer-events-none');
-        slide.classList.add('opacity-100', 'scale-100');
-        slide.querySelector('.content-box').classList.remove('opacity-0', 'translate-y-10');
-      } else {
-        slide.classList.add('opacity-0', 'scale-110', 'pointer-events-none');
-        slide.classList.remove('opacity-100', 'scale-100');
-        slide.querySelector('.content-box').classList.add('opacity-0', 'translate-y-10');
-      }
+    // Remove all positional classes
+    slides.forEach(slide => {
+      slide.classList.remove('active', 'prev', 'next', 'hidden-item');
+      slide.classList.add('hidden-item');
+      slide.classList.add('pointer-events-none');
     });
+
+    const current = index;
+    const prev = (index - 1 + total) % total;
+    const next = (index + 1) % total;
+
+    slides[current].classList.remove('hidden-item', 'pointer-events-none');
+    slides[current].classList.add('active');
+
+    slides[prev].classList.remove('hidden-item');
+    slides[prev].classList.add('prev');
+
+    slides[next].classList.remove('hidden-item');
+    slides[next].classList.add('next');
 
     dots.forEach((dot, i) => {
       if (i === index) {
@@ -178,6 +187,16 @@ async function renderSlider() {
 
     sliderIndex = index;
   };
+
+  // Switch slides on click of neighbor
+  sliderContainer.addEventListener('click', (e) => {
+    const slide = e.target.closest('.slider-item');
+    if (!slide || slide.classList.contains('active')) return;
+
+    if (slide.classList.contains('prev') || slide.classList.contains('next')) {
+      showSlide(parseInt(slide.dataset.index));
+    }
+  });
 
   // Initial show
   showSlide(0);
@@ -562,31 +581,102 @@ function renderDetailsView(data, posterUrl, imdbId, type) {
     ? `<iframe src="${trailerUrl}" class="w-full aspect-video rounded-3xl" allowfullscreen></iframe>`
     : `<p class="text-amber-500 text-center py-8">تریلر در دسترس نیست</p>`;
 
-  // Download Links
-  const downloadContainer = document.getElementById('download-links');
-  if (isMovie) {
-    const imdbShort = imdbId.replace('tt', '');
-    downloadContainer.innerHTML = `
-            <a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" target="_blank" class="bg-amber-500 text-black px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors"><i class="fas fa-download"></i> دانلود مستقیم</a>
-            <a href="http://subtitlestar.com/go-to.php?imdb-id=${imdbId}" target="_blank" class="glass-card text-white px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"><i class="fas fa-language"></i> زیرنویس</a>
+  // --- Multi-Source Download Integration ---
+  const fetchMovieDataDownloads = async (imdbId, title) => {
+    if (!imdbId && !title) return [];
+    const config = window.CONFIG;
+    if (!config || !config.API.MOVIE_DATA) return [];
+
+    // Prioritize IMDB ID for accuracy
+    const query = imdbId ? `imdb=${imdbId}` : `q=${encodeURIComponent(title)}`;
+    const url = `${config.API.MOVIE_DATA}/search?${query}&key=${config.MOVIE_DATA_KEY}`;
+
+    try {
+      const res = await fetch(proxify(url));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.results || data.sources || [];
+    } catch (e) {
+      console.warn("MovieData API fetch failed, using fallbacks.");
+      return [];
+    }
+  };
+
+  const renderDownloadSources = (sources) => {
+    if (!sources || sources.length === 0) return '';
+
+    return sources.map(src => {
+      const quality = src.quality || 'HD';
+      const size = src.size ? `<span class="text-[10px] text-gray-500 ml-2">(${src.size})</span>` : '';
+      const badgeColor = quality.includes('1080') ? 'bg-amber-500' : (quality.includes('720') ? 'bg-blue-500' : 'bg-gray-600');
+
+      return `
+            <a href="${src.url}" target="_blank" class="glass-card-premium p-4 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-white/10 transition-all group/dl reveal-on-scroll">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl ${badgeColor}/10 flex items-center justify-center text-white font-black text-xs">
+                        ${quality}
+                    </div>
+                    <div>
+                        <span class="text-white font-bold text-sm block">${src.label || 'لینک مستقیم'}</span>
+                        <span class="text-xs text-gray-400">سرور پرسرعت ایران</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    ${size}
+                    <i class="fas fa-arrow-down text-gray-500 group-hover/dl:text-white transition-colors"></i>
+                </div>
+            </a>
         `;
-  } else {
+    }).join('');
+  };
+
+  // Download Links Management
+  const downloadContainer = document.getElementById('download-links');
+  downloadContainer.innerHTML = '<div class="w-full flex justify-center py-4"><div class="w-6 h-6 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div></div>';
+
+  fetchMovieDataDownloads(imdbId, title).then(sources => {
     let dlHtml = '';
-    const seasons = data.number_of_seasons || 1;
-    for (let s = 1; s <= seasons; s++) {
-      const subProxy = window.CONFIG ? window.CONFIG.LINKS.SUBTITLE_PROXY : 'https://subtitle.saymyname.website/DL/filmgir';
+
+    // 1. Premium Sources (from New API)
+    if (sources && sources.length > 0) {
       dlHtml += `
-                <div class="w-full glass-card p-4 rounded-2xl text-center">
+            <div class="w-full mb-4">
+                <h4 class="text-amber-500 font-bold text-sm mb-4 flex items-center gap-2">
+                    <i class="fas fa-bolt"></i> دانلود مستقیم پرسرعت (رایگان)
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    ${renderDownloadSources(sources)}
+                </div>
+            </div>
+        `;
+    }
+
+    // 2. Standard Fallbacks
+    if (isMovie) {
+      const imdbShort = imdbId.replace('tt', '');
+      dlHtml += `
+            <div class="w-full flex flex-col md:flex-row gap-4 mt-4">
+                <a href="https://berlin.saymyname.website/Movies/${year}/${imdbShort}" target="_blank" class="bg-amber-500 text-black px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"><i class="fas fa-download"></i> لینک کمکی</a>
+                <a href="http://subtitlestar.com/go-to.php?imdb-id=${imdbId}" target="_blank" class="glass-card text-white px-6 py-4 rounded-2xl font-black flex-1 flex items-center justify-center gap-2 hover:bg-white/10 transition-colors border border-white/5"><i class="fas fa-language"></i> زیرنویس</a>
+            </div>
+        `;
+    } else {
+      const seasons = data.number_of_seasons || 1;
+      for (let s = 1; s <= seasons; s++) {
+        const subProxy = window.CONFIG ? window.CONFIG.LINKS.SUBTITLE_PROXY : 'https://subtitle.saymyname.website/DL/filmgir';
+        dlHtml += `
+                <div class="w-full glass-card p-4 rounded-2xl text-center border border-white/5">
                     <h3 class="font-bold text-amber-500 mb-2">فصل ${s}</h3>
                     <div class="flex gap-2 flex-wrap justify-center">
-                        <a href="${subProxy}/?i=${imdbId}&f=${s}&q=1" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 1</a>
-                        <a href="${subProxy}/?i=${imdbId}&f=${s}&q=2" class="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20">کیفیت 2</a>
+                        <a href="${subProxy}/?i=${imdbId}&f=${s}&q=1" class="text-xs bg-white/5 px-4 py-2 rounded-xl hover:bg-white/10 border border-white/5 transition-all">کیفیت 1</a>
+                        <a href="${subProxy}/?i=${imdbId}&f=${s}&q=2" class="text-xs bg-white/5 px-4 py-2 rounded-xl hover:bg-white/10 border border-white/5 transition-all">کیفیت 2</a>
                     </div>
                 </div>
             `;
+      }
     }
     downloadContainer.innerHTML = dlHtml;
-  }
+  });
 
   // View Switch
   document.getElementById('home-view').classList.add('hidden');

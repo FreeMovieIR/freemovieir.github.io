@@ -281,7 +281,7 @@
                         <span class="text-3xl font-black text-white tracking-tighter">فیری <span class="text-amber-500">مووی</span></span>
                     </a>
                     <p class="text-gray-400 text-base leading-9 max-w-xl font-medium">
-                        مرجع پیشرفته و رایگان سینما برای پارسی‌زبانان. ما با بهره‌گیری از هوش مصنوعی، بهترین تجربه تماشای فیلم و سریال را برای شما فراهم می‌کنیم. فیری مووی همواره رایگان می‌ماند.
+                        پلتفرم فیری مووی به عنوان یک آرشیو جامع و دیجیتال، با هدف ارتقای دسترسی به آثار برتر سینمای جهان برای پارسی‌زبانان فعالیت می‌کند. ما همواره در تلاشیم تا تجربه‌ای حرفه‌ای و مدرن را به صورت رایگان ارائه دهیم.
                     </p>
                     <div class="flex items-center gap-4">
                         <a href="https://twitter.com/freemovie_ir" target="_blank" class="footer-social-btn hover:bg-[#1DA1F2]" aria-label="توییتر">
@@ -358,18 +358,22 @@
     headerTarget.innerHTML = headerHtml;
     localStorage.setItem('homeCache_header', headerHtml);
 
-    // Add search listener
-    const headerSearchInput = document.getElementById('header-search-input');
-    if (headerSearchInput) {
-      headerSearchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const query = headerSearchInput.value.trim();
-          if (query.length >= 3) {
-            window.location.href = `/pages/search/index.html?q=${encodeURIComponent(query)}`;
+    // Desktop & Mobile Search Handlers
+    const setupSearch = (id) => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const query = input.value.trim();
+            if (query.length >= 3) {
+              window.location.href = `/pages/search/index.html?q=${encodeURIComponent(query)}`;
+            }
           }
-        }
-      });
-    }
+        });
+      }
+    };
+    setupSearch('header-search-input');
+    setupSearch('header-search-input-mobile');
   }
 
   if (footerTarget) {

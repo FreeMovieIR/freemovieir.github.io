@@ -185,9 +185,9 @@ body::before {
 /* Content Grid refined */
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 2rem;
-    padding: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2.5rem;
+    padding: 2rem 0;
 }
 
 @media (max-width: 640px) {
@@ -196,4 +196,92 @@ body::before {
         gap: 1rem;
         padding: 1rem;
     }
+}
+
+/* --- Added Styles --- */
+
+/* --- Slider Stage Styles --- */
+.slider-container {
+    perspective: 1200px;
+    overflow: hidden;
+    position: relative;
+    height: clamp(500px, 75vh, 750px);
+    margin-bottom: 4rem;
+}
+
+.slider-item {
+    transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    position: absolute;
+    inset: 0;
+    will-change: transform, opacity, filter;
+}
+
+.slider-item.active {
+    z-index: 30;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+}
+
+.slider-item.prev {
+    z-index: 20;
+    opacity: 0.35;
+    transform: translateX(-48%) scale(0.8) rotateY(15deg);
+    filter: blur(4px) grayscale(50%);
+    pointer-events: auto;
+}
+
+.slider-item.next {
+    z-index: 20;
+    opacity: 0.35;
+    transform: translateX(48%) scale(0.8) rotateY(-15deg);
+    filter: blur(4px) grayscale(50%);
+    pointer-events: auto;
+}
+
+.slider-item.hidden-item {
+    z-index: 10;
+    opacity: 0;
+    transform: scale(0.6) translateY(50px);
+    pointer-events: none;
+}
+
+.slider-item .content-box {
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.2s;
+    opacity: 0;
+    transform: translateY(40px);
+}
+
+.slider-item.active .content-box {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Search UI Refinement --- */
+.search-results-section {
+    border-right: 4px solid var(--accent-color);
+    padding-right: 1.5rem;
+    margin-bottom: 5rem;
+}
+
+.search-results-section.tv {
+    border-color: #3b82f6;
+}
+
+/* --- Professional Typography --- */
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
 }

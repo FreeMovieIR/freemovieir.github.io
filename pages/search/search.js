@@ -214,13 +214,11 @@ async function fetchAndSetPoster(item, itemType) {
 /**
  * Main function to search media based on query and type.
  */
-async function searchMedia(query, searchType) {
+async function searchMedia(query) {
     const cleanedQuery = query.trim().toLowerCase();
     if (cleanedQuery.length < minQueryLength) {
         if (window.showToast) {
-            window.showToast(`لطفاً حداقل ${minQueryLength} کاراکتر وارد کنید.`, 'info');
-        } else {
-            alert(`لطفاً حداقل ${minQueryLength} کاراکتر وارد کنید.`);
+            window.showToast(`حداقل ${minQueryLength} حرف وارد کنید.`, 'info');
         }
         return;
     }
@@ -236,45 +234,42 @@ async function searchMedia(query, searchType) {
 
     try {
         const response = await fetch(searchMultiUrl);
-        if (!response.ok) {
-            throw new Error(`خطای API: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`خطای API: ${response.status}`);
+
         const data = await response.json();
         const allResults = data.results || [];
 
-        let movieItems = [];
-        let tvItems = [];
+        const movieItems = allResults.filter(item => item.media_type === 'movie');
+        const tvItems = allResults.filter(item => item.media_type === 'tv');
 
-        if (searchType === 'movie' || searchType === 'all') {
-            movieItems = allResults.filter(item => item.media_type === 'movie');
-        }
-        if (searchType === 'tv' || searchType === 'all') {
-            tvItems = allResults.filter(item => item.media_type === 'tv');
-        }
-
-        // Display initial results with default posters
-        if (searchType === 'movie' || searchType === 'all') {
-            displayInitialResults(movieResultsContainer, movieSection, movieTitleElement, movieItems, 'movie', cleanedQuery, 'فیلمی با این مشخصات یافت نشد.');
-            // Fetch and set posters asynchronously
+        // Professional Results Header Cleanup
+        if (movieItems.length > 0) {
+            movieSection.classList.add('search-results-section');
+            displayInitialResults(movieResultsContainer, movieSection, movieTitleElement, movieItems, 'movie', cleanedQuery, 'فیلمی یافت نشد.');
             movieItems.forEach(movie => fetchAndSetPoster(movie, 'movie'));
         }
-        if (searchType === 'tv' || searchType === 'all') {
-            displayInitialResults(tvResultsContainer, tvSection, tvTitleElement, tvItems, 'tv', cleanedQuery, 'سریالی با این مشخصات یافت نشد.');
-            // Fetch and set posters asynchronously
+
+        if (tvItems.length > 0) {
+            tvSection.classList.add('search-results-section', 'tv');
+            displayInitialResults(tvResultsContainer, tvSection, tvTitleElement, tvItems, 'tv', cleanedQuery, 'سریالی یافت نشد.');
             tvItems.forEach(tv => fetchAndSetPoster(tv, 'tv'));
         }
 
-        if (searchType === 'all' && movieItems.length === 0 && tvItems.length === 0) {
-            console.log("هیچ نتیجه‌ای (نه فیلم، نه سریال) یافت نشد.");
+        if (movieItems.length === 0 && tvItems.length === 0) {
+            movieSection.classList.remove('hidden');
+            movieResultsContainer.innerHTML = `
+                <div class="col-span-full py-20 text-center glass-card-premium rounded-[2.5rem] border border-white/5">
+                    <i class="fas fa-search text-gray-600 text-5xl mb-6"></i>
+                    <h3 class="text-2xl font-black text-white">نتیجه‌ای یافت نشد</h3>
+                    <p class="text-gray-400 mt-2">پوزش می‌طلبیم، اما اثری با عنوان "${query}" در آرشیو یافت نگردید.</p>
+                </div>
+            `;
         }
 
     } catch (error) {
-        console.error('خطا در دریافت اطلاعات جستجو:', error);
+        console.error('Search error:', error);
         movieSection.classList.remove('hidden');
-        movieResultsContainer.innerHTML = `<p class="text-center text-red-500 col-span-full">خطایی در هنگام جستجو رخ داد. لطفاً دوباره تلاش کنید.</p>`;
-        tvSection.classList.add('hidden');
-        movieTitleElement.textContent = 'خطا در جستجو';
-        tvTitleElement.textContent = 'نتایج جستجو سریال'; // Reset
+        movieResultsContainer.innerHTML = `<p class="text-center text-red-500 py-10">خطایی در برقراری ارتباط با سرور رخ داد.</p>`;
     } finally {
         hideLoading();
     }
@@ -282,9 +277,7 @@ async function searchMedia(query, searchType) {
 
 // --- Event Listeners & Initial Setup ---
 function handleSearch() {
-    const query = searchInput.value;
-    const selectedType = searchTypeSelect.value;
-    searchMedia(query, selectedType);
+    searchMedia(searchInput.value);
 }
 
 searchButton.addEventListener('click', handleSearch);
