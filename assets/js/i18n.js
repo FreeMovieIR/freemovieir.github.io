@@ -51,7 +51,7 @@ const i18nData = {
         omdb_desc: "برای بارگذاری پوسترها با کیفیت بالاتر، توکن OMDB نیاز است."
     },
     en: {
-        site_title: "FreeMovieIR",
+        site_title: "FreeMovie",
         site_subtitle: "THE DIGITAL ARCHIVE",
         home: "Dashboard",
         advanced_search: "Smart Filter",
@@ -85,8 +85,8 @@ const i18nData = {
         tmdb_token: "Personal TMDB Token (Optional)",
         omdb_token: "OMDB Token (For Posters)",
         language: "System Language",
-        footer_desc: "FreeMovieIR is a comprehensive digital archive aimed at enhancing access to top cinema works globally.",
-        copyright: "© 2024 FreeMovieIR platform. All rights reserved.",
+        footer_desc: "Free Movie is a comprehensive digital archive aimed at enhancing access to top cinema works globally.",
+        copyright: "© 2024 Free Movie platform. All rights reserved.",
         design_credit: "Designed with love for cinema culture",
         feedback: "Send Feedback",
         report_bug: "Report Issue",
@@ -102,7 +102,7 @@ const i18nData = {
         omdb_desc: "OMDB token is required for higher quality posters."
     },
     es: {
-        site_title: "FreeMovieIR",
+        site_title: "Free Movie",
         site_subtitle: "EL ARCHIVO DIGITAL",
         home: "Panel",
         advanced_search: "Filtro Inteligente",
@@ -136,8 +136,8 @@ const i18nData = {
         tmdb_token: "Token TMDB Personal (Opcional)",
         omdb_token: "Token OMDB (Posters)",
         language: "Idioma del Sistema",
-        footer_desc: "FreeMovieIR es un archivo digital diseñado para mejorar el acceso al mejor cine del mundo.",
-        copyright: "© 2024 Plataforma FreeMovieIR. Reservados todos los derechos.",
+        footer_desc: "Free Movie es un archivo digital diseñado para mejorar el acceso al mejor cine del mundo.",
+        copyright: "© 2024 Plataforma Free Movie. Reservados todos los derechos.",
         design_credit: "Diseñado con amor por la cultura cinematográfica",
         feedback: "Enviar Comentarios",
         report_bug: "Reportar Problema",
@@ -145,7 +145,12 @@ const i18nData = {
         tv_archive: "Archivo TV",
         not_found: "¡No se encontraron datos!",
         error_connection: "Error de conexión",
-        error_desc: "Lamentablemente, no se pueden recuperar datos en este momento."
+        error_desc: "Lamentablemente, no se pueden recuperar datos en este momento.",
+        announcement: "Noticias y Novedades",
+        latest_quote: "Citas Famosas",
+        quote_desc: "Líneas que quedaron para siempre en la historia del cine.",
+        tmdb_desc: "Ingrese su token de TMDB para acceder a funciones exclusivas.",
+        omdb_desc: "Se requiere un token de OMDB para pósters de mayor calidad."
     },
     fr: {
         site_title: "FreeMovieIR",
@@ -182,8 +187,8 @@ const i18nData = {
         tmdb_token: "Token TMDB Personnel",
         omdb_token: "Token OMDB",
         language: "Langue du Système",
-        footer_desc: "FreeMovieIR est une archive numérique visant à améliorer l'accès aux meilleures œuvres cinématographiques.",
-        copyright: "© 2024 FreeMovieIR. Tous droits réservés.",
+        footer_desc: "Free Movie est une archive numérique visant à améliorer l'accès aux meilleures œuvres cinématographiques.",
+        copyright: "© 2024 Free Movie. Tous droits réservés.",
         design_credit: "Conçu avec amour pour la culture cinématographique",
         feedback: "Commentaires",
         report_bug: "Signaler un Bug",
@@ -191,7 +196,12 @@ const i18nData = {
         tv_archive: "Archive TV",
         not_found: "Aucune donnée trouvée !",
         error_connection: "Erreur de Connexion",
-        error_desc: "Malheureusement, les données ne peuvent pas être récupérées."
+        error_desc: "Malheureusement, les données ne peuvent pas être récupérées.",
+        announcement: "Actualités & Mises à jour",
+        latest_quote: "Citations Célèbres",
+        quote_desc: "Des répliques gravées à jamais dans l'histoire du cinéma.",
+        tmdb_desc: "Entrez votre jeton TMDB pour accéder à des fonctionnalités exclusives.",
+        omdb_desc: "Un jeton OMDB est requis pour des affiches de meilleure qualité."
     },
     ar: {
         site_title: "فييري موفي",
@@ -237,7 +247,12 @@ const i18nData = {
         tv_archive: "أرشيف التلفزيون",
         not_found: "لم يتم العثور على بيانات!",
         error_connection: "خطأ في الاتصال",
-        error_desc: "للأسف لا يمكن جلب البيانات في الوقت الحالي."
+        error_desc: "للأسف لا يمكن جلب البيانات في الوقت الحالي.",
+        announcement: "أخبار وتحديثات",
+        latest_quote: "ديالوگ‌های ماندگار",
+        quote_desc: "جملاتی که در حافظه سینما جاودانه شدند.",
+        tmdb_desc: "أدخل رمز TMDB الخاص بك للوصول إلى المیزات الحصریة.",
+        omdb_desc: "مطلوب رمز OMDB لصور ملصقات عالیة الجودة."
     }
 };
 

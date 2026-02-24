@@ -1,4 +1,4 @@
-# Implementation Plan: FreeMovieIR Enhancements
+# Implementation Plan: Free Movie Enhancements
 
 ## Phase 1: Branding & Cleanup
 - [x] Remove all mentions of "Raha" and "Rahamovie".

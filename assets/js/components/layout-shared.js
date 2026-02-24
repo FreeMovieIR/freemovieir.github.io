@@ -252,6 +252,7 @@
 
   document.getElementById('open-settings-modal').onclick = () => {
     document.getElementById('modal-tmdb-token').value = localStorage.getItem('userTmdbToken') || '';
+    document.getElementById('modal-omdb-token').value = localStorage.getItem('userOmdbToken') || '';
     modal.classList.remove('opacity-0', 'pointer-events-none');
     modalContent.classList.remove('scale-90');
   };
@@ -264,8 +265,9 @@
   document.getElementById('save-settings-btn').onclick = () => {
     const lang = langSelect.value;
     const tmdb = document.getElementById('modal-tmdb-token').value.trim();
-    if (tmdb) localStorage.setItem('userTmdbToken', tmdb);
-    else localStorage.removeItem('userTmdbToken');
+    const omdb = document.getElementById('modal-omdb-token').value.trim();
+    if (tmdb) localStorage.setItem('userTmdbToken', tmdb); else localStorage.removeItem('userTmdbToken');
+    if (omdb) localStorage.setItem('userOmdbToken', omdb); else localStorage.removeItem('userOmdbToken');
     window.i18n.setLanguage(lang);
   };
 

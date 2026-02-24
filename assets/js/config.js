@@ -13,7 +13,8 @@ window.CONFIG = {
         TMDB_IMAGE: 'https://image.tmdb.org/t/p',
         OMDB: 'https://www.omdbapi.com',
         TVMAZE: 'https://api.tvmaze.com',
-        MOVIE_DATA: 'https://server-hi-speed-iran.info/api'
+        MOVIE_DATA: 'https://server-hi-speed-iran.info/api',
+        ALMAS_MOVIE: 'almasmovie.xyz'
     },
 
     // Assets
