@@ -159,35 +159,19 @@ async function renderSlider() {
 }
 
 async function fetchAndDisplayContent() {
-  const movieContainer = document.getElementById('new-movies');
-  const tvContainer = document.getElementById('trending-tv');
-  if (!movieContainer || !tvContainer || !window.FreeMovieAPI) return;
+  const movieGrid = document.getElementById('new-movies-grid');
+  const tvGrid = document.getElementById('trending-tv-grid');
+  if (!movieGrid || !tvGrid) return;
 
   try {
-    const [moviesData, seriesData] = await Promise.all([
-      window.FreeMovieAPI.fetchMovies(0, 0, 'created'),
-      window.FreeMovieAPI.fetchSeries(0, 0, 'created')
-    ]);
+    // 1. Use SmartFetch (Automatic key rotation and service failover)
+    const { movies, series, source } = await window.FreeMovieAPI.SmartFetch.fetchHomeContent();
+    console.log(`Content loaded via ${source.toUpperCase()}`);
 
-    const movies = moviesData || [];
-    const series = seriesData || [];
-
-    // Map FreeMovie data to the slider/grid format (FreeMovie has 'title', 'image', 'id', 'year', 'vote_average' etc.)
-    sliderItems = [...movies.slice(0, 3), ...series.slice(0, 2)];
+    // 2. Render Slider (Using first few items)
+    sliderItems = [...movies.slice(0, 5), ...series.slice(0, 5)];
     renderSlider();
 
-    const movieHtml = await Promise.all(movies.slice(3).map(async (item) => {
-      // FreeMovie already provides localized data or we use what's available
-      return window.createMovieCard(item, item.image, 'movie');
-    }));
-    movieContainer.innerHTML = movieHtml.join('');
-
-    const tvHtml = await Promise.all(series.slice(2).map(async (item) => {
-      return window.createMovieCard(item, item.image, 'tv');
-    }));
-    tvContainer.innerHTML = tvHtml.join('');
-
-    if (window.refreshRevealObserver) window.refreshRevealObserver();
 
     // Cache content for next visit
     localStorage.setItem('homeCache_header', document.getElementById('shared-header')?.innerHTML || '');

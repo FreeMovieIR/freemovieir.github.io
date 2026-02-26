@@ -4,10 +4,17 @@
  */
 
 const API_CONFIG = {
-    KEY: window.CONFIG?.MOVIE_DATA_KEY || '4F5A9C3D9A86FA54EACEDDD635185',
+    KEYS: {
+        MOVIE_DATA: window.CONFIG?.MOVIE_DATA_KEYS || ['4F5A9C3D9A86FA54EACEDDD635185'],
+        TMDB: window.CONFIG?.TMDB_KEYS || ['1dc4cbf81f0accf4fa108820d551dafc'],
+        OMDB: window.CONFIG?.OMDB_KEYS || ['38fa39d5']
+    },
     PRIMARY: window.CONFIG?.API?.MOVIE_DATA || 'https://server-hi-speed-iran.info',
     HELPERS: ['https://hostinnegar.com', 'https://windowsdiba.info']
 };
+
+// Track current key indices for rotation
+const KEY_INDICES = { MOVIE_DATA: 0, TMDB: 0, OMDB: 0 };
 
 const DEFAULT_HEADERS = {
     'Accept': 'application/json',
@@ -51,8 +58,19 @@ async function executeRequest(url, options = {}) {
  */
 const MovieService = {
     async fetchMovies(page = 0, genreId = 0, filterType = 'created') {
-        const url = `${API_CONFIG.PRIMARY}/api/movie/by/filtres/${genreId}/${filterType}/${page}/${API_CONFIG.KEY}`;
-        return await executeRequest(url);
+        const keys = API_CONFIG.KEYS.MOVIE_DATA;
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[(KEY_INDICES.MOVIE_DATA + i) % keys.length];
+            try {
+                const url = `${API_CONFIG.PRIMARY}/api/movie/by/filtres/${genreId}/${filterType}/${page}/${key}`;
+                const result = await executeRequest(url);
+                KEY_INDICES.MOVIE_DATA = (KEY_INDICES.MOVIE_DATA + i) % keys.length;
+                return result;
+            } catch (e) {
+                console.warn(`Movie key ${key} failed, trying next...`);
+            }
+        }
+        throw new Error("All Movie API keys failed");
     }
 };
 
@@ -61,11 +79,22 @@ const MovieService = {
  */
 const SeriesService = {
     async fetchSeries(page = 0, genreId = 0, filterType = 'created') {
-        const url = `${API_CONFIG.PRIMARY}/api/serie/by/filtres/${genreId}/${filterType}/${page}/${API_CONFIG.KEY}`;
-        return await executeRequest(url);
+        const keys = API_CONFIG.KEYS.MOVIE_DATA;
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[(KEY_INDICES.MOVIE_DATA + i) % keys.length];
+            try {
+                const url = `${API_CONFIG.PRIMARY}/api/serie/by/filtres/${genreId}/${filterType}/${page}/${key}`;
+                const result = await executeRequest(url);
+                KEY_INDICES.MOVIE_DATA = (KEY_INDICES.MOVIE_DATA + i) % keys.length;
+                return result;
+            } catch (e) { continue; }
+        }
+        throw new Error("All Series API keys failed");
     },
     async fetchSeasons(seriesId) {
-        const url = `${API_CONFIG.PRIMARY}/api/season/by/serie/${seriesId}/${API_CONFIG.KEY}/`;
+        const keys = API_CONFIG.KEYS.MOVIE_DATA;
+        const key = keys[KEY_INDICES.MOVIE_DATA]; // Use stable key for details
+        const url = `${API_CONFIG.PRIMARY}/api/season/by/serie/${seriesId}/${key}/`;
         return await executeRequest(url);
     }
 };
@@ -97,6 +126,53 @@ const DiscoveryService = {
     async fetchByCountry(countryId, page = 0, filterType = 'created') {
         const url = `${API_CONFIG.PRIMARY}/api/poster/by/filtres/0/${countryId}/${filterType}/${page}/${API_CONFIG.KEY}`;
         return await executeRequest(url);
+    }
+};
+
+/**
+ * Smart Fetch Service (Service failover for Home Page)
+ */
+const SmartFetch = {
+    async fetchHomeContent() {
+        try {
+            // Priority 1: TMDB (via TMDB keys)
+            return await this.fetchFromTMDB();
+        } catch (e) {
+            console.error("TMDB failed, failing over to FreeMovie API", e);
+            // Priority 2: FreeMovie API
+            const movies = await MovieService.fetchMovies(0, 0, 'created');
+            const series = await SeriesService.fetchSeries(0, 0, 'created');
+            return { movies, series, source: 'freemovie' };
+        }
+    },
+
+    async fetchFromTMDB() {
+        const keys = API_CONFIG.KEYS.TMDB;
+        const tmdbBase = window.CONFIG?.API?.TMDB || 'https://api.themoviedb.org/3';
+        const lang = (window.i18n && window.i18n.current === 'fa') ? 'fa-IR' : 'en-US';
+
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[(KEY_INDICES.TMDB + i) % keys.length];
+            try {
+                const movieUrl = `${tmdbBase}/trending/movie/week?api_key=${key}&language=${lang}`;
+                const tvUrl = `${tmdbBase}/trending/tv/week?api_key=${key}&language=${lang}`;
+
+                const [movies, series] = await Promise.all([
+                    executeRequest(movieUrl),
+                    executeRequest(tvUrl)
+                ]);
+
+                KEY_INDICES.TMDB = (KEY_INDICES.TMDB + i) % keys.length;
+                return {
+                    movies: movies.results,
+                    series: series.results,
+                    source: 'tmdb'
+                };
+            } catch (e) {
+                console.warn(`TMDB key ${key} failed, rotating...`);
+            }
+        }
+        throw new Error("All TMDB keys exhausted");
     }
 };
 
