@@ -115,6 +115,9 @@
             <a href="/pages/watchlist/" class="header-nav-link">
               <i class="fas fa-bookmark text-sm"></i> <span>${t('watchlist')}</span>
             </a>
+            <a href="/pages/blog/" class="header-nav-link">
+              <i class="fas fa-book-open text-sm"></i> <span>${t('blog')}</span>
+            </a>
           </nav>
         </div>
 
@@ -150,6 +153,7 @@
           <a href="/" class="mobile-nav-link"><i class="fas fa-home"></i> ${t('home')}</a>
           <a href="/pages/finder/" class="mobile-nav-link"><i class="fas fa-filter"></i> ${t('advanced_search')}</a>
           <a href="/pages/watchlist/" class="mobile-nav-link"><i class="fas fa-bookmark"></i> ${t('watchlist')}</a>
+          <a href="/pages/blog/" class="mobile-nav-link"><i class="fas fa-book-open"></i> ${t('blog')}</a>
         </div>
       </div>
     </header>
@@ -191,10 +195,11 @@
                     <p class="text-gray-400 leading-relaxed max-w-md">${t('footer_desc')}</p>
                 </div>
                 <div>
-                    <h3 class="text-white font-black mb-6 uppercase tracking-widest text-sm text-gray-500">${t('home')}</h3>
+                    <h3 class="text-white font-black mb-6 uppercase tracking-widest text-sm text-gray-500">${t('explore')}</h3>
                     <div class="flex flex-col gap-4">
-                        <a href="/pages/search/" class="text-gray-400 hover:text-amber-500 transition-colors">${t('advanced_search')}</a>
+                        <a href="/pages/finder/" class="text-gray-400 hover:text-amber-500 transition-colors">${t('advanced_search')}</a>
                         <a href="/pages/watchlist/" class="text-gray-400 hover:text-amber-500 transition-colors">${t('watchlist')}</a>
+                        <a href="/pages/blog/" class="text-gray-400 hover:text-amber-500 transition-colors">${t('blog')}</a>
                     </div>
                 </div>
                 <div>

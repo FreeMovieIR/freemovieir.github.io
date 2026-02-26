@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>در حال بارگذاری... | فیری مووی</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+
+<body class="bg-[#0a0a0b] text-zinc-100 font-['Inter','Vazirmatn'] overflow-x-hidden">
+    <div id="header-container"></div>
+
+    <main class="max-w-4xl mx-auto px-4 pt-32 pb-20">
+        <div id="post-content" class="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <!-- Loading State -->
+            <div class="animate-pulse space-y-8">
+                <div class="h-8 md:h-12 bg-zinc-800 rounded-xl w-3/4 mx-auto"></div>
+                <div class="aspect-video bg-zinc-800 rounded-2xl w-full"></div>
+                <div class="space-y-4">
+                    <div class="h-4 bg-zinc-800 rounded w-full"></div>
+                    <div class="h-4 bg-zinc-800 rounded w-5/6"></div>
+                    <div class="h-4 bg-zinc-800 rounded w-4/6"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <!-- Scripts -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/i18n.js"></script>
+    <script src="/assets/js/components/layout-shared.js"></script>
+    <script>
+        async function loadPost() {
+            const params = new URLSearchParams(location.search);
+            const slug = params.get('slug');
+
+            if (!slug) {
+                location.href = '/pages/blog/';
+                return;
+            }
+
+            try {
+                const response = await fetch('/assets/data/blog.json');
+                const posts = await response.json();
+                const post = posts.find(p => p.slug === slug);
+
+                if (post) {
+                    renderPost(post);
+                    updateSEO(post);
+                } else {
+                    document.getElementById('post-content').innerHTML = `
+                        <div class="text-center py-20">
+                            <h2 class="text-3xl font-bold mb-4">مقاله یافت نشد!</h2>
+                            <a href="/pages/blog/" class="text-blue-400 hover:underline">بازگشت به لیست مقالات</a>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading post:', error);
+            }
+        }
+
+        function renderPost(post) {
+            const container = document.getElementById('post-content');
+            container.innerHTML = `
+                <nav class="flex items-center gap-2 text-xs text-zinc-500 mb-8 font-medium">
+                    <a href="/" class="hover:text-zinc-300">خانه</a>
+                    <i class="fas fa-chevron-left text-[10px]"></i>
+                    <a href="/pages/blog/" class="hover:text-zinc-300">مجله</a>
+                    <i class="fas fa-chevron-left text-[10px]"></i>
+                    <span class="text-zinc-300 truncate">${post.title}</span>
+                </nav>
+
+                <h1 class="text-3xl md:text-5xl font-extrabold mb-8 leading-tight md:leading-snug text-center md:text-right">
+                    ${post.title}
+                </h1>
+
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm text-zinc-400 mb-12 py-6 border-y border-white/5">
+                    <div class="flex items-center gap-2">
+                        <i class="far fa-user text-blue-400"></i>
+                        <span>${post.author}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="far fa-calendar text-blue-400"></i>
+                        <span>${new Intl.DateTimeFormat('fa-IR').format(new Date(post.date))}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="far fa-clock text-blue-400"></i>
+                        <span>۵ دقیقه مطالعه</span>
+                    </div>
+                </div>
+
+                <div class="rounded-3xl overflow-hidden mb-12 shadow-2xl shadow-blue-500/10">
+                    <img src="${post.image}" alt="${post.title}" class="w-full object-cover">
+                </div>
+
+                <article class="prose prose-invert prose-blue max-w-none 
+                    prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
+                    prose-p:text-zinc-300 prose-p:leading-loose prose-p:text-lg prose-p:mb-6
+                    prose-ul:list-disc prose-li:text-zinc-300 prose-li:mb-2 prose-strong:text-white">
+                    ${post.content}
+                </article>
+
+                <div class="mt-20 pt-10 border-t border-white/5">
+                    <h3 class="text-xl font-bold mb-6">برچسب‌ها:</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${post.tags.map(tag => `
+                            <span class="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-sm text-zinc-400 cursor-pointer transition-colors">
+                                # ${tag}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateSEO(post) {
+            document.title = `${post.title} | فیری مووی`;
+
+            // Meta Description
+            let metaDesc = document.querySelector('meta[name="description"]');
+            if (!metaDesc) {
+                metaDesc = document.createElement('meta');
+                metaDesc.setAttribute('name', 'description');
+                document.head.appendChild(metaDesc);
+            }
+            metaDesc.setAttribute('content', post.summary);
+
+            // Open Graph
+            const ogTags = [
+                { property: 'og:title', content: post.title },
+                { property: 'og:description', content: post.summary },
+                { property: 'og:image', content: post.image },
+                { property: 'og:type', content: 'article' }
+            ];
+
+            ogTags.forEach(tag => {
+                let el = document.querySelector(`meta[property="${tag.property}"]`);
+                if (!el) {
+                    el = document.createElement('meta');
+                    el.setAttribute('property', tag.property);
+                    document.head.appendChild(el);
+                }
+                el.setAttribute('content', tag.content);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPost);
+    </script>
+</body>
+
+</html>

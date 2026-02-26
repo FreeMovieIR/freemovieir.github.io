@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مجله فیری مووی | آخرین اخبار و مقالات سینما</title>
+    <meta name="description"
+        content="آخرین اخبار، نقدها و معرفی برترین منابع دانلود فیلم و سریال در مجله تخصصی فیری مووی.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-[#0a0a0b] text-zinc-100 font-['Inter','Vazirmatn'] overflow-x-hidden">
+    <div id="header-container"></div>
+
+    <main class="max-w-7xl mx-auto px-4 pt-32 pb-20">
+        <!-- Hero Section -->
+        <div class="mb-16 text-center">
+            <h1
+                class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                مجله فیری مووی</h1>
+            <p class="text-zinc-400 text-lg max-w-2xl mx-auto">تازه‌ترین مقالات، آموزش‌ها و معرفی برترین مراجع دنیای
+                سینما و تلویزیون</p>
+        </div>
+
+        <!-- Blog Grid -->
+        <div id="blog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Shimmer Loading -->
+            <div class="glass-card rounded-2xl overflow-hidden animate-pulse h-96"></div>
+            <div class="glass-card rounded-2xl overflow-hidden animate-pulse h-96"></div>
+            <div class="glass-card rounded-2xl overflow-hidden animate-pulse h-96"></div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <!-- Scripts -->
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/i18n.js"></script>
+    <script src="/assets/js/components/layout-shared.js"></script>
+    <script>
+        async function loadBlogPosts() {
+            try {
+                const response = await fetch('/assets/data/blog.json');
+                const posts = await response.json();
+                renderPosts(posts);
+            } catch (error) {
+                console.error('Error loading blog posts:', error);
+                document.getElementById('blog-grid').innerHTML = '<p class="text-center col-span-full py-20 text-zinc-500">خطا در بارگذاری مقالات...</p>';
+            }
+        }
+
+        function renderPosts(posts) {
+            const grid = document.getElementById('blog-grid');
+            grid.innerHTML = posts.map(post => `
+                <article class="glass-card rounded-2xl overflow-hidden group cursor-pointer" onclick="location.href='/pages/blog/post.html?slug=${post.slug}'">
+                    <div class="aspect-video relative overflow-hidden">
+                        <img src="${post.image}" alt="${post.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-4 right-4 px-3 py-1 bg-blue-500/20 backdrop-blur-md rounded-full text-xs text-blue-300 border border-blue-500/30">
+                            ${post.tags[0]}
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 text-xs text-zinc-500 mb-3 font-medium">
+                            <i class="far fa-calendar"></i>
+                            <span>${new Intl.DateTimeFormat('fa-IR').format(new Date(post.date))}</span>
+                            <span class="w-1 h-1 rounded-full bg-zinc-700 mx-1"></span>
+                            <i class="far fa-user"></i>
+                            <span>${post.author}</span>
+                        </div>
+                        <h2 class="text-xl font-bold mb-3 line-clamp-2 leading-relaxed group-hover:text-blue-400 transition-colors">${post.title}</h2>
+                        <p class="text-zinc-400 text-sm line-clamp-3 leading-loose mb-6">${post.summary}</p>
+                        <div class="flex items-center text-blue-400 text-sm font-semibold group-hover:gap-2 transition-all">
+                            <span>ادامه مطلب</span>
+                            <i class="fas fa-chevron-left ml-2 text-xs"></i>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBlogPosts();
+        });
+    </script>
+</body>
+
+</html>

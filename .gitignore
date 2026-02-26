@@ -4,3 +4,9 @@ movies-list.txt
 node_modules
 /.idea
 .DS_Store
+.github/doc dl/countryApi.ts
+.github/doc dl/movieApi.ts
+.github/doc dl/posterApi.ts
+.github/doc dl/searchApi.ts
+.github/doc dl/seasonsApi.ts
+.github/doc dl/seriesApi.ts
