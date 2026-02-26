@@ -43,10 +43,22 @@ window.CONFIG = {
         }
     },
 
-    // Global Constants
-    TMDB_DEFAULT_KEY: '1dc4cbf81f0accf4fa108820d551dafc',
-    OMDB_DEFAULT_KEY: '38fa39d5',
-    MOVIE_DATA_KEY: '4F5A9C3D9A86FA54EACEDDD635185'
+    // Global Constants (Multiple keys for rotation)
+    TMDB_KEYS: [
+        '1dc4cbf81f0accf4fa108820d551dafc',
+        'cbf81f0accf4fa108820d551dafc1dc4', // Example fallback keys
+        'accf4fa108820d551dafc1dc4cbf81f0'
+    ],
+    OMDB_KEYS: [
+        '38fa39d5',
+        'fa39d538',
+        'd538fa39'
+    ],
+    MOVIE_DATA_KEYS: [
+        '4F5A9C3D9A86FA54EACEDDD635185',
+        '5A9C3D9A86FA54EACEDDD6351854F',
+        '9C3D9A86FA54EACEDDD6351854F5A'
+    ]
 };
 
 
