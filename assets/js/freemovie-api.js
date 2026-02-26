@@ -3,12 +3,12 @@
  * Based on the Kotlin repository implementations
  */
 
-const API_KEY = '4F5A9C3D9A86FA54EACEDDD635185'
-const PRIMARY_SERVER = 'https://server-hi-speed-iran.info'
+const API_KEY = window.CONFIG?.MOVIE_DATA_KEY || '4F5A9C3D9A86FA54EACEDDD635185';
+const PRIMARY_SERVER = window.CONFIG?.API?.MOVIE_DATA || 'https://server-hi-speed-iran.info';
 const HELPER_SERVERS = [
     'https://hostinnegar.com',
     'https://windowsdiba.info'
-]
+];
 
 // Persian to English genre mapping
 const GENRE_MAP = {
@@ -168,30 +168,30 @@ function groupSeasonsByNumber(seasons) {
 }
 
 /**
- * Execute request with fallback to helper servers
+ * Execute request with fallback to helper servers (Ported from BaseRepository.kt)
  */
-async function executeRequest(primaryUrl) {
-    // Try primary server first
+async function executeRequest(url, options = {}) {
+    const timeout = options.timeout || 30000;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
     try {
-        const response = await fetch(primaryUrl, { timeout: 30000 })
-        if (response.ok) {
-            return await response.json()
-        }
-        throw new Error(`Primary server returned: ${response.status}`)
-    } catch (primaryError) {
-        // Try helper servers
-        for (const helperServer of HELPER_SERVERS) {
+        // 1. Try Primary Server
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        if (response.ok) return await response.json();
+        throw new Error(`Primary server failed: ${response.status}`);
+    } catch (error) {
+        // 2. Try Helper Servers
+        for (const helper of HELPER_SERVERS) {
             try {
-                const helperUrl = primaryUrl.replace(/^https?:\/\/[^/]+/, helperServer)
-                const response = await fetch(helperUrl, { timeout: 30000 })
-                if (response.ok) {
-                    return await response.json()
-                }
-            } catch (helperError) {
-                continue
-            }
+                const helperUrl = url.replace(/^https?:\/\/[^/]+/, helper);
+                const response = await fetch(helperUrl, { ...options, signal: controller.signal });
+                if (response.ok) return await response.json();
+            } catch (e) { continue; }
         }
-        throw primaryError
+        throw error;
+    } finally {
+        clearTimeout(id);
     }
 }
 
@@ -201,26 +201,16 @@ function getApiLang() {
 }
 
 /**
- * Fetch movies list
- * @param {number} page - Page number (0-indexed)
- * @param {number} genreId - Genre ID (0 for all)
- * @param {string} filterType - 'created', 'year', or 'imdb'
+ * Generic fetcher for posters (Movies/Series)
  */
-async function fetchMovies(page = 0, genreId = 0, filterType = 'created') {
-    const url = `${PRIMARY_SERVER}/api/movie/by/filtres/${genreId}/${filterType}/${page}/${API_KEY}`
-    return await executeRequest(url)
+async function fetchPosters(type, page = 0, genreId = 0, filterType = 'created') {
+    const endpoint = type === 'movie' ? 'movie' : 'serie';
+    const url = `${PRIMARY_SERVER}/api/${endpoint}/by/filtres/${genreId}/${filterType}/${page}/${API_KEY}`;
+    return await executeRequest(url);
 }
 
-/**
- * Fetch series list
- * @param {number} page - Page number (0-indexed)
- * @param {number} genreId - Genre ID (0 for all)
- * @param {string} filterType - 'created', 'year', or 'imdb'
- */
-async function fetchSeries(page = 0, genreId = 0, filterType = 'created') {
-    const url = `${PRIMARY_SERVER}/api/serie/by/filtres/${genreId}/${filterType}/${page}/${API_KEY}`
-    return await executeRequest(url)
-}
+const fetchMovies = (page, genreId, filterType) => fetchPosters('movie', page, genreId, filterType);
+const fetchSeries = (page, genreId, filterType) => fetchPosters('series', page, genreId, filterType);
 
 /**
  * Fetch seasons and episodes for a series

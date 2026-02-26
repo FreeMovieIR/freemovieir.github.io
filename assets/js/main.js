@@ -333,13 +333,15 @@ async function renderDownloadSection(data, type) {
     `).join('');
 }
 
+/**
+ * Generate download links based on API data and patterns (Cleaned up)
+ */
 async function generateDownloadLinks(data, type) {
   const links = [];
   const isMovie = type === 'movie';
-  const titleEn = (data.original_title || data.original_name || data.title || '').replace(/[^a-zA-Z0-9]/g, '.');
-  const year = data.year || (isMovie ? data.release_date?.substring(0, 4) : data.first_air_date?.substring(0, 4));
+  const almasBase = window.CONFIG?.API?.ALMAS_MOVIE ? `https://${window.CONFIG.API.ALMAS_MOVIE}` : "https://dl1.almasmovie.xyz";
 
-  // 1. FreeMovie API Sources (Real Data)
+  // 1. Priority: API Sources (Real Data from Kotlin-style repositories)
   if (data.sources && Array.isArray(data.sources)) {
     data.sources.forEach(source => {
       links.push({
@@ -351,11 +353,11 @@ async function generateDownloadLinks(data, type) {
     });
   }
 
-  // 2. FreeMovie Series Logic (Seasons & Episodes)
+  // 2. Series Logic: Seasons & Episodes (Enhanced)
   if (!isMovie && data.seasons && window.FreeMovieAPI) {
     try {
       const videos = window.FreeMovieAPI.toStremioVideos(data.seasons, data.id);
-      // For now, we'll show the latest 5 episodes or the first season's top links to avoid clutter
+      // Show latest 8 episodes
       videos.slice(0, 8).forEach(vid => {
         if (vid._sources) {
           vid._sources.forEach(src => {
@@ -371,46 +373,36 @@ async function generateDownloadLinks(data, type) {
     } catch (e) { console.warn('Error processing FreeMovie seasons', e); }
   }
 
-  // 3. Fallback to Almas Movie Patterns (User's requested models)
-  const almasBase = "https://dl1.almasmovie.xyz";
-  if (isMovie) {
-    // Model 1: HardSub
-    links.push({
-      label: "1080p.HardSub",
-      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.HardSub.mkv`,
-      source: "Almas Movie",
-      icon: "fa-film"
-    });
-    links.push({
-      label: "720p.HardSub",
-      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.720p.HardSub.mkv`,
-      source: "Almas Movie",
-      icon: "fa-video"
-    });
-    // Model 2: SoftSub
-    links.push({
-      label: "1080p.SoftSub",
-      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.SoftSub.mkv`,
-      source: "Almas Movie",
-      icon: "fa-closed-captioning"
-    });
-    // Model 3: Dubbed
-    links.push({
-      label: "1080p.Dubbed",
-      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.Dubbed.mkv`,
-      source: "Almas Movie",
-      icon: "fa-microphone"
-    });
-  } else if (links.length < 3) {
-    // Simple series fallback if no FreeMovie data found
-    ["1080p", "720p"].forEach(q => {
-      links.push({
-        label: `S01E01.${q}.WEB-DL`,
-        url: `${almasBase}/Series/${titleEn}/S01/${q}/${titleEn}.S01E01.${q}.mkv`,
-        source: "Almas Movie",
-        icon: "fa-tv"
+  // 3. Pattern-based Fallbacks (Only if no real sources found to keep it clean)
+  if (links.length === 0) {
+    const titleEn = (data.original_title || data.original_name || data.title || '').replace(/[^a-zA-Z0-9]/g, '.');
+    const year = data.year || (isMovie ? data.release_date?.substring(0, 4) : data.first_air_date?.substring(0, 4));
+
+    if (isMovie) {
+      const patterns = [
+        { suffix: '1080p.HardSub', icon: 'fa-film' },
+        { suffix: '720p.HardSub', icon: 'fa-video' },
+        { suffix: '1080p.Dubbed', icon: 'fa-microphone' }
+      ];
+      patterns.forEach(p => {
+        links.push({
+          label: p.suffix,
+          url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.${p.suffix}.mkv`,
+          source: "Almas Movie",
+          icon: p.icon
+        });
       });
-    });
+    } else {
+      // Basic series fallback
+      ['1080p', '720p'].forEach(q => {
+        links.push({
+          label: `S01E01.${q}.WEB-DL`,
+          url: `${almasBase}/Series/${titleEn}/S01/${q}/${titleEn}.S01E01.${q}.mkv`,
+          source: "Almas Movie",
+          icon: "fa-tv"
+        });
+      });
+    }
   }
 
   return links;
