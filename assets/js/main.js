@@ -219,25 +219,65 @@ function handleRouting() {
 
 async function fetchDetails(id, type) {
   const isMovie = type === 'movie';
-  const url = `${tmdbBase}/${isMovie ? 'movie' : 'tv'}/${id}?api_key=${apiKey}&language=${apiLang}&append_to_response=credits,videos,external_ids`;
+  let data = null;
+  let poster = null;
 
+  // 1. Try CCloud API first if available
+  if (window.CCloudAPI) {
+    try {
+      // In CCloud, we search by ID or use a specific detail call if available. 
+      // Since we don't have a direct "getById" in the provided snippet, 
+      // but we know the home load/search gave us items with IDs.
+      // We'll attempt to fetch seasons/episodes if it's a series to get full data.
+      if (type === 'tv') {
+        const seasons = await window.CCloudAPI.fetchSeasons(id);
+        if (seasons) {
+          data = { id, type, seasons, title: 'Series Details', overview: 'Loading detailed overview...' };
+          // We might need to find the series in a list to get its basic info if not cached,
+          // but for now, we'll assume the item data is passed or we fetch what we can.
+        }
+      }
+      // If we don't have enough data yet, we can fall back to TMDB for metadata 
+      // and use CCloud specifically for links.
+    } catch (e) { console.warn('CCloud detail fetch failed, falling back to TMDB', e); }
+  }
+
+  // 2. Fetch from TMDB for Metadata (Title, Overview, Poster)
+  const tmdbUrl = `${tmdbBase}/${isMovie ? 'movie' : 'tv'}/${id}?api_key=${apiKey}&language=${apiLang}&append_to_response=credits,videos,external_ids`;
   try {
-    const res = await fetch(proxify(url));
-    const data = await res.json();
-    const poster = await window.resolvePoster(id, 'detail', data.poster_path);
+    const res = await fetch(proxify(tmdbUrl));
+    if (res.ok) {
+      const tmdbData = await res.json();
+      poster = await window.resolvePoster(id, 'detail', tmdbData.poster_path);
 
-    // Fallback for missing Persian overview
-    if (!data.overview && window.i18n && window.i18n.current === 'fa') {
-      try {
-        const enRes = await fetch(proxify(`${tmdbBase}/${type}/${id}?api_key=${apiKey}&language=en-US`));
-        const enData = await enRes.json();
-        if (enData.overview) data.overview = enData.overview;
-      } catch (e) { console.warn('EN fallback failed', e); }
+      // Merge CCloud data if exists
+      if (data) {
+        data = { ...tmdbData, ...data };
+      } else {
+        data = tmdbData;
+      }
+    } else if (data) {
+      // We have CCloud data but TMDB failed (legacy ID or non-TMDB item)
+      poster = data.image || window.defaultPoster;
     }
+  } catch (e) {
+    console.error('TMDB fetch failed', e);
+    if (!data) return; // Completely failed
+  }
 
-    renderDetails(data, poster, type);
+  // Fallback for missing Persian overview
+  if (data && !data.overview && window.i18n && window.i18n.current === 'fa') {
+    try {
+      const enRes = await fetch(proxify(`${tmdbBase}/${type}/${id}?api_key=${apiKey}&language=en-US`));
+      const enData = await enRes.json();
+      if (enData.overview) data.overview = enData.overview;
+    } catch (e) { console.warn('EN fallback failed', e); }
+  }
+
+  if (data) {
+    renderDetails(data, poster || data.image, type);
     if (window.refreshRevealObserver) window.refreshRevealObserver();
-  } catch (e) { console.error(e); }
+  }
 }
 
 function renderDetails(data, poster, type) {
@@ -272,8 +312,10 @@ async function renderDownloadSection(data, type) {
     return;
   }
 
+  // Use the new download-grid class for better organization
+  container.className = "download-grid mt-6";
   container.innerHTML = links.map(link => `
-        <a href="${link.url}" target="_blank" class="flex-1 min-w-[300px] glass-card-premium p-6 rounded-3xl border border-white/5 hover:border-amber-500/30 transition-all hover:scale-[1.02] group relative overflow-hidden">
+        <a href="${link.url}" target="_blank" class="glass-card-premium p-6 rounded-3xl border border-white/5 hover:border-amber-500/30 transition-all hover:scale-[1.02] group relative overflow-hidden flex flex-col justify-between">
             <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="flex items-center justify-between relative z-10">
                 <div class="flex items-center gap-4">
@@ -294,14 +336,45 @@ async function renderDownloadSection(data, type) {
 async function generateDownloadLinks(data, type) {
   const links = [];
   const isMovie = type === 'movie';
-  const titleEn = (data.original_title || data.original_name || '').replace(/[^a-zA-Z0-9]/g, '.');
-  const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
+  const titleEn = (data.original_title || data.original_name || data.title || '').replace(/[^a-zA-Z0-9]/g, '.');
+  const year = data.year || (isMovie ? data.release_date?.substring(0, 4) : data.first_air_date?.substring(0, 4));
 
-  // 1. Almas Movie Logic
+  // 1. CCloud API Sources (Real Data)
+  if (data.sources && Array.isArray(data.sources)) {
+    data.sources.forEach(source => {
+      links.push({
+        label: source.quality || 'Download',
+        url: source.url,
+        source: "Hi-Speed Server",
+        icon: source.quality?.includes('1080') ? "fa-film" : "fa-video"
+      });
+    });
+  }
+
+  // 2. CCloud Series Logic (Seasons & Episodes)
+  if (!isMovie && data.seasons && window.CCloudAPI) {
+    try {
+      const videos = window.CCloudAPI.toStremioVideos(data.seasons, data.id);
+      // For now, we'll show the latest 5 episodes or the first season's top links to avoid clutter
+      videos.slice(0, 8).forEach(vid => {
+        if (vid._sources) {
+          vid._sources.forEach(src => {
+            links.push({
+              label: `S${vid.season.toString().padStart(2, '0')}E${vid.episode.toString().padStart(2, '0')} - ${src.quality}`,
+              url: src.url,
+              source: "Direct Stream",
+              icon: "fa-tv"
+            });
+          });
+        }
+      });
+    } catch (e) { console.warn('Error processing CCloud seasons', e); }
+  }
+
+  // 3. Fallback to Almas Movie Patterns (User's requested models)
   const almasBase = "https://dl1.almasmovie.xyz";
-
   if (isMovie) {
-    // Model 1: Standard 1080p/720p Hardcoded Sub
+    // Model 1: HardSub
     links.push({
       label: "1080p.HardSub",
       url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.HardSub.mkv`,
@@ -314,42 +387,29 @@ async function generateDownloadLinks(data, type) {
       source: "Almas Movie",
       icon: "fa-video"
     });
-
-    // Model 2: SoftSub / Original
+    // Model 2: SoftSub
     links.push({
       label: "1080p.SoftSub",
       url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.SoftSub.mkv`,
       source: "Almas Movie",
       icon: "fa-closed-captioning"
     });
-
-    // Model 3: Dubbed (if available)
+    // Model 3: Dubbed
     links.push({
       label: "1080p.Dubbed",
       url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.Dubbed.mkv`,
       source: "Almas Movie",
       icon: "fa-microphone"
     });
-  } else {
-    // Series logic: Season based
-    const qualities = ["1080p", "720p", "480p"];
-    qualities.forEach(q => {
+  } else if (links.length < 3) {
+    // Simple series fallback if no CCloud data found
+    ["1080p", "720p"].forEach(q => {
       links.push({
-        label: `S01.${q}.WEB-DL`,
+        label: `S01E01.${q}.WEB-DL`,
         url: `${almasBase}/Series/${titleEn}/S01/${q}/${titleEn}.S01E01.${q}.mkv`,
         source: "Almas Movie",
         icon: "fa-tv"
       });
-    });
-  }
-
-  // 2. Hi-Speed API Logic (Fallback/Secondary)
-  if (window.CONFIG && window.CONFIG.API.MOVIE_DATA) {
-    links.push({
-      label: "High Speed Server",
-      url: `${window.CONFIG.API.MOVIE_DATA}/download?id=${data.id}&type=${type}`,
-      source: "Hi-Speed IR",
-      icon: "fa-bolt"
     });
   }
 
