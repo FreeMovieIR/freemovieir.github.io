@@ -27,23 +27,34 @@
     }, 3000);
   };
 
-  window.createMovieCard = function (item, poster, type) {
-    const titleFa = item.title || item.name || 'نامشخص';
-    const titleEn = item.original_title || item.original_name || '';
-    const year = (item.release_date || item.first_air_date || '').split('-')[0];
-    const displayYear = year ? ` (${year})` : '';
-    const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` / ${titleEn}` : '') + displayYear;
-    const overview = item.overview ? `${item.overview.slice(0, 80)}...` : t('not_found');
+  window.createMovieCard = function (item, initialPoster, type) {
+    const utils = window.FreeMovieAPI.UIUtils;
+    const displayTitle = utils.formatTitle(item);
+    const detailsUrl = utils.getDetailsUrl(item, type);
     const score = item.vote_average ? item.vote_average.toFixed(1) : '—';
-    const paramText = type === 'movie' ? `m=${item.id}` : `s=${item.id}`;
+    const overview = item.overview ? `${item.overview.slice(0, 80)}...` : t('not_found');
+
+    // Prepare Fallbacks
+    const fallbacks = [];
+    if (item.image && item.image !== initialPoster) fallbacks.push(item.image);
+    if (item.poster_path) {
+      const tmdbBase = window.CONFIG?.API?.TMDB_IMAGE || 'https://image.tmdb.org/t/p';
+      fallbacks.push(`${tmdbBase}/w342${item.poster_path}`);
+    }
+    fallbacks.push(window.defaultPoster);
 
     return `
     <div class="movie-card reveal-on-scroll group relative overflow-hidden rounded-2xl glass-card cursor-pointer" 
-         onclick="window.location.href='/?${paramText}'"
+         onclick="window.location.href='${detailsUrl}'"
          data-id="${item.id}"
          data-type="${type}">
       <div class="aspect-[2/3] relative overflow-hidden">
-        <img src="${poster}" alt="${displayTitle}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" onerror="this.src=window.defaultPoster">
+        <img src="${initialPoster || window.defaultPoster}" 
+             alt="${displayTitle}" 
+             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+             loading="lazy" 
+             data-fallbacks='${JSON.stringify(fallbacks)}'
+             onerror="window.handleImageError(this)">
         <div class="movie-card-overlay absolute inset-0 flex flex-col justify-end p-5 text-right">
           <div class="movie-card-info">
             <div class="flex items-center gap-2 mb-2 justify-end">
@@ -63,18 +74,34 @@
   `;
   };
 
-  window.resolvePoster = async function (itemId, type, tmdbPosterPath = null) {
+  window.handleImageError = function (img) {
+    const fallbacks = JSON.parse(img.getAttribute('data-fallbacks') || '[]');
+    if (fallbacks.length > 0) {
+      const next = fallbacks.shift();
+      img.setAttribute('data-fallbacks', JSON.stringify(fallbacks));
+      img.src = next;
+    } else {
+      img.src = window.defaultPoster;
+      img.onerror = null;
+    }
+  };
+
+  window.resolvePoster = async function (itemId, type, pathOrUrl = null) {
     const cacheKey = `poster_${type}_${itemId}`;
+    if (!pathOrUrl) return window.defaultPoster;
+
+    // If it's already a full URL, return it
+    if (pathOrUrl.startsWith('http')) return pathOrUrl;
+
     const cached = localStorage.getItem(cacheKey);
     if (cached) return cached;
-    if (tmdbPosterPath) {
-      const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
-      const size = type === 'hero' ? 'w1280' : (type === 'detail' ? 'w500' : 'w342');
-      const url = `${tmdbImageBase}/${size}${tmdbPosterPath}`;
-      localStorage.setItem(cacheKey, url);
-      return url;
-    }
-    return window.defaultPoster;
+
+    const tmdbImageBase = window.CONFIG ? window.CONFIG.API.TMDB_IMAGE : 'https://image.tmdb.org/t/p';
+    const size = type === 'hero' ? 'w1280' : (type === 'detail' ? 'w500' : 'w342');
+    const url = `${tmdbImageBase}/${size}${pathOrUrl}`;
+
+    localStorage.setItem(cacheKey, url);
+    return url;
   };
 
   const headerHtml = `

@@ -206,81 +206,53 @@ async function fetchDetails(id, type) {
   let data = null;
   let poster = null;
 
-  // 1. Try FreeMovie API first if available
-  if (window.FreeMovieAPI) {
-    try {
-      // In FreeMovie, we search by ID or use a specific detail call if available. 
-      // Since we don't have a direct "getById" in the provided snippet, 
-      // but we know the home load/search gave us items with IDs.
-      // We'll attempt to fetch seasons/episodes if it's a series to get full data.
-      if (type === 'tv') {
-        const seasons = await window.FreeMovieAPI.fetchSeasons(id);
-        if (seasons) {
-          data = { id, type, seasons, title: 'Series Details', overview: 'Loading detailed overview...' };
-          // We might need to find the series in a list to get its basic info if not cached,
-          // but for now, we'll assume the item data is passed or we fetch what we can.
-        }
-      }
-      // If we don't have enough data yet, we can fall back to TMDB for metadata 
-      // and use FreeMovie specifically for links.
-    } catch (e) { console.warn('FreeMovie detail fetch failed, falling back to TMDB', e); }
-  }
-
-  // 2. Fetch from TMDB for Metadata (Title, Overview, Poster)
-  const tmdbUrl = `${tmdbBase}/${isMovie ? 'movie' : 'tv'}/${id}?api_key=${apiKey}&language=${apiLang}&append_to_response=credits,videos,external_ids`;
   try {
-    const res = await fetch(proxify(tmdbUrl));
-    if (res.ok) {
-      const tmdbData = await res.json();
-      poster = await window.resolvePoster(id, 'detail', tmdbData.poster_path);
+    // 1. Fetch Metadata via SmartFetch or Custom Logic
+    const tmdbBase = window.CONFIG?.API?.TMDB || 'https://api.themoviedb.org/3';
+    const lang = (window.i18n && window.i18n.current === 'fa') ? 'fa-IR' : 'en-US';
+    const keys = window.CONFIG?.TMDB_KEYS || [window.CONFIG?.TMDB_DEFAULT_KEY];
 
-      // Merge FreeMovie data if exists
-      if (data) {
-        data = { ...tmdbData, ...data };
-      } else {
-        data = tmdbData;
-      }
-    } else if (data) {
-      // We have FreeMovie data but TMDB failed (legacy ID or non-TMDB item)
-      poster = data.image || window.defaultPoster;
+    // We try keys for details too (Simple rotation here)
+    for (const key of keys) {
+      try {
+        const url = `${tmdbBase}/${type}/${id}?api_key=${key}&language=${lang}&append_to_response=credits,videos,external_ids`;
+        const res = await fetch(proxify(url));
+        if (res.ok) {
+          data = await res.json();
+          break;
+        }
+      } catch (e) { continue; }
     }
-  } catch (e) {
-    console.error('TMDB fetch failed', e);
-    if (!data) return; // Completely failed
-  }
 
-  // Fallback for missing Persian overview
-  if (data && !data.overview && window.i18n && window.i18n.current === 'fa') {
-    try {
-      const enRes = await fetch(proxify(`${tmdbBase}/${type}/${id}?api_key=${apiKey}&language=en-US`));
-      const enData = await enRes.json();
-      if (enData.overview) data.overview = enData.overview;
-    } catch (e) { console.warn('EN fallback failed', e); }
-  }
+    // 2. Fetch Seasons if Series
+    if (type === 'tv' && window.FreeMovieAPI) {
+      try {
+        const seasons = await window.FreeMovieAPI.fetchSeasons(id);
+        if (seasons) data = { ...data, seasons };
+      } catch (e) { console.warn('FreeMovie seasons fetch failed', e); }
+    }
 
-  if (data) {
-    renderDetails(data, poster || data.image, type);
-    if (window.refreshRevealObserver) window.refreshRevealObserver();
+    if (data) {
+      poster = await window.resolvePoster(id, 'detail', data.poster_path || data.image);
+      renderDetails(data, poster, type);
+    }
+  } catch (error) {
+    console.error('Fatal error in fetchDetails:', error);
   }
 }
 
 function renderDetails(data, poster, type) {
-  const isMovie = type === 'movie';
-  const titleFa = data.title || data.name || 'Untitled';
-  const titleEn = data.original_title || data.original_name || '';
-  const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
-  const displayTitle = titleFa + (titleEn && titleEn !== titleFa ? ` / ${titleEn}` : '') + (year ? ` (${year})` : '');
+  const utils = window.FreeMovieAPI.UIUtils;
+  const displayTitle = utils.formatTitle(data);
+  const isMovie = type === 'movie' || data.title;
 
   document.getElementById('details-title').textContent = displayTitle;
   document.getElementById('details-poster').src = poster;
   document.getElementById('details-type-badge').textContent = isMovie ? t('cinema') : t('tv_archive');
   document.getElementById('details-overview').textContent = data.overview || t('not_found');
-  document.getElementById('details-overview-heading').textContent = t('storyline');
   document.getElementById('rating-text').textContent = data.vote_average ? data.vote_average.toFixed(1) : '—';
 
-  // Render Download Links
-  renderDownloadSection(data, type);
-
+  renderDownloadSection(data, isMovie ? 'movie' : 'series');
   document.title = `${displayTitle} | ${t('site_title')}`;
 }
 

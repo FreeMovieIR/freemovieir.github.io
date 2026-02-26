@@ -110,6 +110,24 @@ const MetadataService = {
     async fetchCountries() {
         const url = `${API_CONFIG.PRIMARY}/api/country/all/${API_CONFIG.KEY}/`;
         return await executeRequest(url);
+    },
+    async fetchOMDBPoster(imdbId) {
+        if (!imdbId) return null;
+        const keys = API_CONFIG.KEYS.OMDB;
+        const omdbBase = window.CONFIG?.API?.OMDB || 'https://www.omdbapi.com';
+
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[(KEY_INDICES.OMDB + i) % keys.length];
+            try {
+                const url = `${omdbBase}/?i=${imdbId}&apikey=${key}`;
+                const result = await executeRequest(url);
+                if (result && result.Poster && result.Poster !== 'N/A') {
+                    KEY_INDICES.OMDB = (KEY_INDICES.OMDB + i) % keys.length;
+                    return result.Poster;
+                }
+            } catch (e) { continue; }
+        }
+        return null;
     }
 };
 
@@ -354,6 +372,25 @@ window.FreeMovieAPI = {
     ...SeriesService,
     ...MetadataService,
     ...DiscoveryService,
+    SmartFetch,
+    UIUtils: {
+        formatTitle: (item) => {
+            const titleFa = item.title || item.name || 'نامشخص';
+            const titleEn = item.original_title || item.original_name || '';
+            const year = (item.release_date || item.first_air_date || item.year || '').toString().split('-')[0];
+            const displayYear = year ? ` (${year})` : '';
+            return titleFa + (titleEn && titleEn !== titleFa ? ` / ${titleEn}` : '') + displayYear;
+        },
+        getDetailsUrl: (item, type) => {
+            const id = item.id;
+            const param = type === 'movie' || item.title ? 'm' : 's';
+            return `/?${param}=${id}`;
+        },
+        getShareText: (item) => {
+            const title = window.FreeMovieAPI.UIUtils.formatTitle(item);
+            return `پیشنهاد تماشای ${title} در فیری مووی: ${window.location.origin}${window.FreeMovieAPI.UIUtils.getDetailsUrl(item)}`;
+        }
+    },
     translateGenre: (p) => GENRE_MAP[p] || p,
     toStremioMeta,
     toStremioVideos,
