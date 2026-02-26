@@ -161,43 +161,41 @@ async function renderSlider() {
 async function fetchAndDisplayContent() {
   const movieContainer = document.getElementById('new-movies');
   const tvContainer = document.getElementById('trending-tv');
-  if (!movieContainer || !tvContainer) return;
+  if (!movieContainer || !tvContainer || !window.CCloudAPI) return;
 
   try {
-    const [movieRes, tvRes] = await Promise.all([
-      fetch(proxify(apiUrls.now_playing)),
-      fetch(proxify(apiUrls.tv_trending))
+    const [moviesData, seriesData] = await Promise.all([
+      window.CCloudAPI.fetchMovies(0, 0, 'created'),
+      window.CCloudAPI.fetchSeries(0, 0, 'created')
     ]);
-    const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
 
-    const movies = movieData.results || [];
-    const series = tvData.results || [];
+    const movies = moviesData || [];
+    const series = seriesData || [];
 
+    // Map CCloud data to the slider/grid format (CCloud has 'title', 'image', 'id', 'year', 'vote_average' etc.)
     sliderItems = [...movies.slice(0, 3), ...series.slice(0, 2)];
     renderSlider();
 
-    const seenIds = new Set();
     const movieHtml = await Promise.all(movies.slice(3).map(async (item) => {
-      const poster = await window.resolvePoster(item.id, 'movie', item.poster_path);
-      return window.createMovieCard(item, poster, 'movie');
+      // CCloud already provides localized data or we use what's available
+      return window.createMovieCard(item, item.image, 'movie');
     }));
     movieContainer.innerHTML = movieHtml.join('');
 
     const tvHtml = await Promise.all(series.slice(2).map(async (item) => {
-      const poster = await window.resolvePoster(item.id, 'tv', item.poster_path);
-      return window.createMovieCard(item, poster, 'tv');
+      return window.createMovieCard(item, item.image, 'tv');
     }));
     tvContainer.innerHTML = tvHtml.join('');
 
     if (window.refreshRevealObserver) window.refreshRevealObserver();
 
     // Cache content for next visit
-    localStorage.setItem('homeCache_header', document.getElementById('shared-header').innerHTML);
+    localStorage.setItem('homeCache_header', document.getElementById('shared-header')?.innerHTML || '');
     localStorage.setItem('homeCache_movies', movieContainer.innerHTML);
     localStorage.setItem('homeCache_tv', tvContainer.innerHTML);
 
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error('CCloud API Fetch error:', error);
   }
 }
 
