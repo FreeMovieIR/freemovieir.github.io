@@ -1,5 +1,7 @@
 {
   "scripts": {
+    "build": "tailwindcss -i ./assets/css/style.css -o ./assets/css/output.css --minify",
+    "watch": "tailwindcss -i ./assets/css/style.css -o ./assets/css/output.css --watch",
     "lint": "eslint . --ext .js,.html",
     "format": "prettier --write .",
     "fix": "npm run lint -- --fix && npm run format"

@@ -15,13 +15,13 @@
     <link rel="canonical" href="https://freemovieir.github.io/">
     <meta property="og:title" content="Free Movie | دانلود و تماشای آنلاین فیلم و سریال">
     <meta property="og:description" content="آرشیو کاملاً رایگان و بدون تبلیغات فیلم و سریال در Free Movie.">
-    <meta property="og:image" content="https://freemovieir.github.io/assets/images/story.png">
+    <meta property="og:image" content="https://freemovieir.github.io/assets/images/story.webp">
     <meta property="og:url" content="https://freemovieir.github.io/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="فیری مووی | سینمای همیشه رایگان">
     <meta name="twitter:description" content="آرشیو بزرگ فیلم و سریال با قابلیت جستجوی هوشمند.">
-    <meta name="twitter:image" content="https://freemovieir.github.io/assets/images/story.png">
+    <meta name="twitter:image" content="https://freemovieir.github.io/assets/images/story.webp">
 
     <!-- Resource Preprocessing -->
     <link rel="preconnect" href="https://api.themoviedb.org">
@@ -29,14 +29,27 @@
     <link rel="dns-prefetch" href="https://api.themoviedb.org">
     <link rel="dns-prefetch" href="https://image.tmdb.org">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="preload" href="/assets/css/style.css" as="style">
+    <link rel="preload" href="/assets/css/output.css" as="style">
     <link rel="preload" href="/assets/js/main.js" as="script">
     <link rel="preload" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/dist/font-face.css" as="style">
 
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Free Movie",
+      "url": "https://freemovieir.github.io/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://freemovieir.github.io/pages/search/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
     <script src="/assets/js/config.js"></script>
     <script src="/assets/js/config/tailwind-config.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/output.css">
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/dist/font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="icon" href="/assets/icons/favicon.ico" type="favicon/ico">
