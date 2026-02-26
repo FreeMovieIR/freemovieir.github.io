@@ -195,6 +195,11 @@ async function executeRequest(primaryUrl) {
     }
 }
 
+// Dynamic language helper for TMDB API based on site language
+function getApiLang() {
+    return (window.i18n && window.i18n.current === 'fa') ? 'fa-IR' : (window.i18n ? window.i18n.current : 'en-US');
+}
+
 /**
  * Fetch movies list
  * @param {number} page - Page number (0-indexed)

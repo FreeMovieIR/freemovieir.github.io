@@ -14,14 +14,13 @@
 	<script src="/assets/js/analytics.js" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; direction: rtl; }
         .skeleton { background: #333; animation: pulse 1.5s infinite; height: 16rem; border-radius: 0.5rem; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         #loading-bar { position: fixed; top: 0; left: 0; height: 4px; background-color: #FFC107; width: 0; z-index: 9999; transition: width 0.3s ease; }
         .days-left { position: absolute; top: 10px; left: 10px; background: rgba(255, 193, 7, 0.9); color: #1a1a2e; padding: 0.5rem; border-radius: 0.25rem; font-weight: bold; }
     </style>
-</head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <script src="/assets/js/i18n.js"></script></head>
+    <script src="/assets/js/freemovie-api.js"></script><body class="bg-gray-900 text-white min-h-screen flex flex-col">
     <!-- نوار پیشرفت -->
     <div id="loading-bar"></div>
 
