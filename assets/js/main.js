@@ -191,6 +191,11 @@ async function fetchAndDisplayContent() {
 
     if (window.refreshRevealObserver) window.refreshRevealObserver();
 
+    // Cache content for next visit
+    localStorage.setItem('homeCache_header', document.getElementById('shared-header').innerHTML);
+    localStorage.setItem('homeCache_movies', movieContainer.innerHTML);
+    localStorage.setItem('homeCache_tv', tvContainer.innerHTML);
+
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -370,6 +375,16 @@ window.onload = () => {
   handleRouting();
   initQuotes();
   initAnnouncements();
+
+  // Header scroll effect
+  const header = document.getElementById('site-header');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
 };
 window.onpopstate = handleRouting;
 

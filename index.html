@@ -15,13 +15,13 @@
     <link rel="canonical" href="https://freemovieir.github.io/">
     <meta property="og:title" content="Free Movie | دانلود و تماشای آنلاین فیلم و سریال">
     <meta property="og:description" content="آرشیو کاملاً رایگان و بدون تبلیغات فیلم و سریال در Free Movie.">
-    <meta property="og:image" content="https://freemovieir.github.io/assets/images/story.webp">
+    <meta property="og:image" content="https://freemovieir.github.io/assets/images/story_optimized.png">
     <meta property="og:url" content="https://freemovieir.github.io/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="فیری مووی | سینمای همیشه رایگان">
     <meta name="twitter:description" content="آرشیو بزرگ فیلم و سریال با قابلیت جستجوی هوشمند.">
-    <meta name="twitter:image" content="https://freemovieir.github.io/assets/images/story.webp">
+    <meta name="twitter:image" content="https://freemovieir.github.io/assets/images/story_optimized.png">
 
     <!-- Resource Preprocessing -->
     <link rel="preconnect" href="https://api.themoviedb.org">
@@ -160,26 +160,16 @@
             </section>
 
             <script>
+                // Initial Cache Hydration (Optimized)
                 (function () {
-                    const params = new URLSearchParams(window.location.search);
-                    if (params.has('m') || params.has('s')) return;
-                    try {
-                        const head = localStorage.getItem('homeCache_header');
-                        const m = localStorage.getItem('homeCache_movies');
-                        const t = localStorage.getItem('homeCache_tv');
-                        if (head) {
-                            const heal = document.getElementById('shared-header');
-                            if (heal) heal.innerHTML = head;
+                    const cacheItems = ['header', 'movies', 'tv'];
+                    cacheItems.forEach(item => {
+                        const content = localStorage.getItem(`homeCache_${item}`);
+                        if (content) {
+                            const target = document.getElementById(item === 'header' ? 'shared-header' : (item === 'movies' ? 'new-movies' : 'trending-tv'));
+                            if (target) target.innerHTML = content;
                         }
-                        if (m) {
-                            const me = document.getElementById('new-movies');
-                            if (me) me.innerHTML = m;
-                        }
-                        if (t) {
-                            const te = document.getElementById('trending-tv');
-                            if (te) te.innerHTML = t;
-                        }
-                    } catch (e) { }
+                    });
                 })();
             </script>
         </div> <!-- End of Home View -->

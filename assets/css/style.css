@@ -69,12 +69,19 @@ body::before {
 }
 
 .glass-nav {
-    background: rgba(7, 9, 15, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(7, 9, 15, 0.7);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     z-index: 50;
+    transition: all 0.4s ease;
 }
+
+.glass-nav.scrolled {
+    background: rgba(7, 9, 15, 0.95);
+    padding: 0.5rem 0;
+}
+
 
 /* Enhanced Movie Card */
 .movie-card {
@@ -146,6 +153,27 @@ body::before {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* Premium Gradient Text */
+.text-premium-gradient {
+    background: linear-gradient(135deg, #fff 0%, #f59e0b 50%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    animation: textGradient 5s linear infinite;
+}
+
+@keyframes textGradient {
+    0% {
+        background-position: 0% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
 
 /* skeleton refined */
 .skeleton {
