@@ -206,36 +206,34 @@ async function searchMedia(query) {
         return;
     }
 
+    if (!window.CCloudAPI) {
+        console.error('CCloudAPI not loaded');
+        return;
+    }
+
     showLoading();
     movieResultsContainer.innerHTML = '';
     tvResultsContainer.innerHTML = '';
     movieSection.classList.add('hidden');
     tvSection.classList.add('hidden');
 
-    const encodedQuery = encodeURIComponent(cleanedQuery);
-    const searchMultiUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbApiKey}&language=${language}&query=${encodedQuery}`;
-
     try {
-        const response = await fetch(searchMultiUrl);
-        if (!response.ok) throw new Error(`خطای API: ${response.status}`);
+        const results = await window.CCloudAPI.search(cleanedQuery);
 
-        const data = await response.json();
-        const allResults = data.results || [];
+        // CCloud returns a mixed list of posters. Map them to movie/tv types based on API metadata if available, 
+        // or treat all as movies for now if the API doesn't specify. 
+        // Based on the provided integration, results are 'posters'.
+        const movieItems = results.filter(item => item.type === 'movie' || !item.type);
+        const tvItems = results.filter(item => item.type === 'serie');
 
-        const movieItems = allResults.filter(item => item.media_type === 'movie');
-        const tvItems = allResults.filter(item => item.media_type === 'tv');
-
-        // Professional Results Header Cleanup
         if (movieItems.length > 0) {
-            movieSection.classList.add('search-results-section');
+            movieSection.classList.remove('hidden');
             displayInitialResults(movieResultsContainer, movieSection, movieTitleElement, movieItems, 'movie', cleanedQuery, 'فیلمی یافت نشد.');
-            movieItems.forEach(movie => fetchAndSetPoster(movie, 'movie'));
         }
 
         if (tvItems.length > 0) {
-            tvSection.classList.add('search-results-section', 'tv');
+            tvSection.classList.remove('hidden');
             displayInitialResults(tvResultsContainer, tvSection, tvTitleElement, tvItems, 'tv', cleanedQuery, 'سریالی یافت نشد.');
-            tvItems.forEach(tv => fetchAndSetPoster(tv, 'tv'));
         }
 
         if (movieItems.length === 0 && tvItems.length === 0) {
@@ -250,7 +248,7 @@ async function searchMedia(query) {
         }
 
     } catch (error) {
-        console.error('Search error:', error);
+        console.error('CCloud Search error:', error);
         movieSection.classList.remove('hidden');
         movieResultsContainer.innerHTML = `<p class="text-center text-red-500 py-10">خطایی در برقراری ارتباط با سرور رخ داد.</p>`;
     } finally {
