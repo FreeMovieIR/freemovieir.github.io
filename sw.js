@@ -2,7 +2,7 @@ const CACHE_NAME = 'freemovie-pwa-v3'; // Bump version
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/assets/css/output.css',
+  '/assets/css/style.css',
   '/assets/js/main.js',
   '/assets/js/config.js',
   '/assets/js/apiKeySwitcher.js',

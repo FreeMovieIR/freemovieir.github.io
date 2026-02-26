@@ -99,7 +99,7 @@
                 <img src="/assets/images/logo.png" alt="Logo" class="w-9 h-9 object-contain relative transform group-hover:scale-110 transition-all duration-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
             </div>
             <div class="hidden sm:flex flex-col">
-              <h1 class="text-2xl font-black bg-gradient-to-l from-amber-500 via-yellow-100 to-amber-500 bg-[length:200%_auto] animate-textShimmer bg-clip-text text-transparent tracking-tighter leading-none py-1">${t('site_title')}</h1>
+              <h1 class="text-2xl font-black text-premium-gradient tracking-tighter leading-none py-1">${t('site_title')}</h1>
               <span class="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase mt-0.5">${t('site_subtitle')}</span>
             </div>
           </a>
