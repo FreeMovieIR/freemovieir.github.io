@@ -191,6 +191,52 @@ const SmartFetch = {
             }
         }
         throw new Error("All TMDB keys exhausted");
+    },
+
+    async search(query) {
+        try {
+            // Priority 1: TMDB Search (via keys)
+            return await this.searchTMDB(query);
+        } catch (e) {
+            console.error("TMDB Search failed, failing over to FreeMovie API", e);
+            // Priority 2: FreeMovie API Search
+            const results = await DiscoveryService.search(query);
+            return {
+                movies: results.filter(i => i.type === 'movie' || !i.type),
+                series: results.filter(i => i.type === 'serie' || i.type === 'tv'),
+                source: 'freemovie'
+            };
+        }
+    },
+
+    async searchTMDB(query) {
+        const keys = API_CONFIG.KEYS.TMDB;
+        const tmdbBase = window.CONFIG?.API?.TMDB || 'https://api.themoviedb.org/3';
+        const lang = (window.i18n && window.i18n.current === 'fa') ? 'fa-IR' : 'en-US';
+        const encoded = encodeURIComponent(query);
+
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[(KEY_INDICES.TMDB + i) % keys.length];
+            try {
+                const movieUrl = `${tmdbBase}/search/movie?api_key=${key}&language=${lang}&query=${encoded}`;
+                const tvUrl = `${tmdbBase}/search/tv?api_key=${key}&language=${lang}&query=${encoded}`;
+
+                const [movies, series] = await Promise.all([
+                    executeRequest(movieUrl),
+                    executeRequest(tvUrl)
+                ]);
+
+                KEY_INDICES.TMDB = (KEY_INDICES.TMDB + i) % keys.length;
+                return {
+                    movies: movies.results,
+                    series: series.results,
+                    source: 'tmdb'
+                };
+            } catch (e) {
+                console.warn(`TMDB search key ${key} failed, rotating...`);
+            }
+        }
+        throw new Error("All TMDB search keys exhausted");
     }
 };
 
