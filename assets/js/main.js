@@ -161,23 +161,23 @@ async function renderSlider() {
 async function fetchAndDisplayContent() {
   const movieContainer = document.getElementById('new-movies');
   const tvContainer = document.getElementById('trending-tv');
-  if (!movieContainer || !tvContainer || !window.CCloudAPI) return;
+  if (!movieContainer || !tvContainer || !window.FreeMovieAPI) return;
 
   try {
     const [moviesData, seriesData] = await Promise.all([
-      window.CCloudAPI.fetchMovies(0, 0, 'created'),
-      window.CCloudAPI.fetchSeries(0, 0, 'created')
+      window.FreeMovieAPI.fetchMovies(0, 0, 'created'),
+      window.FreeMovieAPI.fetchSeries(0, 0, 'created')
     ]);
 
     const movies = moviesData || [];
     const series = seriesData || [];
 
-    // Map CCloud data to the slider/grid format (CCloud has 'title', 'image', 'id', 'year', 'vote_average' etc.)
+    // Map FreeMovie data to the slider/grid format (FreeMovie has 'title', 'image', 'id', 'year', 'vote_average' etc.)
     sliderItems = [...movies.slice(0, 3), ...series.slice(0, 2)];
     renderSlider();
 
     const movieHtml = await Promise.all(movies.slice(3).map(async (item) => {
-      // CCloud already provides localized data or we use what's available
+      // FreeMovie already provides localized data or we use what's available
       return window.createMovieCard(item, item.image, 'movie');
     }));
     movieContainer.innerHTML = movieHtml.join('');
@@ -195,7 +195,7 @@ async function fetchAndDisplayContent() {
     localStorage.setItem('homeCache_tv', tvContainer.innerHTML);
 
   } catch (error) {
-    console.error('CCloud API Fetch error:', error);
+    console.error('FreeMovie API Fetch error:', error);
   }
 }
 
@@ -222,15 +222,15 @@ async function fetchDetails(id, type) {
   let data = null;
   let poster = null;
 
-  // 1. Try CCloud API first if available
-  if (window.CCloudAPI) {
+  // 1. Try FreeMovie API first if available
+  if (window.FreeMovieAPI) {
     try {
-      // In CCloud, we search by ID or use a specific detail call if available. 
+      // In FreeMovie, we search by ID or use a specific detail call if available. 
       // Since we don't have a direct "getById" in the provided snippet, 
       // but we know the home load/search gave us items with IDs.
       // We'll attempt to fetch seasons/episodes if it's a series to get full data.
       if (type === 'tv') {
-        const seasons = await window.CCloudAPI.fetchSeasons(id);
+        const seasons = await window.FreeMovieAPI.fetchSeasons(id);
         if (seasons) {
           data = { id, type, seasons, title: 'Series Details', overview: 'Loading detailed overview...' };
           // We might need to find the series in a list to get its basic info if not cached,
@@ -238,8 +238,8 @@ async function fetchDetails(id, type) {
         }
       }
       // If we don't have enough data yet, we can fall back to TMDB for metadata 
-      // and use CCloud specifically for links.
-    } catch (e) { console.warn('CCloud detail fetch failed, falling back to TMDB', e); }
+      // and use FreeMovie specifically for links.
+    } catch (e) { console.warn('FreeMovie detail fetch failed, falling back to TMDB', e); }
   }
 
   // 2. Fetch from TMDB for Metadata (Title, Overview, Poster)
@@ -250,14 +250,14 @@ async function fetchDetails(id, type) {
       const tmdbData = await res.json();
       poster = await window.resolvePoster(id, 'detail', tmdbData.poster_path);
 
-      // Merge CCloud data if exists
+      // Merge FreeMovie data if exists
       if (data) {
         data = { ...tmdbData, ...data };
       } else {
         data = tmdbData;
       }
     } else if (data) {
-      // We have CCloud data but TMDB failed (legacy ID or non-TMDB item)
+      // We have FreeMovie data but TMDB failed (legacy ID or non-TMDB item)
       poster = data.image || window.defaultPoster;
     }
   } catch (e) {
@@ -339,7 +339,7 @@ async function generateDownloadLinks(data, type) {
   const titleEn = (data.original_title || data.original_name || data.title || '').replace(/[^a-zA-Z0-9]/g, '.');
   const year = data.year || (isMovie ? data.release_date?.substring(0, 4) : data.first_air_date?.substring(0, 4));
 
-  // 1. CCloud API Sources (Real Data)
+  // 1. FreeMovie API Sources (Real Data)
   if (data.sources && Array.isArray(data.sources)) {
     data.sources.forEach(source => {
       links.push({
@@ -351,10 +351,10 @@ async function generateDownloadLinks(data, type) {
     });
   }
 
-  // 2. CCloud Series Logic (Seasons & Episodes)
-  if (!isMovie && data.seasons && window.CCloudAPI) {
+  // 2. FreeMovie Series Logic (Seasons & Episodes)
+  if (!isMovie && data.seasons && window.FreeMovieAPI) {
     try {
-      const videos = window.CCloudAPI.toStremioVideos(data.seasons, data.id);
+      const videos = window.FreeMovieAPI.toStremioVideos(data.seasons, data.id);
       // For now, we'll show the latest 5 episodes or the first season's top links to avoid clutter
       videos.slice(0, 8).forEach(vid => {
         if (vid._sources) {
@@ -368,7 +368,7 @@ async function generateDownloadLinks(data, type) {
           });
         }
       });
-    } catch (e) { console.warn('Error processing CCloud seasons', e); }
+    } catch (e) { console.warn('Error processing FreeMovie seasons', e); }
   }
 
   // 3. Fallback to Almas Movie Patterns (User's requested models)
@@ -402,7 +402,7 @@ async function generateDownloadLinks(data, type) {
       icon: "fa-microphone"
     });
   } else if (links.length < 3) {
-    // Simple series fallback if no CCloud data found
+    // Simple series fallback if no FreeMovie data found
     ["1080p", "720p"].forEach(q => {
       links.push({
         label: `S01E01.${q}.WEB-DL`,

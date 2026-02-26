@@ -1,9 +1,9 @@
-# CCloud API Integration
+# FreeMovie API Integration
 
-This document outlines the implementation of the CCloud API integration layer for FreeMovie.
+This document outlines the implementation of the FreeMovie API integration layer for FreeMovie.
 
 ## Overview
-The integration layer provides a robust set of functions to interact with the CCloud API, including fallback support for secondary servers and localized genre mapping.
+The integration layer provides a robust set of functions to interact with the FreeMovie API, including fallback support for secondary servers and localized genre mapping.
 
 ## Key Features
 - **Fallback Support**: Automatically tries helper servers if the primary server fails.
@@ -23,13 +23,13 @@ The integration layer provides a robust set of functions to interact with the CC
 ### Fetching Movies
 ```javascript
 // Fetch the first page of new releases
-const movies = await CCloudAPI.fetchMovies(0, 0, 'created');
+const movies = await FreeMovieAPI.fetchMovies(0, 0, 'created');
 ```
 
 ### Searching
 ```javascript
 // Search for a specific title
-const results = await CCloudAPI.search('Inception');
+const results = await FreeMovieAPI.search('Inception');
 ```
 
 ## Internal Mapping Table

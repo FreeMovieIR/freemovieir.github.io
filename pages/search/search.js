@@ -206,8 +206,8 @@ async function searchMedia(query) {
         return;
     }
 
-    if (!window.CCloudAPI) {
-        console.error('CCloudAPI not loaded');
+    if (!window.FreeMovieAPI) {
+        console.error('FreeMovieAPI not loaded');
         return;
     }
 
@@ -218,9 +218,9 @@ async function searchMedia(query) {
     tvSection.classList.add('hidden');
 
     try {
-        const results = await window.CCloudAPI.search(cleanedQuery);
+        const results = await window.FreeMovieAPI.search(cleanedQuery);
 
-        // CCloud returns a mixed list of posters. Map them to movie/tv types based on API metadata if available, 
+        // FreeMovie returns a mixed list of posters. Map them to movie/tv types based on API metadata if available, 
         // or treat all as movies for now if the API doesn't specify. 
         // Based on the provided integration, results are 'posters'.
         const movieItems = results.filter(item => item.type === 'movie' || !item.type);
@@ -248,7 +248,7 @@ async function searchMedia(query) {
         }
 
     } catch (error) {
-        console.error('CCloud Search error:', error);
+        console.error('FreeMovie Search error:', error);
         movieSection.classList.remove('hidden');
         movieResultsContainer.innerHTML = `<p class="text-center text-red-500 py-10">خطایی در برقراری ارتباط با سرور رخ داد.</p>`;
     } finally {

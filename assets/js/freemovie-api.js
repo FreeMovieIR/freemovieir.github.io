@@ -1,5 +1,5 @@
 /**
- * CCloud API Integration Layer
+ * FreeMovie API Integration Layer
  * Based on the Kotlin repository implementations
  */
 
@@ -420,7 +420,7 @@ function toStremioStreams(sources) {
         }
 
         return {
-            name: 'CCloud',
+            name: 'FreeMovie',
             title,
             url: source.url,
             quality: source.quality
@@ -449,7 +449,7 @@ if (typeof module !== 'undefined' && module.exports) {
         toStremioStreams
     }
 } else {
-    window.CCloudAPI = {
+    window.FreeMovieAPI = {
         fetchMovies,
         fetchSeries,
         fetchSeasons,
