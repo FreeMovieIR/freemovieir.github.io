@@ -300,22 +300,48 @@ async function generateDownloadLinks(data, type) {
   const year = isMovie ? (data.release_date?.substring(0, 4)) : (data.first_air_date?.substring(0, 4));
 
   // 1. Almas Movie Logic
+  const almasBase = "https://dl1.almasmovie.xyz";
+
   if (isMovie) {
-    ["dl1", "dl2", "dl3"].forEach(sub => {
-      links.push({
-        label: `Direct Link ${sub.toUpperCase()}`,
-        url: `https://${sub}.almasmovie.xyz/Movies/${year}/${titleEn}/${titleEn}.mkv`,
-        source: "Almas Movie",
-        icon: "fa-bolt"
-      });
+    // Model 1: Standard 1080p/720p Hardcoded Sub
+    links.push({
+      label: "1080p.HardSub",
+      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.HardSub.mkv`,
+      source: "Almas Movie",
+      icon: "fa-film"
+    });
+    links.push({
+      label: "720p.HardSub",
+      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.720p.HardSub.mkv`,
+      source: "Almas Movie",
+      icon: "fa-video"
+    });
+
+    // Model 2: SoftSub / Original
+    links.push({
+      label: "1080p.SoftSub",
+      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.SoftSub.mkv`,
+      source: "Almas Movie",
+      icon: "fa-closed-captioning"
+    });
+
+    // Model 3: Dubbed (if available)
+    links.push({
+      label: "1080p.Dubbed",
+      url: `${almasBase}/Movies/${year}/${titleEn}/${titleEn}.1080p.Dubbed.mkv`,
+      source: "Almas Movie",
+      icon: "fa-microphone"
     });
   } else {
-    // Series logic - Season 1 Quality example
-    links.push({
-      label: "S01 - 720p WEB-DL",
-      url: `https://dl1.almasmovie.xyz/Series/${titleEn}/S01/720p/${titleEn}.S01E01.720p.mkv`,
-      source: "Almas Movie",
-      icon: "fa-tv"
+    // Series logic: Season based
+    const qualities = ["1080p", "720p", "480p"];
+    qualities.forEach(q => {
+      links.push({
+        label: `S01.${q}.WEB-DL`,
+        url: `${almasBase}/Series/${titleEn}/S01/${q}/${titleEn}.S01E01.${q}.mkv`,
+        source: "Almas Movie",
+        icon: "fa-tv"
+      });
     });
   }
 
@@ -325,7 +351,7 @@ async function generateDownloadLinks(data, type) {
       label: "High Speed Server",
       url: `${window.CONFIG.API.MOVIE_DATA}/download?id=${data.id}&type=${type}`,
       source: "Hi-Speed IR",
-      icon: "fa-cloud-download-alt"
+      icon: "fa-bolt"
     });
   }
 
