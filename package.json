@@ -3,5 +3,8 @@
     "@tailwindcss/postcss": "^4.0.15",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.15"
+  },
+  "scripts": {
+    "generate:sitemap": "node scripts/generate-sitemap.mjs"
   }
 }

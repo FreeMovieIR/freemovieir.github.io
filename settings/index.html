@@ -19,19 +19,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
-    <header class="bg-gray-800 p-4 shadow-md w-full">
-        <div class="navbar flex justify-between items-center">
-            <nav class="flex items-center space-x-4 space-x-reverse">
-                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-2" aria-label="خانه"><i class="fas fa-home"></i></a>
-                <a href="/settings/index.html" class="hover:text-gray-300 p-2" aria-label="تنظیمات"><i class="fas fa-cog"></i></a>
-            </nav>
-            <div>
-                <a href="https://freemovieir.github.io/">
-                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10">
-                </a>
-            </div>
-        </div>
-    </header>
+    <div id="shared-header"></div>
 
     <main class="container mx-auto py-8 flex-grow">
         <h1 class="text-2xl font-bold mb-6 text-center">تنظیمات</h1>
@@ -60,11 +48,8 @@
         </div>
     </main>
 
-    <footer class="bg-gray-800 p-4 mt-auto w-full">
-        <div class="footer text-center">
-            <p>فیری مووی - ساخته شده با 🤍</p>
-        </div>
-    </footer>
+    <div id="shared-footer"></div>
 <script src="settings.js" defer></script>
+    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>

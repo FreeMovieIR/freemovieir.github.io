@@ -24,14 +24,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
-    <header class="bg-gray-800 p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">پلی‌شو - تماشای گروهی</h1>
-            <button onclick="showInputSection()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg">
-                <i class="fas fa-plus ml-2"></i> فیلم جدید
-            </button>
-        </div>
-    </header>
+    <div id="shared-header"></div>
 
     <main class="container mx-auto flex-1 py-8 px-4">
         <div class="flex flex-col items-center gap-6">
@@ -71,11 +64,8 @@
         </div>
     </main>
 
-    <footer class="bg-gray-800 p-4 mt-auto">
-        <div class="container mx-auto text-center text-gray-400">
-            پلی‌شو - تماشای همزمان ویدیو با دوستان
-        </div>
-    </footer>
+    <div id="shared-footer"></div>
     <script src="script.js"></script>
+    <script src="/js/layout-shared.js" defer></script>
 </body>
 </html>
