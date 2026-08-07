@@ -24,6 +24,12 @@
 🌐 **لینک کوتاه سایت:**  
 🔗 [b2n.ir/freemovie](b2n.ir/freemovie)  
 
+## تماشای دونفره
+
+بخش `/watch-party/` امکان ساخت اتاق خصوصی دو نفره برای تماشای هم‌زمان لینک مستقیم ویدیو را فراهم می‌کند. این بخش با Firebase Anonymous Auth، Firebase Realtime Database، HLS.js و WebRTC ساخته شده و هیچ فایل ویدیویی یا صدای میکروفن را میزبانی، ذخیره یا پراکسی نمی‌کند.
+
+برای راه‌اندازی، فایل `watch-party/firebase-config.example.js` را به `watch-party/firebase-config.js` کپی کنید، Firebase Anonymous Authentication و Realtime Database را فعال کنید و قوانین `firebase/database.rules.json` را deploy کنید. توضیحات کامل در `watch-party/README.md` و `firebase/README.md` آمده است.
+
 🔗 **لینک اصلی (هاست گیت‌هاب):**  
 [https://freemovieir.github.io/](https://freemovieir.github.io/)  
 

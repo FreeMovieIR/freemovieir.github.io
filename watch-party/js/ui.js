@@ -1,0 +1,681 @@
+import { APP_STATES, getVisibleScreenForState } from "./ui-state.js";
+import { formatClock, normalizeRoomCode } from "./utils.js";
+
+export function qs(selector, root = document) {
+    return root.querySelector(selector);
+}
+
+export function qsa(selector, root = document) {
+    return Array.from(root.querySelectorAll(selector));
+}
+
+export class WatchPartyUI extends EventTarget {
+    constructor() {
+        super();
+        this.state = APP_STATES.WELCOME;
+        this.selectedRole = null;
+        this.activeTab = "room";
+        this.unreadChat = 0;
+        this.confirmResolver = null;
+        this.createSubmitLocked = false;
+        this.joinSubmitLocked = false;
+        this.els = this.collectElements();
+        this.bindStaticEvents();
+        this.setState(APP_STATES.WELCOME);
+    }
+
+    collectElements() {
+        return {
+            screens: qsa(".app-screen"),
+            topBanner: qs("#top-banner"),
+            authMessage: qs("#auth-message"),
+            hostProfileForm: qs("#host-profile-form"),
+            hostDisplayName: qs("#host-display-name"),
+            hostRememberName: qs("#host-remember-name"),
+            hostNameError: qs("#host-name-error"),
+            hostMediaForm: qs("#host-media-form"),
+            hostVideoUrl: qs("#host-video-url"),
+            hostSubtitleUrl: qs("#host-subtitle-url"),
+            hostSubtitleFile: qs("#host-subtitle-file"),
+            hostSubtitleUrlWrap: qs("#host-subtitle-url-wrap"),
+            hostSubtitleFileWrap: qs("#host-subtitle-file-wrap"),
+            hostVideoError: qs("#host-video-error"),
+            hostSubtitleError: qs("#host-subtitle-error"),
+            createButton: qs("#create-room-button"),
+            guestCodeForm: qs("#guest-code-form"),
+            guestRoomCode: qs("#guest-room-code"),
+            guestCodeError: qs("#guest-code-error"),
+            invitationDetected: qs("#invitation-detected"),
+            checkCodeButton: qs("#check-code-button"),
+            restoreStatusMessage: qs("#restore-status-message"),
+            restoreFailedMessage: qs("#restore-failed-message"),
+            restoreRetry: qs("#restore-retry"),
+            restoreCancel: qs("#restore-cancel"),
+            restoreRetryFailed: qs("#restore-retry-failed"),
+            restoreCancelFailed: qs("#restore-cancel-failed"),
+            serviceAuthStatus: qs("#service-auth-status"),
+            serviceDatabaseStatus: qs("#service-database-status"),
+            serviceMessage: qs("#service-message"),
+            serviceCommandHint: qs("#service-command-hint"),
+            serviceRetry: qs("#service-retry"),
+            serviceBack: qs("#service-back"),
+            guestProfileForm: qs("#guest-profile-form"),
+            guestDisplayName: qs("#guest-display-name"),
+            guestRememberName: qs("#guest-remember-name"),
+            guestNameError: qs("#guest-name-error"),
+            roomPreview: qs("#room-preview"),
+            joinButton: qs("#join-room-button"),
+            inviteCode: qs("#invite-code"),
+            activeInviteCode: qs("#active-invite-code"),
+            inviteLink: qs("#invite-link"),
+            lobbyMessage: qs("#lobby-message"),
+            lobbyMediaState: qs("#lobby-media-state"),
+            lobbySubtitleState: qs("#lobby-subtitle-state"),
+            lobbyConnectionState: qs("#lobby-connection-state"),
+            lobbyHostActions: qs("#lobby-host-actions"),
+            participants: qs("#participants"),
+            activeParticipants: qs("#active-participants"),
+            readyButton: qs("#ready-button"),
+            video: qs("#party-video"),
+            remoteAudio: qs("#remote-audio"),
+            track: qs("#subtitle-track"),
+            movieControls: qs("#movie-controls"),
+            controlPlayPause: qs("#control-play-pause"),
+            controlBack10: qs("#control-back-10"),
+            controlForward10: qs("#control-forward-10"),
+            controlTime: qs("#control-time"),
+            controlSeek: qs("#control-seek"),
+            seekPreview: qs("#seek-preview"),
+            controlRate: qs("#control-rate"),
+            controlSubtitleToggle: qs("#control-subtitle-toggle"),
+            audioTrackWrap: qs("#audio-track-wrap"),
+            controlAudioTrack: qs("#control-audio-track"),
+            controlMovieVolume: qs("#control-movie-volume"),
+            controlMovieMute: qs("#control-movie-mute"),
+            playerMicButton: qs("#player-mic-button"),
+            controlVoiceVolume: qs("#control-voice-volume"),
+            controlVoiceMute: qs("#control-voice-mute"),
+            controlFullscreen: qs("#control-fullscreen"),
+            controlPip: qs("#control-pip"),
+            syncStatus: qs("#sync-status"),
+            mkvAudioStatus: qs("#mkv-audio-status"),
+            statusBanner: qs("#status-banner"),
+            reactionLayer: qs("#reaction-layer"),
+            autoplayOverlay: qs("#autoplay-overlay"),
+            countdown: qs("#countdown"),
+            mediaUrl: qs("#media-url"),
+            subtitleUrl: qs("#subtitle-url"),
+            subtitleFile: qs("#subtitle-file"),
+            activeSubtitleUrl: qs("#active-subtitle-url"),
+            localMicState: qs("#local-mic-state"),
+            micButton: qs("#mic-button"),
+            muteButton: qs("#mute-button"),
+            playbackState: qs("#playback-state"),
+            partnerState: qs("#partner-state"),
+            roomStatus: qs("#room-status"),
+            chatMessages: qs("#chat-messages"),
+            chatForm: qs("#chat-form"),
+            chatInput: qs("#chat-input"),
+            chatUnread: qs("#chat-unread"),
+            subtitleSourceState: qs("#subtitle-source-state"),
+            activeSubtitleHostControls: qs("#active-subtitle-host-controls"),
+            toastRoot: qs("#toast-root"),
+            fatalErrorMessage: qs("#fatal-error-message"),
+            dialog: qs("#confirm-dialog"),
+            dialogTitle: qs("#dialog-title"),
+            dialogText: qs("#dialog-text"),
+            dialogCancel: qs("#dialog-cancel"),
+            dialogConfirm: qs("#dialog-confirm")
+        };
+    }
+
+    bindStaticEvents() {
+        qs("#choose-host").addEventListener("click", () => this.dispatchEvent(new CustomEvent("selectRole", { detail: "host" })));
+        qs("#choose-guest").addEventListener("click", () => this.dispatchEvent(new CustomEvent("selectRole", { detail: "guest" })));
+        qsa("[data-action]").forEach((button) => {
+            button.addEventListener("click", () => this.dispatchEvent(new CustomEvent("action", { detail: button.dataset.action })));
+        });
+        this.els.hostProfileForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            this.dispatchEvent(new CustomEvent("hostProfile", { detail: new FormData(this.els.hostProfileForm) }));
+        });
+        this.els.hostMediaForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (this.createSubmitLocked) return;
+            this.createSubmitLocked = true;
+            this.dispatchEvent(new CustomEvent("create", { detail: new FormData(this.els.hostMediaForm) }));
+        });
+        this.els.guestCodeForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            this.dispatchEvent(new CustomEvent("guestCode", { detail: new FormData(this.els.guestCodeForm) }));
+        });
+        this.els.guestProfileForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (this.joinSubmitLocked) return;
+            this.joinSubmitLocked = true;
+            this.dispatchEvent(new CustomEvent("join", { detail: new FormData(this.els.guestProfileForm) }));
+        });
+        this.els.guestRoomCode.addEventListener("input", () => {
+            this.els.guestRoomCode.value = normalizeRoomCode(extractRoomCodeInput(this.els.guestRoomCode.value)).slice(0, 8);
+        });
+        this.els.restoreRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreRetry")));
+        this.els.restoreRetryFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreRetry")));
+        this.els.restoreCancel.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
+        this.els.restoreCancelFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
+        this.els.serviceRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("serviceRetry")));
+        this.els.serviceBack.addEventListener("click", () => this.dispatchEvent(new CustomEvent("serviceBack")));
+        qsa("input[name='subtitleMode']").forEach((input) => {
+            input.addEventListener("change", () => this.updateSubtitleMode(input.value));
+        });
+        qs("#copy-code").addEventListener("click", () => this.dispatchEvent(new CustomEvent("copyCode")));
+        qs("#copy-link").addEventListener("click", () => this.dispatchEvent(new CustomEvent("copy")));
+        qs("#share-link").addEventListener("click", () => this.dispatchEvent(new CustomEvent("share")));
+        qs("#copy-link-active").addEventListener("click", () => this.dispatchEvent(new CustomEvent("copy")));
+        this.els.readyButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("ready")));
+        qs("#continue-button").addEventListener("click", () => this.dispatchEvent(new CustomEvent("continue")));
+        qs("#change-media").addEventListener("click", () => this.dispatchEvent(new CustomEvent("mediaChange")));
+        qs("#change-subtitle").addEventListener("click", () => this.dispatchEvent(new CustomEvent("subtitleChange")));
+        qs("#active-change-subtitle").addEventListener("click", () => {
+            this.els.subtitleUrl.value = this.els.activeSubtitleUrl.value;
+            this.dispatchEvent(new CustomEvent("subtitleChange"));
+        });
+        qs("#restart-button").addEventListener("click", () => this.dispatchEvent(new CustomEvent("restart")));
+        qs("#fullscreen-button").addEventListener("click", () => this.els.video.requestFullscreen?.());
+        qs("#pip-button").addEventListener("click", () => this.els.video.requestPictureInPicture?.());
+        this.bindPlayerControls();
+        qs("#leave-room").addEventListener("click", () => this.dispatchEvent(new CustomEvent("leave")));
+        qs("#end-room").addEventListener("click", () => this.dispatchEvent(new CustomEvent("end")));
+        qs("#end-room-lobby").addEventListener("click", () => this.dispatchEvent(new CustomEvent("end")));
+        this.els.micButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("mic")));
+        this.els.muteButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("mute")));
+        this.els.chatForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            this.dispatchEvent(new CustomEvent("chat", { detail: this.els.chatInput.value }));
+        });
+        qsa("[data-reaction]").forEach((button) => {
+            button.addEventListener("click", () => this.dispatchEvent(new CustomEvent("reaction", { detail: button.dataset.reaction })));
+        });
+        qsa("[data-subtitle-pref]").forEach((input) => {
+            input.addEventListener("input", () => this.dispatchEvent(new CustomEvent("subtitlePrefs", { detail: this.getSubtitlePrefs() })));
+        });
+        qsa("[data-tab]").forEach((button) => {
+            button.addEventListener("click", () => this.setActiveTab(button.dataset.tab));
+        });
+        this.els.dialogCancel.addEventListener("click", () => this.resolveDialog(false));
+        this.els.dialogConfirm.addEventListener("click", () => this.resolveDialog(true));
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && !this.els.dialog.hidden) this.resolveDialog(false);
+            this.handlePlayerShortcut(event);
+        });
+    }
+
+    bindPlayerControls() {
+        this.els.video.controls = false;
+        this.els.controlPlayPause.addEventListener("click", () => this.togglePlayback());
+        this.els.controlBack10.addEventListener("click", () => this.seekRelative(-10));
+        this.els.controlForward10.addEventListener("click", () => this.seekRelative(10));
+        this.els.controlRate.addEventListener("change", () => {
+            this.els.video.playbackRate = Number(this.els.controlRate.value || 1);
+        });
+        this.els.controlSeek.addEventListener("input", () => {
+            this.els.seekPreview.hidden = false;
+            this.els.seekPreview.textContent = formatClock(Number(this.els.controlSeek.value || 0));
+        });
+        this.els.controlSeek.addEventListener("change", () => {
+            this.els.video.currentTime = Number(this.els.controlSeek.value || 0);
+            this.els.seekPreview.hidden = true;
+        });
+        this.els.controlSubtitleToggle.addEventListener("click", () => this.toggleSubtitleVisibility());
+        this.els.controlAudioTrack.addEventListener("change", () => {
+            this.dispatchEvent(new CustomEvent("audioTrackChange", { detail: this.els.controlAudioTrack.value }));
+        });
+        this.els.controlMovieVolume.addEventListener("input", () => {
+            const volume = Number(this.els.controlMovieVolume.value || 0) / 100;
+            this.dispatchEvent(new CustomEvent("movieVolume", { detail: volume }));
+        });
+        this.els.controlMovieMute.addEventListener("click", () => {
+            const next = this.els.controlMovieMute.getAttribute("aria-pressed") !== "true";
+            this.dispatchEvent(new CustomEvent("movieMute", { detail: next }));
+            this.updateMovieMuteButton(next);
+        });
+        this.els.playerMicButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("mic")));
+        this.els.controlVoiceVolume.addEventListener("input", () => {
+            const volume = Number(this.els.controlVoiceVolume.value || 0) / 100;
+            this.dispatchEvent(new CustomEvent("voiceVolume", { detail: volume }));
+        });
+        this.els.controlVoiceMute.addEventListener("click", () => {
+            const next = this.els.controlVoiceMute.getAttribute("aria-pressed") !== "true";
+            this.els.controlVoiceMute.setAttribute("aria-pressed", String(next));
+            this.dispatchEvent(new CustomEvent("voiceMute", { detail: next }));
+        });
+        this.els.controlFullscreen.addEventListener("click", () => this.els.video.requestFullscreen?.());
+        this.els.controlPip.addEventListener("click", () => this.els.video.requestPictureInPicture?.());
+        ["loadedmetadata", "timeupdate", "durationchange", "play", "pause", "ratechange", "volumechange"].forEach((eventName) => {
+            this.els.video.addEventListener(eventName, () => this.updatePlayerControls());
+        });
+        this.els.controlPip.hidden = !("pictureInPictureEnabled" in document);
+        this.loadLocalControlPrefs();
+        this.updatePlayerControls();
+    }
+
+    setState(state, options = {}) {
+        this.state = state;
+        if (state === APP_STATES.HOST_MEDIA) this.createSubmitLocked = false;
+        if (state === APP_STATES.GUEST_PROFILE) this.joinSubmitLocked = false;
+        const visible = getVisibleScreenForState(state);
+        this.els.screens.forEach((screen) => {
+            screen.hidden = screen.dataset.screen !== visible;
+        });
+        document.body.dataset.wpState = state;
+        this.els.createButton.disabled = state === APP_STATES.CREATING_ROOM;
+        this.els.joinButton.disabled = state === APP_STATES.JOINING_ROOM;
+        this.els.checkCodeButton.disabled = state === APP_STATES.JOINING_ROOM;
+        this.els.serviceRetry.disabled = state === APP_STATES.AUTHENTICATING || state === APP_STATES.CREATING_ROOM || state === APP_STATES.JOINING_ROOM;
+        const restoring = state === APP_STATES.RESTORING_ROOM;
+        this.els.restoreRetry.disabled = restoring;
+        this.els.restoreRetryFailed.disabled = restoring;
+        this.els.createButton.textContent = state === APP_STATES.CREATING_ROOM ? "در حال ساخت اتاق..." : "ساخت اتاق";
+        this.els.joinButton.textContent = state === APP_STATES.JOINING_ROOM ? "در حال ورود به اتاق..." : "ورود به اتاق";
+        if (options.message) this.banner(options.message, true);
+        if (state !== APP_STATES.ACTIVE_ROOM) this.hideAutoplayOverlay();
+        if (state === APP_STATES.ACTIVE_ROOM) this.updatePlayerControls();
+    }
+
+    showRestoring({ attempt = 1, message = "لطفاً چند لحظه صبر کن." } = {}) {
+        this.els.restoreStatusMessage.textContent = attempt > 1 ? `تلاش ${attempt}: ${message}` : message;
+        this.els.restoreRetry.disabled = true;
+        this.setState(APP_STATES.RESTORING_ROOM);
+    }
+
+    showRestoreFailed({ message, canRetry = true } = {}) {
+        this.els.restoreFailedMessage.textContent = message || "بازیابی اتاق انجام نشد. ممکن است اتاق حذف شده باشد یا ارتباط موقتاً در دسترس نباشد.";
+        this.setState(APP_STATES.RESTORE_FAILED);
+        this.els.restoreRetryFailed.hidden = !canRetry;
+        this.els.restoreRetryFailed.disabled = !canRetry;
+    }
+
+    showServiceUnavailable(status = {}, { production = false } = {}) {
+        const available = "در دسترس";
+        const unavailable = "در دسترس نیست";
+        this.els.serviceAuthStatus.textContent = status.authAvailable ? available : unavailable;
+        this.els.serviceDatabaseStatus.textContent = status.databaseAvailable ? available : unavailable;
+        this.els.serviceMessage.textContent = production
+            ? "سرویس اتاق موقتاً در دسترس نیست. کمی بعد دوباره تلاش کنید."
+            : "برای ادامه، Emulator را اجرا کن و سپس دوباره بررسی کن.";
+        this.els.serviceCommandHint.hidden = Boolean(production);
+        this.setState(APP_STATES.SERVICE_UNAVAILABLE);
+    }
+
+    setSelectedRole(role) {
+        this.selectedRole = role;
+        this.els.lobbyHostActions.hidden = role !== "host";
+        qs("#end-room").hidden = role !== "host";
+        qs("#end-room-lobby").hidden = role !== "host";
+        this.els.activeSubtitleHostControls.hidden = role !== "host";
+    }
+
+    prefill({ videoUrl, subtitleUrl, roomCode }) {
+        if (videoUrl) {
+            this.els.hostVideoUrl.value = videoUrl;
+            this.els.mediaUrl.value = videoUrl;
+        }
+        if (subtitleUrl) {
+            qsa("input[name='subtitleMode']").find((input) => input.value === "url").checked = true;
+            this.updateSubtitleMode("url");
+            this.els.hostSubtitleUrl.value = subtitleUrl;
+            this.els.subtitleUrl.value = subtitleUrl;
+            this.els.activeSubtitleUrl.value = subtitleUrl;
+        }
+        if (roomCode) {
+            this.els.guestRoomCode.value = normalizeRoomCode(roomCode);
+            this.els.invitationDetected.hidden = false;
+        }
+    }
+
+    updateSubtitleMode(mode) {
+        this.els.hostSubtitleUrlWrap.hidden = mode !== "url";
+        this.els.hostSubtitleFileWrap.hidden = mode !== "file";
+    }
+
+    setFieldError(id, message = "") {
+        const el = this.els[id] || qs(`#${id}`);
+        if (el) el.textContent = message;
+    }
+
+    clearFieldErrors() {
+        ["hostNameError", "hostVideoError", "hostSubtitleError", "guestCodeError", "guestNameError"].forEach((id) => this.setFieldError(id, ""));
+    }
+
+    loadRememberedName() {
+        try {
+            const name = localStorage.getItem("watchPartyDisplayName") || "";
+            this.els.hostDisplayName.value ||= name;
+            this.els.guestDisplayName.value ||= name;
+        } catch {}
+    }
+
+    saveRememberedName(name, remember) {
+        if (!remember) return;
+        localStorage.setItem("watchPartyDisplayName", name);
+    }
+
+    enterLobby(code, link, isOwner) {
+        this.setSelectedRole(isOwner ? "host" : "guest");
+        this.els.inviteCode.textContent = code;
+        this.els.activeInviteCode.textContent = code;
+        this.els.inviteLink.value = link;
+        this.setState(APP_STATES.LOBBY);
+    }
+
+    renderRoom(room, uid) {
+        if (!room) return;
+        if (room.status === "ended") {
+            this.setState(APP_STATES.ROOM_ENDED);
+            return;
+        }
+        this.els.roomStatus.textContent = room.status === "open" ? "فعال" : room.status;
+        const participants = Object.entries(room.participants || {});
+        this.renderParticipants(this.els.participants, participants, uid, room);
+        this.renderParticipants(this.els.activeParticipants, participants, uid, room);
+        const partner = participants.find(([id]) => id !== uid)?.[1];
+        this.els.partnerState.textContent = partner ? `${partner.online ? "آنلاین" : "آفلاین"} · ${partner.buffering ? "در حال بافر" : "آماده"}` : "در انتظار نفر دوم";
+        this.els.lobbyMessage.textContent = this.getLobbyMessage(participants);
+        this.els.lobbyMediaState.textContent = room.media?.url ? "انتخاب شده" : "نامشخص";
+        this.els.lobbySubtitleState.textContent = room.subtitle?.mode && room.subtitle.mode !== "none" ? "فعال" : "بدون زیرنویس";
+        this.els.lobbyConnectionState.textContent = "اتصال برقرار است";
+        this.els.subtitleSourceState.textContent = room.subtitle?.mode && room.subtitle.mode !== "none" ? (room.subtitle.fileName || room.subtitle.url || "زیرنویس فعال") : "بدون زیرنویس";
+        const self = participants.find(([id]) => id === uid)?.[1];
+        this.els.readyButton.textContent = self?.ready ? "آماده هستم" : "آماده‌ام";
+        this.els.readyButton.classList.toggle("is-ready", Boolean(self?.ready));
+        const playback = room.playback;
+        if (playback) this.els.playbackState.textContent = `${playback.paused ? "مکث" : "پخش"} · ${formatClock(playback.currentTime)} · ${playback.playbackRate || 1}x`;
+        if (playback) this.els.syncStatus.textContent = playback.paused ? "مکث مشترک" : "همگام";
+        if (room.media?.url) this.els.mediaUrl.value = room.media.url;
+    }
+
+    renderParticipants(target, participants, uid, room = {}) {
+        target.textContent = "";
+        const byUid = new Map(participants);
+        const byRole = [
+            room.ownerUid ? [room.ownerUid, byUid.get(room.ownerUid)] : participants.find(([, p]) => p.role === "owner"),
+            room.guestUid ? [room.guestUid, byUid.get(room.guestUid)] : null
+        ];
+        byRole.forEach((entry, index) => {
+            const item = document.createElement("li");
+            item.className = "participant";
+            item.dataset.testid = index === 0 ? "participant-owner" : "participant-guest";
+            const title = document.createElement("strong");
+            const participant = entry?.[1];
+            title.textContent = participant ? `${participant.displayName || "مهمان"}${entry[0] === uid ? " (شما)" : ""}` : (index === 0 ? "سازنده" : "مهمان");
+            const status = document.createElement("span");
+            status.textContent = participant ? [
+                participant.online ? "آنلاین" : "آفلاین",
+                participant.ready ? "آماده" : "ناآماده",
+                participant.micEnabled ? "میکروفن روشن" : "میکروفن خاموش",
+                participant.connectionState || ""
+            ].filter(Boolean).join(" · ") : "در انتظار ورود";
+            item.append(title, status);
+            target.append(item);
+        });
+    }
+
+    getLobbyMessage(participants) {
+        if (participants.length < 2) return this.selectedRole === "host" ? "منتظر ورود همراهت هستیم..." : "با موفقیت وارد اتاق شدی";
+        return "هر دو نفر وارد اتاق شده‌اند";
+    }
+
+    renderMessages(messages) {
+        const wasChatClosed = this.activeTab !== "chat" && this.state === APP_STATES.ACTIVE_ROOM;
+        this.els.chatMessages.textContent = "";
+        if (!messages.length) {
+            const empty = document.createElement("p");
+            empty.className = "empty-state";
+            empty.textContent = "هنوز پیامی نیست.";
+            this.els.chatMessages.append(empty);
+        }
+        messages.forEach((message) => {
+            const row = document.createElement("div");
+            row.className = "chat-message";
+            const meta = document.createElement("div");
+            meta.className = "chat-meta";
+            const time = message.createdAt ? new Date(message.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }) : "";
+            meta.textContent = `${message.displayName || "مهمان"} · ${time}`;
+            const text = document.createElement("p");
+            text.textContent = message.text || "";
+            row.append(meta, text);
+            this.els.chatMessages.append(row);
+        });
+        if (wasChatClosed && messages.length) this.setUnread(this.unreadChat + 1);
+        this.els.chatMessages.scrollTop = this.els.chatMessages.scrollHeight;
+    }
+
+    setActiveTab(tab) {
+        this.activeTab = tab;
+        qsa("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === tab));
+        qsa(".side-tab-panel").forEach((panel) => {
+            panel.hidden = panel.id !== `tab-${tab}`;
+        });
+        if (tab === "chat") this.setUnread(0);
+    }
+
+    setUnread(count) {
+        this.unreadChat = count;
+        this.els.chatUnread.hidden = count <= 0;
+        this.els.chatUnread.textContent = String(count);
+    }
+
+    clearChatInput() {
+        this.els.chatInput.value = "";
+    }
+
+    showReaction(emoji) {
+        const span = document.createElement("span");
+        span.className = "reaction-float";
+        span.textContent = emoji;
+        span.style.left = `${20 + Math.random() * 60}%`;
+        this.els.reactionLayer.append(span);
+        setTimeout(() => span.remove(), 1800);
+    }
+
+    toast(message, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        this.els.toastRoot.append(toast);
+        setTimeout(() => toast.remove(), 4200);
+    }
+
+    banner(message, show = true) {
+        const target = this.state === APP_STATES.ACTIVE_ROOM ? this.els.statusBanner : this.els.topBanner;
+        target.hidden = !show;
+        target.textContent = message;
+    }
+
+    showAutoplayOverlay() {
+        this.els.autoplayOverlay.hidden = false;
+    }
+
+    hideAutoplayOverlay() {
+        this.els.autoplayOverlay.hidden = true;
+    }
+
+    setCountdown(value) {
+        this.els.countdown.textContent = String(value);
+    }
+
+    async askConfirmation({ title, text, confirmLabel = "تأیید" }) {
+        this.els.dialogTitle.textContent = title;
+        this.els.dialogText.textContent = text;
+        this.els.dialogConfirm.textContent = confirmLabel;
+        this.els.dialog.hidden = false;
+        this.els.dialogConfirm.focus();
+        return new Promise((resolve) => {
+            this.confirmResolver = resolve;
+        });
+    }
+
+    resolveDialog(value) {
+        this.els.dialog.hidden = true;
+        this.confirmResolver?.(value);
+        this.confirmResolver = null;
+    }
+
+    getSubtitlePrefs() {
+        return {
+            fontSize: Number(qs("#caption-size").value),
+            color: qs("#caption-color").value,
+            bgOpacity: Number(qs("#caption-bg").value),
+            vertical: Number(qs("#caption-position").value)
+        };
+    }
+
+    togglePlayback() {
+        if (this.els.video.paused) {
+            this.els.video.play().catch(() => this.showAutoplayOverlay());
+        } else {
+            this.els.video.pause();
+        }
+    }
+
+    seekRelative(seconds) {
+        const duration = Number.isFinite(this.els.video.duration) ? this.els.video.duration : Infinity;
+        this.els.video.currentTime = Math.max(0, Math.min(duration, (this.els.video.currentTime || 0) + seconds));
+    }
+
+    toggleSubtitleVisibility() {
+        const track = this.els.video.textTracks?.[0];
+        if (!track) return;
+        const nextShowing = track.mode !== "showing";
+        track.mode = nextShowing ? "showing" : "disabled";
+        this.els.controlSubtitleToggle.setAttribute("aria-pressed", String(nextShowing));
+    }
+
+    updatePlayerControls() {
+        const video = this.els.video;
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        const current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+        this.els.controlTime.textContent = `${formatClock(current)} / ${formatClock(duration)}`;
+        this.els.controlSeek.max = String(duration || 0);
+        if (document.activeElement !== this.els.controlSeek) this.els.controlSeek.value = String(current || 0);
+        const paused = video.paused;
+        this.els.controlPlayPause.setAttribute("aria-pressed", String(!paused));
+        this.els.controlPlayPause.setAttribute("aria-label", paused ? "پخش" : "مکث");
+        this.els.controlPlayPause.querySelector("i").className = paused ? "fas fa-play" : "fas fa-pause";
+        this.els.controlPlayPause.querySelector("span").textContent = paused ? "پخش" : "مکث";
+        this.els.controlRate.value = String(video.playbackRate || 1);
+        this.els.controlMovieVolume.value = String(Math.round((video.volume ?? 1) * 100));
+        this.updateMovieMuteButton(video.muted);
+    }
+
+    updateMovieMuteButton(muted) {
+        this.els.controlMovieMute.setAttribute("aria-pressed", String(Boolean(muted)));
+        this.els.controlMovieMute.querySelector("i").className = muted ? "fas fa-volume-xmark" : "fas fa-volume-high";
+    }
+
+    renderAudioTracks(diagnostics = {}) {
+        const tracks = diagnostics.tracks || [];
+        this.els.audioTrackWrap.hidden = tracks.length <= 1;
+        this.els.controlAudioTrack.textContent = "";
+        tracks.forEach((track) => {
+            const option = document.createElement("option");
+            option.value = String(track.id);
+            option.textContent = formatAudioTrackLabel(track);
+            option.disabled = !track.supported;
+            option.selected = String(track.id) === String(diagnostics.selectedTrackId);
+            this.els.controlAudioTrack.append(option);
+        });
+    }
+
+    setMkvAudioStatus(message = "") {
+        this.els.mkvAudioStatus.textContent = message || "";
+    }
+
+    setMicState({ enabled = false, muted = false, label = "" } = {}) {
+        const text = label || (enabled ? "میکروفن روشن" : "میکروفن خاموش");
+        this.els.localMicState.textContent = text;
+        this.els.micButton.textContent = enabled ? "خاموش کردن میکروفن" : "فعال‌کردن میکروفن";
+        this.els.playerMicButton.textContent = "";
+        this.els.playerMicButton.append(makeIcon(enabled ? "fa-microphone" : "fa-microphone-slash"), document.createTextNode(enabled ? " روشن" : " میکروفن"));
+        [this.els.micButton, this.els.playerMicButton].forEach((button) => {
+            button.setAttribute("aria-pressed", String(Boolean(enabled && !muted)));
+            button.setAttribute("aria-label", text);
+        });
+        this.els.muteButton.disabled = !enabled;
+    }
+
+    loadLocalControlPrefs() {
+        try {
+            const movieVolume = Number(localStorage.getItem("watchPartyMovieVolume"));
+            if (Number.isFinite(movieVolume)) {
+                this.els.video.volume = Math.min(1, Math.max(0, movieVolume));
+                this.els.controlMovieVolume.value = String(Math.round(this.els.video.volume * 100));
+            }
+            const voiceVolume = Number(localStorage.getItem("watchPartyVoiceVolume"));
+            if (Number.isFinite(voiceVolume)) this.els.controlVoiceVolume.value = String(Math.round(Math.min(1, Math.max(0, voiceVolume)) * 100));
+        } catch {}
+    }
+
+    handlePlayerShortcut(event) {
+        if (this.state !== APP_STATES.ACTIVE_ROOM || isTypingTarget(event.target)) return;
+        const key = event.key.toLowerCase();
+        if (key === " ") {
+            event.preventDefault();
+            this.togglePlayback();
+        } else if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            this.seekRelative(event.shiftKey ? -10 : -5);
+        } else if (event.key === "ArrowRight") {
+            event.preventDefault();
+            this.seekRelative(event.shiftKey ? 10 : 5);
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            this.els.video.volume = Math.min(1, (this.els.video.volume || 0) + 0.05);
+            this.dispatchEvent(new CustomEvent("movieVolume", { detail: this.els.video.volume }));
+        } else if (event.key === "ArrowDown") {
+            event.preventDefault();
+            this.els.video.volume = Math.max(0, (this.els.video.volume || 0) - 0.05);
+            this.dispatchEvent(new CustomEvent("movieVolume", { detail: this.els.video.volume }));
+        } else if (key === "m") {
+            event.preventDefault();
+            this.dispatchEvent(new CustomEvent("movieMute", { detail: !this.els.video.muted }));
+        } else if (key === "c") {
+            event.preventDefault();
+            this.toggleSubtitleVisibility();
+        } else if (key === "f") {
+            event.preventDefault();
+            this.els.video.requestFullscreen?.();
+        } else if (key === "p") {
+            event.preventDefault();
+            this.els.video.requestPictureInPicture?.();
+        }
+    }
+}
+
+function extractRoomCodeInput(value) {
+    const raw = String(value || "").trim();
+    try {
+        const url = new URL(raw);
+        return url.searchParams.get("room") || raw;
+    } catch {
+        return raw;
+    }
+}
+
+function formatAudioTrackLabel(track) {
+    const language = track.language && track.language !== "und" ? track.language : "صدا";
+    const codec = String(track.codec || track.internalCodecId || "ناشناخته").toUpperCase();
+    const channels = track.channelCount ? `${track.channelCount} کانال` : "کانال نامشخص";
+    return `${track.title || language} — ${codec} — ${channels}`;
+}
+
+function makeIcon(iconClass) {
+    const icon = document.createElement("i");
+    icon.className = `fas ${iconClass}`;
+    icon.setAttribute("aria-hidden", "true");
+    return icon;
+}
+
+function isTypingTarget(target) {
+    const tag = target?.tagName?.toLowerCase();
+    return tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable;
+}

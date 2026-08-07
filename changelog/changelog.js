@@ -2,6 +2,15 @@
 // داده‌های نمونه برای تغییرات (می‌توانید این را به صورت دستی یا از یک API پر کنید)
 const changelogData = [
     {
+        version: "1.4.0",
+        date: "1405/05/16",
+        changes: [
+            { feature: "افزودن تماشای دونفره با اتاق خصوصی دو نفره", contributor: "FreeMovieIR" },
+            { feature: "همگام‌سازی پخش، مکث، جستجو، سرعت، ویدیو و زیرنویس با Firebase", contributor: "FreeMovieIR" },
+            { feature: "افزودن چت، واکنش سریع، حضور آنلاین و مکالمه صوتی WebRTC", contributor: "FreeMovieIR" }
+        ]
+    },
+    {
         version: "1.3.0",
         date: "1404/01/07",
         changes: [

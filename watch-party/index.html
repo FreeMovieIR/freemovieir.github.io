@@ -1,0 +1,450 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <title>تماشای دونفره - فیری مووی</title>
+    <meta name="description" content="ساخت اتاق خصوصی دو نفره برای تماشای هم‌زمان ویدیو با زیرنویس، چت و مکالمه صوتی.">
+    <link rel="canonical" href="https://freemovieir.github.io/watch-party/">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
+    <script src="/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="7978c39a-bec9-49d3-976a-8362dc9dfea2"></script>
+</head>
+<body class="dark">
+    <div id="loading-bar"></div>
+    <header class="site-header">
+        <div class="wp-container wp-header">
+            <a href="/" class="wp-logo" aria-label="فیری مووی">
+                <img src="/logo.png" alt="لوگوی فیری مووی">
+                <span>فیری مووی</span>
+            </a>
+            <nav class="wp-nav" aria-label="ناوبری اصلی">
+                <a href="/" class="nav-link" aria-label="خانه" title="خانه"><i class="fas fa-home"></i></a>
+                <a href="/player/" class="nav-link" aria-label="پلیر" title="پلیر"><i class="fas fa-play"></i></a>
+                <a href="/watch-party/" class="nav-link active" aria-label="تماشای دونفره" title="تماشای دونفره"><i class="fas fa-users-viewfinder"></i></a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="wp-container wp-main" id="app-root" aria-live="polite">
+        <div id="top-banner" class="status-banner top-banner" hidden></div>
+
+        <section id="screen-welcome" class="app-screen welcome-screen" data-screen="welcome" aria-labelledby="page-title">
+            <div class="welcome-hero">
+                <img src="/logo.png" alt="لوگوی فیری مووی" class="welcome-logo">
+                <p class="eyebrow">سینمای خصوصی دو نفره</p>
+                <h1 id="page-title">تماشای دونفره</h1>
+                <p>یک اتاق امن بساز یا با کد دعوت وارد شو. ویدیو روی سرور فیری مووی آپلود نمی‌شود.</p>
+            </div>
+            <div class="role-grid" role="list">
+                <article class="role-card" role="listitem">
+                    <i class="fas fa-clapperboard role-icon" aria-hidden="true"></i>
+                    <h2>ساخت اتاق جدید</h2>
+                    <p>فیلم را انتخاب کن، اتاق بساز و کد دعوت را برای همراهت بفرست.</p>
+                    <button id="choose-host" data-testid="role-host" class="primary-btn" type="button">ساخت اتاق</button>
+                </article>
+                <article class="role-card" role="listitem">
+                    <i class="fas fa-ticket role-icon" aria-hidden="true"></i>
+                    <h2>ورود به اتاق</h2>
+                    <p>کد دعوتی که دریافت کرده‌ای را وارد کن و به تماشای مشترک بپیوند.</p>
+                    <button id="choose-guest" data-testid="role-guest" class="secondary-btn" type="button">ورود با کد</button>
+                </article>
+            </div>
+            <p class="privacy-note">Firebase فقط وضعیت اتاق، چت، زیرنویس و سیگنال تماس را نگه می‌دارد؛ فایل ویدیو و صدای میکروفن ذخیره نمی‌شود.</p>
+            <a href="/" class="back-site-link"><i class="fas fa-arrow-right"></i> بازگشت به سایت</a>
+        </section>
+
+        <section id="screen-authenticating" class="app-screen narrow-screen" data-screen="authenticating" hidden>
+            <div class="panel center-panel">
+                <span class="loader" aria-hidden="true"></span>
+                <h2>در حال آماده‌سازی...</h2>
+                <p id="auth-message">در حال ساخت هویت موقت امن هستیم.</p>
+            </div>
+        </section>
+
+        <section id="screen-restoring-room" class="app-screen narrow-screen" data-screen="restoring-room" hidden>
+            <div class="panel center-panel restore-panel">
+                <span class="loader" aria-hidden="true"></span>
+                <h2>در حال بازیابی اتاق...</h2>
+                <p>در حال بررسی اتاق قبلی و اتصال دوباره هستیم.</p>
+                <p id="restore-status-message" data-testid="restore-status" class="restore-status" aria-live="polite">لطفاً چند لحظه صبر کن.</p>
+                <div class="action-row">
+                    <button id="restore-retry" data-testid="restore-retry" class="secondary-btn" type="button" disabled>تلاش مجدد</button>
+                    <button id="restore-cancel" data-testid="restore-cancel" class="ghost-btn" type="button">انصراف و بازگشت به صفحه اصلی</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-restore-failed" class="app-screen narrow-screen" data-screen="restore-failed" hidden>
+            <div class="panel center-panel restore-panel">
+                <h2>بازیابی اتاق بیشتر از حد معمول طول کشید.</h2>
+                <p id="restore-failed-message" data-testid="restore-failed-message" aria-live="polite">بازیابی اتاق انجام نشد. ممکن است اتاق حذف شده باشد یا ارتباط موقتاً در دسترس نباشد.</p>
+                <div class="action-row">
+                    <button id="restore-retry-failed" data-testid="restore-retry-failed" class="primary-btn" type="button">تلاش مجدد</button>
+                    <button id="restore-cancel-failed" data-testid="restore-cancel-failed" class="secondary-btn" type="button">بازگشت به صفحه اصلی</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-service-unavailable" class="app-screen narrow-screen" data-screen="service-unavailable" hidden>
+            <div class="panel center-panel service-panel">
+                <h2>سرویس تست لوکال اجرا نیست</h2>
+                <p>برای ساخت یا ورود به اتاق، Firebase Emulator باید روی سیستم اجرا باشد.</p>
+                <dl class="service-status-list" aria-live="polite">
+                    <div>
+                        <dt>احراز هویت</dt>
+                        <dd id="service-auth-status" data-testid="service-auth-status">در حال بررسی</dd>
+                    </div>
+                    <div>
+                        <dt>دیتابیس</dt>
+                        <dd id="service-database-status" data-testid="service-database-status">در حال بررسی</dd>
+                    </div>
+                </dl>
+                <p id="service-message" data-testid="service-message" class="field-error"></p>
+                <code id="service-command-hint" class="command-hint">npm run watch-party:emulators</code>
+                <div class="action-row">
+                    <button id="service-retry" data-testid="service-retry" class="primary-btn" type="button">بررسی دوباره</button>
+                    <button id="service-back" data-testid="service-back" class="secondary-btn" type="button">بازگشت به صفحه اصلی</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-host-profile" class="app-screen narrow-screen" data-screen="host-profile" hidden>
+            <form id="host-profile-form" class="panel step-panel" autocomplete="off">
+                <p class="step-label">مرحله ۱ از ۲</p>
+                <h2>نامت را وارد کن</h2>
+                <label for="host-display-name">نام نمایشی</label>
+                <input id="host-display-name" data-testid="host-display-name" name="displayName" maxlength="32" required placeholder="مثلا آرمین">
+                <p id="host-name-error" data-testid="inline-error" class="field-error" aria-live="polite"></p>
+                <label class="check-row">
+                    <input id="host-remember-name" name="rememberName" type="checkbox">
+                    <span>نام را برای دفعات بعد ذخیره کن</span>
+                </label>
+                <div class="action-row">
+                    <button class="primary-btn" type="submit">ادامه</button>
+                    <button class="secondary-btn" type="button" data-action="back-role">بازگشت</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="screen-host-media" class="app-screen narrow-screen" data-screen="host-media" hidden>
+            <form id="host-media-form" class="panel step-panel" autocomplete="off">
+                <p class="step-label">مرحله ۲ از ۲</p>
+                <h2>فیلم و زیرنویس</h2>
+                <label for="host-video-url">لینک مستقیم ویدیو</label>
+                <input id="host-video-url" data-testid="host-video-url" name="videoUrl" type="url" required placeholder="https://example.com/movie.mp4">
+                <p class="help-text">فرمت‌های پیشنهادی: MP4، WebM، HLS / m3u8</p>
+                <p class="help-text">ویدیو روی سرور فیری مووی آپلود نمی‌شود و مستقیماً در مرورگر هر دو نفر پخش خواهد شد.</p>
+                <p id="host-video-error" data-testid="inline-error" class="field-error" aria-live="polite"></p>
+
+                <fieldset class="segmented-field">
+                    <legend>زیرنویس</legend>
+                    <label><input type="radio" name="subtitleMode" value="none" checked> بدون زیرنویس</label>
+                    <label><input type="radio" name="subtitleMode" value="url"> لینک زیرنویس</label>
+                    <label><input type="radio" name="subtitleMode" value="file"> آپلود فایل</label>
+                </fieldset>
+                <div id="host-subtitle-url-wrap" hidden>
+                    <label for="host-subtitle-url">لینک زیرنویس</label>
+                    <input id="host-subtitle-url" data-testid="host-subtitle-url" name="subtitleUrl" type="url" placeholder="https://example.com/subtitle.vtt">
+                </div>
+                <div id="host-subtitle-file-wrap" hidden>
+                    <label for="host-subtitle-file">فایل زیرنویس</label>
+                    <input id="host-subtitle-file" data-testid="host-subtitle-file" name="subtitleFile" type="file" accept=".srt,.vtt,text/vtt,text/plain">
+                    <p class="help-text">فرمت‌های قابل قبول: SRT و VTT</p>
+                </div>
+                <p id="host-subtitle-error" data-testid="inline-error" class="field-error" aria-live="polite"></p>
+
+                <label class="check-row">
+                    <input name="autoPauseOnBuffer" type="checkbox" checked>
+                    <span>وقتی یکی از دو نفر بافر می‌کند، پخش مشترک موقت متوقف شود</span>
+                </label>
+                <label class="check-row">
+                    <input name="allowBothControls" type="checkbox" checked>
+                    <span>هر دو نفر بتوانند پخش را کنترل کنند</span>
+                </label>
+                <div class="action-row">
+                    <button id="create-room-button" data-testid="create-room" class="primary-btn" type="submit">ساخت اتاق</button>
+                    <button class="secondary-btn" type="button" data-action="host-prev">مرحله قبل</button>
+                    <button class="ghost-btn" type="button" data-action="back-role">بازگشت به انتخاب نقش</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="screen-guest-code" class="app-screen narrow-screen" data-screen="guest-code" hidden>
+            <form id="guest-code-form" class="panel step-panel" autocomplete="off">
+                <p class="step-label">ورود مهمان</p>
+                <h2>کد دعوت</h2>
+                <p id="invitation-detected" class="success-note" hidden>کد دعوت شناسایی شد</p>
+                <label for="guest-room-code">کد اتاق</label>
+                <input id="guest-room-code" data-testid="guest-room-code" name="roomCode" maxlength="128" required inputmode="latin" dir="ltr" placeholder="ABCDEFGH">
+                <p id="guest-code-error" data-testid="inline-error" class="field-error" aria-live="polite"></p>
+                <div class="action-row">
+                    <button id="check-code-button" class="primary-btn" type="submit">بررسی کد</button>
+                    <button class="secondary-btn" type="button" data-action="back-role">بازگشت</button>
+                    <button class="ghost-btn" type="button" data-action="switch-host">می‌خواهم اتاق جدیدی بسازم</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="screen-guest-profile" class="app-screen narrow-screen" data-screen="guest-profile" hidden>
+            <form id="guest-profile-form" class="panel step-panel" autocomplete="off">
+                <p class="step-label">پیوستن به اتاق</p>
+                <h2>نامت را وارد کن</h2>
+                <div id="room-preview" class="room-preview">کد دعوت آماده است.</div>
+                <label for="guest-display-name">نام نمایشی</label>
+                <input id="guest-display-name" data-testid="guest-display-name" name="displayName" maxlength="32" required placeholder="مثلا امیر">
+                <p id="guest-name-error" data-testid="inline-error" class="field-error" aria-live="polite"></p>
+                <label class="check-row">
+                    <input id="guest-remember-name" name="rememberName" type="checkbox">
+                    <span>نام را برای دفعات بعد ذخیره کن</span>
+                </label>
+                <div class="action-row">
+                    <button id="join-room-button" data-testid="join-room" class="primary-btn" type="submit">ورود به اتاق</button>
+                    <button class="secondary-btn" type="button" data-action="guest-prev">مرحله قبل</button>
+                    <button class="ghost-btn" type="button" data-action="back-role">بازگشت به انتخاب نقش</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="screen-lobby" class="app-screen lobby-screen" data-screen="lobby" hidden>
+            <div class="lobby-main panel">
+                <p class="eyebrow">لابی تماشا</p>
+                <h2 id="lobby-message">منتظر همراه</h2>
+                <div class="room-code" id="invite-code" data-testid="room-code">--------</div>
+                <div class="invite-row">
+                    <input id="invite-link" readonly aria-label="لینک دعوت">
+                    <button id="copy-code" class="secondary-btn" type="button">کپی کد</button>
+                    <button id="copy-link" data-testid="copy-invite" class="secondary-btn" type="button">کپی لینک</button>
+                    <button id="share-link" class="secondary-btn" type="button">اشتراک‌گذاری</button>
+                </div>
+                <div class="lobby-status-grid">
+                    <div><span>فیلم</span><b id="lobby-media-state">آماده</b></div>
+                    <div><span>زیرنویس</span><b id="lobby-subtitle-state">بدون زیرنویس</b></div>
+                    <div><span>اتصال</span><b id="lobby-connection-state">در حال اتصال</b></div>
+                </div>
+                <ul id="participants" class="participants participant-cards"></ul>
+                <button id="ready-button" data-testid="ready-button" class="primary-btn ready-btn" type="button">آماده‌ام</button>
+            </div>
+            <aside class="lobby-side">
+                <section class="panel mic-card">
+                    <h3>میکروفن اختیاری</h3>
+                    <p>اگر خواستی هنگام تماشا صحبت کنید، میکروفن را فعال کن.</p>
+                    <p id="local-mic-state">میکروفن خاموش</p>
+                    <div class="button-row">
+                        <button id="mic-button" class="secondary-btn" type="button">فعال‌کردن میکروفن</button>
+                        <button id="mute-button" class="icon-text-btn" type="button">بی‌صدا</button>
+                    </div>
+                </section>
+                <section id="lobby-host-actions" class="panel host-only">
+                    <h3>تنظیمات سازنده</h3>
+                    <label for="media-url">لینک ویدیو</label>
+                    <input id="media-url" type="url" placeholder="https://example.com/movie.mp4">
+                    <button id="change-media" class="secondary-btn" type="button">تغییر ویدیو</button>
+                    <label for="subtitle-url">لینک زیرنویس</label>
+                    <input id="subtitle-url" type="url" placeholder="https://example.com/subtitle.srt">
+                    <label for="subtitle-file">فایل زیرنویس</label>
+                    <input id="subtitle-file" type="file" accept=".srt,.vtt,text/vtt,text/plain">
+                    <button id="change-subtitle" class="secondary-btn" type="button">تغییر زیرنویس</button>
+                    <button id="end-room-lobby" class="danger-btn" type="button">پایان اتاق</button>
+                </section>
+            </aside>
+        </section>
+
+        <section id="screen-countdown" class="app-screen narrow-screen" data-screen="countdown" hidden>
+            <div class="panel center-panel">
+                <p>هر دو نفر آماده‌اند</p>
+                <div id="countdown" data-testid="countdown" class="countdown-number" aria-live="assertive">3</div>
+            </div>
+        </section>
+
+        <section id="screen-active-room" class="app-screen room-grid" data-screen="active-room" hidden>
+            <div class="cinema-column">
+                <div id="status-banner" class="status-banner" hidden></div>
+                <div class="video-shell">
+                    <video id="party-video" data-testid="active-player" controls playsinline preload="metadata">
+                        <track id="subtitle-track" kind="subtitles" srclang="fa" label="فارسی">
+                    </video>
+                    <audio id="remote-audio" autoplay></audio>
+                    <div id="reaction-layer" class="reaction-layer" aria-hidden="true"></div>
+                    <div id="autoplay-overlay" class="autoplay-overlay" hidden>
+                        <p>برای شروع پخش هم‌زمان، روی ادامه بزنید</p>
+                        <button id="continue-button" class="primary-btn" type="button">ادامه</button>
+                    </div>
+                </div>
+                <section id="movie-controls" class="movie-controls" data-testid="movie-controls" aria-label="کنترل‌های فیلم">
+                    <div class="control-row primary-control-row">
+                        <button id="control-play-pause" data-testid="control-play-pause" class="control-icon-btn shared-control" type="button" aria-label="پخش" aria-pressed="false">
+                            <i class="fas fa-play" aria-hidden="true"></i>
+                            <span>پخش</span>
+                        </button>
+                        <button id="control-back-10" data-testid="control-back-10" class="control-icon-btn shared-control" type="button" aria-label="۱۰ ثانیه عقب">
+                            <i class="fas fa-backward" aria-hidden="true"></i>
+                            <span>۱۰-</span>
+                        </button>
+                        <button id="control-forward-10" data-testid="control-forward-10" class="control-icon-btn shared-control" type="button" aria-label="۱۰ ثانیه جلو">
+                            <i class="fas fa-forward" aria-hidden="true"></i>
+                            <span>۱۰+</span>
+                        </button>
+                        <span id="control-time" class="time-readout" aria-live="polite">00:00 / 00:00</span>
+                        <label class="progress-wrap" for="control-seek">
+                            <span id="seek-preview" class="seek-preview" hidden>00:00</span>
+                            <input id="control-seek" data-testid="control-seek" type="range" min="0" max="0" value="0" step="0.1" aria-label="جستجوی مشترک">
+                        </label>
+                    </div>
+                    <div class="control-row secondary-control-row">
+                        <label class="compact-control shared-control">سرعت
+                            <select id="control-rate" data-testid="control-rate" aria-label="سرعت پخش مشترک">
+                                <option value="0.5">0.5×</option>
+                                <option value="0.75">0.75×</option>
+                                <option value="1" selected>1×</option>
+                                <option value="1.25">1.25×</option>
+                                <option value="1.5">1.5×</option>
+                                <option value="1.75">1.75×</option>
+                                <option value="2">2×</option>
+                            </select>
+                        </label>
+                        <button id="control-subtitle-toggle" data-testid="control-subtitle-toggle" class="control-icon-btn local-control" type="button" aria-label="نمایش زیرنویس" aria-pressed="true">
+                            <i class="fas fa-closed-captioning" aria-hidden="true"></i>
+                            <span>زیرنویس</span>
+                        </button>
+                        <label id="audio-track-wrap" class="compact-control shared-control" hidden>صدا
+                            <select id="control-audio-track" data-testid="control-audio-track" aria-label="ترک صدای مشترک"></select>
+                        </label>
+                        <label class="compact-control local-control">صدای فیلم
+                            <input id="control-movie-volume" data-testid="control-movie-volume" type="range" min="0" max="100" value="100" aria-label="صدای فیلم">
+                        </label>
+                        <button id="control-movie-mute" data-testid="control-movie-mute" class="control-icon-btn local-control" type="button" aria-label="بی‌صدا کردن فیلم" aria-pressed="false">
+                            <i class="fas fa-volume-high" aria-hidden="true"></i>
+                            <span>فیلم</span>
+                        </button>
+                        <button id="player-mic-button" data-testid="player-mic-button" class="control-icon-btn local-control" type="button" aria-label="فعال‌کردن میکروفن" aria-pressed="false">
+                            <i class="fas fa-microphone" aria-hidden="true"></i>
+                            <span>میکروفن</span>
+                        </button>
+                        <label class="compact-control local-control">صدای همراه
+                            <input id="control-voice-volume" data-testid="control-voice-volume" type="range" min="0" max="100" value="100" aria-label="صدای همراه">
+                        </label>
+                        <button id="control-voice-mute" data-testid="control-voice-mute" class="control-icon-btn local-control" type="button" aria-label="بی‌صدا کردن صدای همراه" aria-pressed="false">
+                            <i class="fas fa-headphones" aria-hidden="true"></i>
+                            <span>همراه</span>
+                        </button>
+                        <button id="control-fullscreen" data-testid="control-fullscreen" class="control-icon-btn local-control" type="button" aria-label="تمام صفحه">
+                            <i class="fas fa-expand" aria-hidden="true"></i>
+                            <span>تمام صفحه</span>
+                        </button>
+                        <button id="control-pip" data-testid="control-pip" class="control-icon-btn local-control" type="button" aria-label="تصویر در تصویر">
+                            <i class="fas fa-up-right-from-square" aria-hidden="true"></i>
+                            <span>PiP</span>
+                        </button>
+                        <span id="sync-status" data-testid="sync-status" class="sync-status" aria-live="polite">همگام</span>
+                    </div>
+                    <p id="mkv-audio-status" data-testid="mkv-audio-status" class="audio-status" aria-live="polite"></p>
+                </section>
+                <div class="control-strip">
+                    <span id="playback-state">آماده</span>
+                    <span id="partner-state">در انتظار نفر دوم</span>
+                    <button id="restart-button" class="icon-text-btn" type="button"><i class="fas fa-rotate-left"></i> شروع از اول</button>
+                </div>
+            </div>
+            <aside class="side-panel">
+                <div class="side-tabs" role="tablist" aria-label="پنل اتاق">
+                    <button class="side-tab active" data-testid="room-tab" type="button" data-tab="room">اتاق</button>
+                    <button class="side-tab" data-testid="chat-tab" type="button" data-tab="chat">گفتگو <span id="chat-unread" class="unread-badge" hidden>0</span></button>
+                    <button class="side-tab" data-testid="subtitle-tab" type="button" data-tab="subtitle">زیرنویس</button>
+                    <button class="side-tab" data-testid="settings-tab" type="button" data-tab="settings">تنظیمات</button>
+                </div>
+                <section id="tab-room" class="panel side-tab-panel">
+                    <div class="panel-head"><h2>اتاق</h2><span id="room-status" class="pill">فعال</span></div>
+                    <div class="room-code compact-code" id="active-invite-code">--------</div>
+                    <button id="copy-link-active" class="secondary-btn" type="button">کپی لینک دعوت</button>
+                    <ul id="active-participants" class="participants participant-cards"></ul>
+                    <div class="danger-row">
+                        <button id="leave-room" data-testid="leave-room" class="icon-text-btn" type="button">ترک اتاق</button>
+                        <button id="end-room" data-testid="end-room" class="danger-btn" type="button">پایان اتاق</button>
+                    </div>
+                </section>
+                <section id="tab-chat" class="panel side-tab-panel" hidden>
+                    <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+                    <div class="reaction-buttons" aria-label="واکنش سریع">
+                        <button type="button" data-reaction="❤️">❤️</button>
+                        <button type="button" data-reaction="😂">😂</button>
+                        <button type="button" data-reaction="😱">😱</button>
+                        <button type="button" data-reaction="😢">😢</button>
+                        <button type="button" data-reaction="🍿">🍿</button>
+                    </div>
+                    <form id="chat-form" class="chat-form">
+                        <input id="chat-input" data-testid="chat-input" maxlength="500" placeholder="پیام کوتاه..." autocomplete="off">
+                        <button class="primary-btn" data-testid="chat-send" type="submit">ارسال</button>
+                    </form>
+                </section>
+                <section id="tab-subtitle" class="panel side-tab-panel" hidden>
+                    <h2>زیرنویس</h2>
+                    <p id="subtitle-source-state">بدون زیرنویس</p>
+                    <div id="active-subtitle-host-controls" class="field-stack">
+                        <label>لینک زیرنویس
+                            <input id="active-subtitle-url" type="url" placeholder="https://example.com/subtitle.srt">
+                        </label>
+                        <button id="active-change-subtitle" class="secondary-btn" type="button">جایگزینی زیرنویس</button>
+                    </div>
+                </section>
+                <section id="tab-settings" class="panel side-tab-panel" hidden>
+                    <h2>تنظیمات محلی</h2>
+                    <label>اندازه زیرنویس
+                        <input id="caption-size" data-subtitle-pref type="range" min="14" max="32" value="18">
+                    </label>
+                    <label>رنگ زیرنویس
+                        <input id="caption-color" data-subtitle-pref type="color" value="#ffffff">
+                    </label>
+                    <label>پس‌زمینه زیرنویس
+                        <input id="caption-bg" data-subtitle-pref type="range" min="0" max="0.9" value="0.65" step="0.05">
+                    </label>
+                    <label>جایگاه زیرنویس
+                        <input id="caption-position" data-subtitle-pref type="range" min="3" max="22" value="8">
+                    </label>
+                    <div class="button-row">
+                        <button id="fullscreen-button" class="secondary-btn" type="button">تمام صفحه</button>
+                        <button id="pip-button" class="secondary-btn" type="button">تصویر در تصویر</button>
+                    </div>
+                    <h3>تنظیمات مشترک</h3>
+                    <p>پخش، مکث، جستجو، سرعت و زیرنویس برای هر دو نفر همگام می‌شود.</p>
+                </section>
+            </aside>
+        </section>
+
+        <section id="screen-room-ended" data-testid="room-ended-state" class="app-screen narrow-screen" data-screen="room-ended" hidden>
+            <div class="panel center-panel">
+                <h2>اتاق پایان یافت</h2>
+                <p>این اتاق بسته شده و امکان بازگشت به آن وجود ندارد.</p>
+                <button class="primary-btn" type="button" data-action="back-role">بازگشت به شروع</button>
+            </div>
+        </section>
+
+        <section id="screen-error" class="app-screen narrow-screen" data-screen="error" hidden>
+            <div class="panel center-panel">
+                <h2>مشکلی پیش آمد</h2>
+                <p id="fatal-error-message">امکان ادامه وجود ندارد.</p>
+                <button class="primary-btn" type="button" data-action="back-role">تلاش دوباره</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="confirm-dialog" class="dialog-backdrop" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+            <h2 id="dialog-title">تأیید</h2>
+            <p id="dialog-text"></p>
+            <div class="action-row">
+                <button id="dialog-cancel" class="secondary-btn" type="button">انصراف</button>
+                <button id="dialog-confirm" class="danger-btn" type="button">تأیید</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-root" class="toast-root" aria-live="polite"></div>
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>

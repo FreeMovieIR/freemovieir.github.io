@@ -29,9 +29,14 @@
                 <i class="fas fa-play-circle mr-2"></i>
                 FreeMovie Player
             </h1>
-            <button id="theme-toggle" class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600">
-                <i class="fas fa-moon"></i>
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="/watch-party/" class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600" title="تماشای دونفره" aria-label="تماشای دونفره">
+                    <i class="fas fa-users-viewfinder"></i>
+                </a>
+                <button id="theme-toggle" class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -79,6 +84,15 @@
                 >
                     <i class="fas fa-play mr-2"></i>
                     شروع پخش
+                </button>
+                <button 
+                    type="button"
+                    onclick="startWatchPartyFromPlayer()"
+                    class="w-full mt-3 bg-gray-700 hover:bg-gray-600 text-gray-100 font-bold py-4 rounded-xl 
+                    smooth-transition transform hover:scale-[1.02]"
+                >
+                    <i class="fas fa-users-viewfinder mr-2"></i>
+                    انتقال به تماشای دونفره
                 </button>
             </div>
 
@@ -205,6 +219,22 @@
             };
 
             videoPlayer.onerror = () => showError('خطا در بارگیری ویدیو!');
+        }
+
+        function startWatchPartyFromPlayer() {
+            const videoUrl = document.getElementById('videoUrl').value.trim();
+            const subtitleUrl = document.getElementById('subtitleUrl').value.trim();
+
+            if (!videoUrl) {
+                showError('ابتدا لینک ویدیو را وارد کنید.');
+                return;
+            }
+
+            sessionStorage.setItem('watchPartyPrefill', JSON.stringify({
+                videoUrl,
+                subtitleUrl
+            }));
+            window.location.href = '/watch-party/';
         }
 
         // نمایش وضعیت

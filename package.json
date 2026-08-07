@@ -1,7 +1,31 @@
 {
+  "type": "module",
+  "scripts": {
+    "watch-party:serve": "http-server . -p 8080 -a 127.0.0.1 -c-1",
+    "watch-party:emulators": "firebase emulators:start --only auth,database --project demo-freemovieir",
+    "watch-party:dev": "node scripts/watch-party-dev-runner.mjs",
+    "watch-party:test": "node --test tests/watch-party/*.test.js",
+    "watch-party:test:rules": "node scripts/watch-party-rules-test.mjs",
+    "watch-party:test:e2e": "node scripts/watch-party-e2e-runner.mjs",
+    "watch-party:test:e2e:headed": "node scripts/watch-party-e2e-runner.mjs --headed",
+    "watch-party:test:e2e:ui": "node scripts/watch-party-e2e-runner.mjs --ui",
+    "watch-party:test:e2e:report": "playwright show-report",
+    "watch-party:build": "node scripts/generate-watch-party-config.mjs --mode=test",
+    "watch-party:test:production": "node scripts/watch-party-production-check.mjs"
+  },
   "dependencies": {
+    "@mediabunny/ac3": "1.52.3",
     "@tailwindcss/postcss": "^4.0.15",
+    "mediabunny": "1.52.3",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.15"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "3.0.3",
+    "@playwright/test": "1.62.1",
+    "ffmpeg-static": "5.2.0",
+    "firebase": "^10.12.5",
+    "firebase-tools": "13.35.1",
+    "http-server": "14.1.1"
   }
 }
