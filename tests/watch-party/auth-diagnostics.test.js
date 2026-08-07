@@ -52,8 +52,8 @@ test("auth diagnostics classify Firebase anonymous sign-in failures safely", () 
 
 test("auth diagnostics expose Persian messages without raw Firebase internals", () => {
     const network = toAuthInitializationError({ code: "auth/network-request-failed", message: "raw network detail", apiKey: "secret" });
-    assert.equal(getAuthUserMessage(network), "اتصال به سرویس ورود برقرار نشد. اینترنت یا محدودیت شبکه را بررسی کنید.");
-    assert.equal(network.message, "اتصال به سرویس ورود برقرار نشد. اینترنت یا محدودیت شبکه را بررسی کنید.");
+    assert.equal(getAuthUserMessage(network), "اتصال به سرویس ورود برقرار نشد.");
+    assert.equal(network.message, "اتصال به سرویس ورود برقرار نشد.");
     assert.doesNotMatch(network.message, /raw|secret|apiKey/i);
 
     const logDetails = getSafeAuthLogDetails(network, false);
@@ -123,7 +123,7 @@ test("createFirebaseClient preserves anonymous auth failures and logs safe diagn
                 assert.equal(error.category, AUTH_ERROR_CATEGORIES.OPERATION_NOT_ALLOWED);
                 assert.equal(error.code, "AUTH-DISABLED");
                 assert.equal(error.retryable, false);
-                assert.equal(error.message, "ورود مهمان در تنظیمات سرویس فعال نیست.");
+                assert.equal(error.message, "ورود مهمان موقتاً در دسترس نیست. لطفاً کمی بعد دوباره امتحان کنید.");
                 return true;
             }
         );

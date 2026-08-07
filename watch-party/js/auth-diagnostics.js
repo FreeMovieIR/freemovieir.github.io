@@ -29,18 +29,18 @@ export const FIREBASE_INIT_DIAGNOSTIC_CODES = Object.freeze({
 });
 
 export const AUTH_USER_MESSAGES = Object.freeze({
-    [AUTH_ERROR_CATEGORIES.NETWORK]: "اتصال به سرویس ورود برقرار نشد. اینترنت یا محدودیت شبکه را بررسی کنید.",
-    [AUTH_ERROR_CATEGORIES.TIMEOUT]: "اتصال به سرویس ورود بیش از حد طول کشید. دوباره تلاش کنید.",
-    [AUTH_ERROR_CATEGORIES.OPERATION_NOT_ALLOWED]: "ورود مهمان در تنظیمات سرویس فعال نیست.",
-    [AUTH_ERROR_CATEGORIES.INVALID_CONFIG]: "پیکربندی سرویس ورود معتبر نیست.",
-    [AUTH_ERROR_CATEGORIES.TOO_MANY_REQUESTS]: "تعداد تلاش‌ها زیاد بوده است. کمی بعد دوباره امتحان کنید.",
-    [AUTH_ERROR_CATEGORIES.UNKNOWN]: "ورود مهمان انجام نشد. دوباره تلاش کنید."
+    [AUTH_ERROR_CATEGORIES.NETWORK]: "اتصال به سرویس ورود برقرار نشد.",
+    [AUTH_ERROR_CATEGORIES.TIMEOUT]: "اتصال به سرویس ورود بیشتر از حد معمول طول کشید.",
+    [AUTH_ERROR_CATEGORIES.OPERATION_NOT_ALLOWED]: "ورود مهمان موقتاً در دسترس نیست. لطفاً کمی بعد دوباره امتحان کنید.",
+    [AUTH_ERROR_CATEGORIES.INVALID_CONFIG]: "سرویس ورود موقتاً دچار مشکل شده است.",
+    [AUTH_ERROR_CATEGORIES.TOO_MANY_REQUESTS]: "تعداد تلاش‌های ورود زیاد بوده است. کمی صبر کنید و دوباره امتحان کنید.",
+    [AUTH_ERROR_CATEGORIES.UNKNOWN]: "ورود انجام نشد. لطفاً دوباره امتحان کنید."
 });
 
 export const FIREBASE_INIT_USER_MESSAGES = Object.freeze({
-    [FIREBASE_INIT_ERROR_CATEGORIES.SDK_NETWORK]: "فایل‌های سرویس ورود بارگذاری نشد. اینترنت یا محدودیت شبکه را بررسی کنید.",
-    [FIREBASE_INIT_ERROR_CATEGORIES.SDK_LOAD_FAILED]: "سرویس ورود به‌درستی بارگذاری نشد. دوباره تلاش کنید.",
-    [FIREBASE_INIT_ERROR_CATEGORIES.CONFIG_LOAD_FAILED]: "پیکربندی سرویس ورود بارگذاری نشد. دوباره تلاش کنید."
+    [FIREBASE_INIT_ERROR_CATEGORIES.SDK_NETWORK]: "ارتباط با سرویس ورود برقرار نشد. اتصال اینترنت را بررسی کنید.",
+    [FIREBASE_INIT_ERROR_CATEGORIES.SDK_LOAD_FAILED]: "بخشی از سرویس موردنیاز بارگذاری نشد. صفحه را دوباره بارگذاری کنید.",
+    [FIREBASE_INIT_ERROR_CATEGORIES.CONFIG_LOAD_FAILED]: "تنظیمات اتصال سرویس بارگذاری نشد. صفحه را تازه‌سازی کنید و دوباره امتحان کنید."
 });
 
 export class AuthTimeoutError extends Error {

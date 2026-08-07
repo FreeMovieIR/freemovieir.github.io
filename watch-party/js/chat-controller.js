@@ -11,6 +11,8 @@ export class ChatController extends EventTarget {
         this.unsubscribeChatChanged = null;
         this.unsubscribeReactions = null;
         this.messages = new Map();
+        this.lastMarkedReadAt = 0;
+        this.readTimer = null;
     }
 
     listen() {
@@ -68,10 +70,29 @@ export class ChatController extends EventTarget {
         return true;
     }
 
+    async markRead(createdAt) {
+        const nextReadAt = Number(createdAt || 0);
+        if (!Number.isFinite(nextReadAt) || nextReadAt <= this.lastMarkedReadAt) return false;
+        clearTimeout(this.readTimer);
+        return new Promise((resolve) => {
+            this.readTimer = setTimeout(async () => {
+                try {
+                    await this.roomService.updateParticipant({ chatReadAt: nextReadAt });
+                    this.lastMarkedReadAt = nextReadAt;
+                    resolve(true);
+                } catch {
+                    resolve(false);
+                }
+            }, Number(this.config.chatReadDebounceMs || 700));
+        });
+    }
+
     destroy() {
         this.unsubscribeChat?.();
         this.unsubscribeChatChanged?.();
         this.unsubscribeReactions?.();
+        clearTimeout(this.readTimer);
         this.messages.clear();
+        this.lastMarkedReadAt = 0;
     }
 }

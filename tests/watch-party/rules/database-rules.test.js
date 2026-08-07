@@ -20,6 +20,7 @@ function roomData(ownerUid = "owner") {
         status: "open",
         createdAt: now,
         expiresAt: now + 60 * 60 * 1000,
+        deleteAt: now + 60 * 60 * 1000,
         settings: {
             allowBothControls: true,
             autoPauseOnBuffer: true
@@ -60,6 +61,7 @@ function participant(uid, role) {
         ready: false,
         buffering: false,
         micEnabled: false,
+        chatReadAt: now,
         joinedAt: now,
         lastSeen: now,
         connectionState: "متصل"
@@ -128,20 +130,32 @@ test("participants can update only their own presence state", async () => {
     await assertFails(update(ref(db("guest1"), `rooms/${ROOM}/participants/owner`), { online: false, lastSeen: now + 1 }));
 });
 
-test("guest cannot delete or end room, owner can end room", async () => {
+test("participants can update only their own chat read watermark", async () => {
+    await seedRoom();
+    await set(ref(db("guest1"), `rooms/${ROOM}/guestUid`), "guest1");
+    await set(ref(db("guest1"), `rooms/${ROOM}/participants/guest1`), participant("guest1", "guest"));
+    await assertSucceeds(update(ref(db("guest1"), `rooms/${ROOM}/participants/guest1`), { chatReadAt: now + 5, lastSeen: now + 5 }));
+    await assertFails(update(ref(db("guest1"), `rooms/${ROOM}/participants/owner`), { chatReadAt: now + 6, lastSeen: now + 6 }));
+    await assertFails(update(ref(db("owner"), `rooms/${ROOM}/participants/guest1`), { chatReadAt: now + 7, ready: false, buffering: false, lastSeen: now + 7 }));
+});
+
+test("guest cannot delete room, owner can hard-delete complete room", async () => {
     await seedRoom();
     await set(ref(db("guest1"), `rooms/${ROOM}/guestUid`), "guest1");
     await assertFails(remove(ref(db("guest1"), `rooms/${ROOM}`)));
     await assertFails(update(ref(db("guest1"), `rooms/${ROOM}`), { status: "ended", endedAt: now, endedBy: "guest1" }));
-    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/status`), "ended"));
-    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/endedAt`), now));
-    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/endedBy`), "owner"));
+    await assertSucceeds(remove(ref(db("owner"), `rooms/${ROOM}`)));
+    const deleted = await get(ref(db("owner"), `rooms/${ROOM}`));
+    assert.equal(deleted.exists(), false);
 });
 
 test("invalid room status and invalid room code are rejected", async () => {
     await seedRoom();
     await assertFails(update(ref(db("owner"), `rooms/${ROOM}`), { status: "bad" }));
     await assertFails(set(ref(db("owner"), "rooms/ABCDEFGO"), roomData("owner")));
+    const farFuture = roomData("owner");
+    farFuture.deleteAt = farFuture.createdAt + 43200000 + 60001;
+    await assertFails(set(ref(db("owner"), "rooms/BCDEFGHJ"), farFuture));
 });
 
 test("oversized display names and chat messages are rejected", async () => {
@@ -370,6 +384,35 @@ test("loopback HTTP media and subtitle URLs are allowed for local emulator testi
         type: "direct",
         updatedAt: now,
         updatedBy: "owner"
+    }));
+});
+
+test("primary media URL changes are owner-only while guest playback control remains allowed", async () => {
+    await seedRoom();
+    await set(ref(db("guest1"), `rooms/${ROOM}/guestUid`), "guest1");
+    await set(ref(db("guest1"), `rooms/${ROOM}/participants/guest1`), participant("guest1", "guest"));
+    await assertFails(update(ref(db("guest1"), `rooms/${ROOM}/media`), {
+        url: "https://example.com/guest-change.mp4",
+        type: "direct",
+        updatedAt: now,
+        updatedBy: "guest1"
+    }));
+    await assertSucceeds(update(ref(db("owner"), `rooms/${ROOM}/media`), {
+        url: "https://example.com/owner-change.mp4",
+        type: "direct",
+        audioTrackId: null,
+        updatedAt: now,
+        updatedBy: "owner"
+    }));
+    await assertSucceeds(update(ref(db("guest1"), `rooms/${ROOM}/playback`), {
+        paused: false,
+        pauseReason: "playing",
+        currentTime: 4,
+        playbackRate: 1,
+        revision: 2,
+        action: "play",
+        updatedAt: now,
+        updatedBy: "guest1"
     }));
 });
 

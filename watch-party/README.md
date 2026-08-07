@@ -115,6 +115,38 @@ The cancel action:
 
 Malformed, expired, wrong-version, or wrong-UID stored sessions are cleared instead of retried forever. Ended, expired, removed, or replaced-room membership states are terminal and do not auto-retry.
 
+## Error UX
+
+Authentication and SDK failures are mapped through `watch-party/js/user-errors.js` before they reach the UI. The main message is natural Persian text, while technical codes such as `AUTH-NETWORK`, `AUTH-TIMEOUT`, `AUTH-DISABLED`, `AUTH-CONFIG`, `AUTH-RATE`, `AUTH-UNKNOWN`, `FIREBASE-SDK-NETWORK`, `FIREBASE-SDK-LOAD`, and `FIREBASE-CONFIG-LOAD` appear only inside the collapsible `جزئیات عیب‌یابی` section.
+
+The safe copy report includes only the diagnostic code, build ID, browser family, online/offline state, and public endpoint reachability. It never includes Firebase API keys, tokens, UID, room code, media URLs, chat text, SDP, ICE candidates, or stack traces. Network and timeout messages include optional VPN guidance for users who may be affected by network restrictions, but a country/network restriction cannot be proven from a generic Firebase error alone.
+
+## Privacy And Retention
+
+Watch Party room data is designed to be ephemeral. The host `پایان اتاق` action hard-deletes the full `rooms/{roomCode}` node, including room metadata, participants, media URL, subtitles, playback state, chat, reactions, read receipts, Voice V2 signaling, legacy signaling, and presence data. Guests who are already inside the room and receive a null room snapshot see the room-ended state instead of a misleading “room not found” message.
+
+New rooms include `deleteAt`, capped at no more than 12 hours after creation. The included Cloud Functions source in `functions/` implements `cleanupExpiredWatchPartyRooms`, a scheduled cleanup that queries by `deleteAt` and removes whole room nodes without archiving or logging private content. It is implemented and tested locally, but it is not deployed by this repository task.
+
+Owner deployment outline:
+
+```powershell
+cd functions
+npm install
+firebase deploy --only functions:cleanupExpiredWatchPartyRooms
+```
+
+Deploy only from an owner-controlled Firebase project after reviewing the function and Realtime Database rules.
+
+## Chat And Reactions
+
+Chat remains room-scoped and is not written to localStorage, IndexedDB, Cache Storage, analytics, or any archive path. The UI groups nearby messages from the same sender, separates local and partner bubbles, preserves text with `textContent`, and shows subtle `ارسال شد` / `دیده شد` receipts only for the sender’s own messages.
+
+Read receipts use a single participant watermark at `participants/{uid}/chatReadAt`; the app updates it only when the Chat tab is visible, the browser tab is visible, messages are rendered, and the message list is at the latest message. Writes are debounced. Reactions still store only `uid`, `emoji`, and `createdAt`; the overlay resolves the sender name from `participants/{uid}.displayName` and shows `شما` for the local user.
+
+## Active Room Settings
+
+The active room Settings tab now separates movie, subtitle, display/audio, shared settings, and privacy notes. Only the room owner sees `تغییر لینک فیلم`. The change uses the existing `RoomService.updateMedia(url)` path, keeps the same room, preserves chat and Voice V2, resets playback to the beginning, and clears readiness/buffering for participants. Firebase Rules enforce owner-only primary media URL changes while keeping shared playback controls available to both participants.
+
 ## Supported Media
 
 - MP4, WebM, and OGG through the browser's native HTML5 video pipeline.

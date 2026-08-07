@@ -3,10 +3,11 @@
     ".read": false,
     ".write": false,
     "rooms": {
+      ".indexOn": ["deleteAt"],
       "$roomCode": {
         ".read": "auth != null && (!data.exists() || data.child('ownerUid').val() === auth.uid || data.child('guestUid').val() === auth.uid)",
         ".write": "auth != null && ((!data.exists() && newData.exists() && newData.child('ownerUid').val() === auth.uid && !newData.child('guestUid').exists()) || (data.exists() && !newData.exists() && data.child('ownerUid').val() === auth.uid))",
-        ".validate": "$roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/) && newData.child('schemaVersion').val() === 1 && newData.child('ownerUid').isString() && (!data.exists() || newData.child('ownerUid').val() === data.child('ownerUid').val())",
+        ".validate": "$roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/) && newData.hasChildren(['schemaVersion','ownerUid','status','createdAt','expiresAt','deleteAt','settings','media','subtitle','playback','participants']) && newData.child('schemaVersion').val() === 1 && newData.child('ownerUid').isString() && (!data.exists() || newData.child('ownerUid').val() === data.child('ownerUid').val())",
 
         "schemaVersion": { ".validate": "newData.val() === 1" },
         "ownerUid": {
@@ -29,6 +30,10 @@
           ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
           ".validate": "newData.isNumber() && newData.val() <= now + 21600000 + 60000"
         },
+        "deleteAt": {
+          ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+          ".validate": "newData.isNumber() && newData.val() <= newData.parent().child('createdAt').val() + 43200000 + 60000"
+        },
         "endedAt": {
           ".write": "auth != null && data.parent().child('ownerUid').val() === auth.uid",
           ".validate": "newData.isNumber() || newData.val() === now"
@@ -46,7 +51,7 @@
         },
 
         "media": {
-          ".write": "auth != null && (data.parent().child('ownerUid').val() === auth.uid || data.parent().child('guestUid').val() === auth.uid)",
+          ".write": "auth != null && (data.parent().child('ownerUid').val() === auth.uid || data.parent().child('guestUid').val() === auth.uid) && (data.parent().child('ownerUid').val() === auth.uid || (newData.child('url').val() === data.child('url').val() && newData.child('type').val() === data.child('type').val()))",
           ".validate": "newData.hasChildren(['url','type','updatedAt','updatedBy'])",
           "url": { ".validate": "newData.isString() && newData.val().matches(/^(https:\\/\\/|http:\\/\\/(127\\.0\\.0\\.1|localhost)(:[0-9]+)?\\/).{1,1900}$/)" },
           "type": { ".validate": "newData.val() === 'direct'" },
@@ -89,7 +94,7 @@
 
         "participants": {
           "$uid": {
-            ".write": "auth != null && $uid === auth.uid && (data.parent().parent().child('ownerUid').val() === auth.uid || data.parent().parent().child('guestUid').val() === auth.uid)",
+            ".write": "auth != null && (($uid === auth.uid && (data.parent().parent().child('ownerUid').val() === auth.uid || data.parent().parent().child('guestUid').val() === auth.uid)) || (data.parent().parent().child('ownerUid').val() === auth.uid && data.exists() && newData.child('displayName').val() === data.child('displayName').val() && newData.child('role').val() === data.child('role').val() && newData.child('online').val() === data.child('online').val() && newData.child('micEnabled').val() === data.child('micEnabled').val() && newData.child('joinedAt').val() === data.child('joinedAt').val() && newData.child('chatReadAt').val() === data.child('chatReadAt').val() && newData.child('connectionState').val() === data.child('connectionState').val() && newData.child('ready').val() === false && newData.child('buffering').val() === false))",
             ".validate": "newData.hasChildren(['displayName','role','online','ready','buffering','micEnabled','lastSeen','connectionState'])",
             "displayName": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 32" },
             "role": { ".validate": "newData.val() === 'owner' || newData.val() === 'guest'" },
@@ -97,6 +102,7 @@
             "ready": { ".validate": "newData.isBoolean()" },
             "buffering": { ".validate": "newData.isBoolean()" },
             "micEnabled": { ".validate": "newData.isBoolean()" },
+            "chatReadAt": { ".validate": "!newData.exists() || newData.isNumber() || newData.val() === now" },
             "joinedAt": { ".validate": "!newData.exists() || newData.isNumber() || newData.val() === now" },
             "lastSeen": { ".validate": "newData.isNumber() || newData.val() === now" },
             "connectionState": { ".validate": "newData.isString() && newData.val().length <= 80" },

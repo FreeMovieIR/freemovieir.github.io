@@ -17,8 +17,10 @@ import {
     FirebaseInitializationError,
     getAuthUserMessage,
     getFirebaseInitUserMessage,
-    getSafeDiagnostic
+    getSafeDiagnostic,
+    probeFirebasePublicEndpoints
 } from "./auth-diagnostics.js";
+import { getAuthErrorView } from "./user-errors.js";
 
 const ui = new WatchPartyUI();
 
@@ -56,6 +58,7 @@ let lastServiceAction = null;
 let lastAuthAction = null;
 let localTestBridge = null;
 let globalRuntimeErrorsBound = false;
+let latestChatMessages = [];
 
 init().catch((error) => showFatal(error.message || MESSAGES.missingConfig));
 
@@ -349,14 +352,36 @@ function returnFromAuthFailure({ back = false } = {}) {
 function showAuthFailure(error, action = null) {
     lastAuthAction = action || lastAuthAction;
     const diagnostic = getSafeDiagnostic(error);
-    const message = error instanceof FirebaseInitializationError
+    const fallbackMessage = error instanceof FirebaseInitializationError
         ? getFirebaseInitUserMessage(error)
         : getAuthUserMessage(error);
-    ui.showAuthFailure({
-        message,
-        code: diagnostic.code,
-        retryable: diagnostic.retryable
+    const view = getAuthErrorView(diagnostic.code, {
+        buildId: globalThis.wpBuildId,
+        online: globalThis.navigator?.onLine
     });
+    ui.showAuthFailure({
+        message: view.primary || fallbackMessage,
+        help: view.secondary,
+        code: diagnostic.code,
+        retryable: diagnostic.retryable,
+        safeReport: view.safeReport
+    });
+    if (/NETWORK|TIMEOUT|FIREBASE-SDK/.test(diagnostic.code || "")) {
+        probeFirebasePublicEndpoints({ timeoutMs: Number(config?.serviceCheckTimeoutMs || 3000) }).then((endpoints) => {
+            const updated = getAuthErrorView(diagnostic.code, {
+                buildId: globalThis.wpBuildId,
+                online: globalThis.navigator?.onLine,
+                endpoints
+            });
+            ui.showAuthFailure({
+                message: updated.primary,
+                help: updated.secondary,
+                code: diagnostic.code,
+                retryable: diagnostic.retryable,
+                safeReport: updated.safeReport
+            });
+        }).catch(() => {});
+    }
 }
 
 function isFirebaseAuthFailure(error) {
@@ -692,9 +717,14 @@ function bindRoomEvents(generation = null) {
     roomEventsBound = true;
     roomService.addEventListener("room", async (event) => {
         if (generation && !isRoomGenerationValid(generation)) return;
+        const previousRoom = currentRoom;
         currentRoom = event.detail;
         if (!currentRoom) {
-            ui.toast(MESSAGES.roomNotFound, "error");
+            if (previousRoom || ui.state === APP_STATES.LOBBY || ui.state === APP_STATES.ACTIVE_ROOM || ui.state === APP_STATES.COUNTDOWN) {
+                handleDeletedRoomSnapshot();
+            } else {
+                ui.toast(MESSAGES.roomNotFound, "error");
+            }
             return;
         }
         if (currentRoom.status === "ended") {
@@ -703,6 +733,12 @@ function bindRoomEvents(generation = null) {
             return;
         }
         ui.renderRoom(currentRoom, roomService.uid);
+        if (latestChatMessages.length) {
+            ui.renderMessages(latestChatMessages, {
+                currentUid: roomService.uid,
+                participants: currentRoom.participants || {}
+            });
+        }
         const partner = Object.entries(currentRoom.participants || {}).find(([uid]) => uid !== roomService.uid)?.[1];
         voiceCall?.updateRoom(currentRoom);
         voiceCall?.setPartnerMicEnabled(Boolean(partner?.micEnabled));
@@ -755,8 +791,15 @@ function bindRoomEvents(generation = null) {
         ui.setMicState({ enabled: micEnabled, muted, label: event.detail?.label, busy: micOperationActive });
     });
     voiceCall.addEventListener("partnerStatus", (event) => ui.setVoicePartnerStatus(event.detail));
-    chatController.addEventListener("messages", (event) => ui.renderMessages(event.detail));
-    chatController.addEventListener("reaction", (event) => ui.showReaction(event.detail.emoji));
+    chatController.addEventListener("messages", (event) => {
+        latestChatMessages = event.detail || [];
+        ui.renderMessages(latestChatMessages, {
+            currentUid: roomService.uid,
+            participants: currentRoom?.participants || {}
+        });
+        markLatestChatReadIfVisible();
+    });
+    chatController.addEventListener("reaction", (event) => ui.showReaction(resolveReactionDisplay(event.detail)));
     ui.addEventListener("copyCode", copyCode);
     ui.addEventListener("copy", copyInvite);
     ui.addEventListener("share", shareInvite);
@@ -786,6 +829,7 @@ function bindRoomEvents(generation = null) {
         if (await chatController.send(event.detail, localDisplayName)) ui.clearChatInput();
     });
     ui.addEventListener("reaction", (event) => chatController.react(event.detail));
+    ui.addEventListener("chatViewed", () => markLatestChatReadIfVisible());
     ui.addEventListener("mic", toggleMic);
     ui.addEventListener("mute", toggleMute);
     ui.addEventListener("movieVolume", (event) => {
@@ -896,6 +940,39 @@ function bindVideoBuffering() {
     ui.els.video.addEventListener("error", () => ui.toast(describeMediaError(ui.els.video), "error"));
 }
 
+function handleDeletedRoomSnapshot() {
+    const wasInside = ui.state === APP_STATES.LOBBY || ui.state === APP_STATES.ACTIVE_ROOM || ui.state === APP_STATES.COUNTDOWN;
+    cleanup();
+    clearSavedSession();
+    if (wasInside) {
+        ui.toast("اتاق پایان یافت و اطلاعات آن پاک شد.", "info");
+        ui.setState(APP_STATES.ROOM_ENDED);
+    } else {
+        ui.showRestoreFailed({
+            message: "اتاق قبلی دیگر وجود ندارد.",
+            canRetry: false
+        });
+    }
+}
+
+function markLatestChatReadIfVisible() {
+    if (!chatController || ui.state !== APP_STATES.ACTIVE_ROOM || ui.activeTab !== "chat") return;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    if (!ui.isChatAtBottom()) return;
+    const latest = latestChatMessages.at(-1);
+    const createdAt = Number(latest?.createdAt || 0);
+    if (createdAt > 0) chatController.markRead(createdAt).catch(() => {});
+}
+
+function resolveReactionDisplay(reaction = {}) {
+    const participant = currentRoom?.participants?.[reaction.uid];
+    const isSelf = reaction.uid && reaction.uid === roomService?.uid;
+    return {
+        emoji: reaction.emoji,
+        displayName: isSelf ? "شما" : (participant?.displayName || "همراه")
+    };
+}
+
 async function buildHostSubtitle(data) {
     const mode = data.get("subtitleMode") || "none";
     if (mode === "none") return null;
@@ -926,18 +1003,21 @@ function normalizeMediaUrl(raw) {
     return url.href;
 }
 
-async function changeMedia() {
+async function changeMedia(event) {
+    const requestedUrl = event?.detail?.url || ui.els.mediaUrl.value;
+    ui.setFieldError("activeMediaError", "");
     const ok = await ui.askConfirmation({
         title: "تغییر فیلم؟",
-        text: "فیلم فعلی برای هر دو نفر جایگزین می‌شود.",
-        confirmLabel: "تغییر فیلم"
+        text: "با تغییر فیلم، زمان پخش به ابتدا برمی‌گردد و وضعیت آماده‌بودن دو نفر دوباره تنظیم می‌شود.",
+        confirmLabel: "اعمال لینک جدید"
     });
     if (!ok) return;
     try {
-        await roomService.updateMedia(normalizeMediaUrl(ui.els.mediaUrl.value));
+        await roomService.updateMedia(normalizeMediaUrl(requestedUrl));
         ui.toast("لینک ویدیو به‌روزرسانی شد.");
     } catch (error) {
-        ui.toast(error.message, "error");
+        if (event?.detail?.source === "settings") ui.setFieldError("activeMediaError", error.message);
+        else ui.toast(error.message, "error");
     }
 }
 
@@ -1024,8 +1104,8 @@ async function leaveRoom({ redirect }) {
 async function endRoom() {
     const ok = await ui.askConfirmation({
         title: "پایان دادن به اتاق؟",
-        text: "اتاق برای هر دو نفر بسته می‌شود و امکان بازگشت به آن وجود نخواهد داشت.",
-        confirmLabel: "پایان اتاق"
+        text: "با پایان اتاق، گفتگو، واکنش‌ها و تمام اطلاعات این اتاق برای همیشه پاک می‌شود.",
+        confirmLabel: "پایان و حذف اتاق"
     });
     if (!ok) return;
     cleanup();
@@ -1043,8 +1123,11 @@ function cleanup() {
     voiceCall?.destroy();
     voiceCall = null;
     chatController?.destroy();
+    latestChatMessages = [];
     subtitleController?.clear();
     mediaController?.destroySource();
+    mediaSignature = "";
+    subtitleSignature = "";
     roomService?.detach();
     currentRoom = null;
     roomEventGeneration = null;

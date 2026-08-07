@@ -138,6 +138,20 @@ async function transformWatchPartyArtifact() {
         .replace("برای ساخت یا ورود به اتاق، Firebase Emulator باید روی سیستم اجرا باشد.", "سرویس اتاق موقتاً در دسترس نیست. لطفاً چند لحظه دیگر دوباره تلاش کنید.")
         .replace(/<code id="service-command-hint"[\s\S]*?<\/code>/, '<code id="service-command-hint" class="command-hint" hidden></code>');
     await writeFile(indexPath, html, "utf8");
+    await transformWatchPartyApp(wpDir);
+}
+
+async function transformWatchPartyApp(wpDir) {
+    const appPath = join(wpDir, "js", "app.js");
+    let appJs = await readFile(appPath, "utf8");
+    appJs = appJs.replace(
+        /async function loadDevelopmentBridge\(\) \{[\s\S]*?\r?\n\}\r?\n\r?\nfunction shouldLoadDevelopmentBridge\(\) \{[\s\S]*?\r?\n\}\r?\n/,
+        "async function loadDevelopmentBridge() {\n    return;\n}\n"
+    );
+    if (/local-test-bridge|__WATCH_PARTY_TEST__|__watchPartyTest/.test(appJs)) {
+        throw new Error("Production Watch Party app artifact still contains local test bridge references.");
+    }
+    await writeFile(appPath, appJs, "utf8");
 }
 
 async function assertRequiredFiles() {

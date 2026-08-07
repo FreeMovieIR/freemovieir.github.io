@@ -19,6 +19,7 @@
     "pages:test": "node scripts/inspect-pages-artifact.mjs --dir=dist && node scripts/watch-party-production-check.mjs --config=dist/watch-party/runtime-config.js && node scripts/check-watch-party-artifact-semantics.mjs --dir=dist",
     "pages:smoke": "node scripts/smoke-pages-preview.mjs && node scripts/smoke-watch-party-production-artifact.mjs",
     "pages:preview": "http-server dist -p 8081 -a 127.0.0.1 -c-1",
+    "functions:test": "node --test functions/test/*.test.js",
     "media-gateway:test": "node --test services/media-gateway/tests/**/*.test.js",
     "media-gateway:docker:build": "docker build -t freemovieir-media-gateway:local services/media-gateway"
   },

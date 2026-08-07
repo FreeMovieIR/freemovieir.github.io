@@ -1,6 +1,7 @@
 import { generateRoomCode, isValidRoomCode, MESSAGES, normalizeRoomCode, sanitizeDisplayName, safeLog } from "./utils.js";
 
 const SCHEMA_VERSION = 1;
+const MAX_ROOM_RETENTION_MS = 12 * 60 * 60 * 1000;
 
 export class RoomService extends EventTarget {
     constructor(firebase, config) {
@@ -26,14 +27,18 @@ export class RoomService extends EventTarget {
     }
 
     async createRoom({ displayName, mediaUrl, subtitle, autoPauseOnBuffer, shouldContinue = () => true }) {
-        const expiresAt = Date.now() + (this.config.roomLifetimeMs || 21600000);
+        const now = Date.now();
+        const lifetimeMs = Number(this.config.roomLifetimeMs || 21600000);
+        const retentionMs = Math.min(Math.max(lifetimeMs, 1), MAX_ROOM_RETENTION_MS);
+        const expiresAt = now + lifetimeMs;
+        const deleteAt = now + retentionMs;
         for (let attempt = 0; attempt < 12; attempt += 1) {
             if (!shouldContinue()) throw new Error("operation-cancelled");
             const code = generateRoomCode();
             const roomRef = this.roomRef(code);
             const result = await this.firebase.db.runTransaction(roomRef, (current) => {
                 if (current !== null) return current;
-                return this.makeRoomData({ code, displayName, mediaUrl, subtitle, autoPauseOnBuffer, expiresAt });
+                return this.makeRoomData({ code, displayName, mediaUrl, subtitle, autoPauseOnBuffer, expiresAt, deleteAt });
             }, { applyLocally: false });
             if (result.committed && result.snapshot.val()?.ownerUid === this.uid) {
                 if (!shouldContinue()) {
@@ -47,7 +52,7 @@ export class RoomService extends EventTarget {
         throw new Error("ساخت کد یکتا ناموفق بود. دوباره تلاش کنید.");
     }
 
-    makeRoomData({ displayName, mediaUrl, subtitle, autoPauseOnBuffer, expiresAt }) {
+    makeRoomData({ displayName, mediaUrl, subtitle, autoPauseOnBuffer, expiresAt, deleteAt }) {
         const now = Date.now();
         return {
             schemaVersion: SCHEMA_VERSION,
@@ -56,6 +61,7 @@ export class RoomService extends EventTarget {
             status: "open",
             createdAt: now,
             expiresAt,
+            deleteAt: Number(deleteAt || now + Math.min(Number(this.config.roomLifetimeMs || 21600000), MAX_ROOM_RETENTION_MS)),
             settings: {
                 allowBothControls: true,
                 autoPauseOnBuffer: Boolean(autoPauseOnBuffer)
@@ -100,6 +106,7 @@ export class RoomService extends EventTarget {
             ready: false,
             buffering: false,
             micEnabled: false,
+            chatReadAt: timestamp,
             joinedAt: timestamp,
             lastSeen: timestamp,
             connectionState: "در حال اتصال"
@@ -244,7 +251,9 @@ export class RoomService extends EventTarget {
     }
 
     async updateMedia(url) {
-        await this.firebase.db.update(this.firebase.db.child(this.roomRef(), "media"), {
+        const db = this.firebase.db;
+        const room = await db.get(this.roomRef()).then((snap) => snap.val()).catch(() => null);
+        await db.update(db.child(this.roomRef(), "media"), {
             url,
             type: "direct",
             playbackMode: "direct",
@@ -256,7 +265,12 @@ export class RoomService extends EventTarget {
             updatedAt: this.firebase.serverTimestamp(),
             updatedBy: this.uid
         });
-        return this.setPlaybackPatch({ paused: true, pauseReason: "manual", currentTime: 0, action: "media" });
+        await this.setPlaybackPatch({ paused: true, pauseReason: "manual", currentTime: 0, playbackRate: 1, action: "media" });
+        await Promise.all(Object.keys(room?.participants || {}).map((uid) => db.update(this.participantRef(uid), {
+            ready: false,
+            buffering: false,
+            lastSeen: this.firebase.serverTimestamp()
+        }).catch(() => {})));
     }
 
     async updateCompatibilityMedia(patch) {
@@ -289,12 +303,7 @@ export class RoomService extends EventTarget {
 
     async endRoom() {
         if (this.role !== "owner") return;
-        const { db } = this.firebase;
-        await Promise.all([
-            db.set(db.child(this.roomRef(), "status"), "ended"),
-            db.set(db.child(this.roomRef(), "endedAt"), this.firebase.serverTimestamp()),
-            db.set(db.child(this.roomRef(), "endedBy"), this.uid)
-        ]);
+        await this.firebase.db.remove(this.roomRef());
     }
 
     async leaveRoom() {

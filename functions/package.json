@@ -1,0 +1,12 @@
+{
+  "type": "module",
+  "private": true,
+  "name": "freemovieir-watch-party-functions",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "12.7.0",
+    "firebase-functions": "5.1.1"
+  }
+}

@@ -70,8 +70,14 @@
         <section id="screen-auth-failed" class="app-screen narrow-screen" data-screen="auth-failed" hidden>
             <div class="panel center-panel service-panel">
                 <h2>ورود مهمان انجام نشد</h2>
-                <p id="auth-failed-message" data-testid="auth-failed-message" class="field-error" aria-live="polite">ورود مهمان انجام نشد. دوباره تلاش کنید.</p>
-                <p class="diagnostic-code">کد عیب‌یابی: <code id="auth-diagnostic-code" data-testid="auth-diagnostic-code">AUTH-UNKNOWN</code></p>
+                <p id="auth-failed-message" data-testid="auth-failed-message" class="field-error auth-error-primary" aria-live="polite">ورود انجام نشد. لطفاً دوباره امتحان کنید.</p>
+                <p id="auth-failed-help" data-testid="auth-failed-help" class="auth-error-help"></p>
+                <details class="diagnostic-details">
+                    <summary>جزئیات عیب‌یابی</summary>
+                    <p class="diagnostic-code">کد خطا: <code id="auth-diagnostic-code" data-testid="auth-diagnostic-code">AUTH-UNKNOWN</code></p>
+                    <pre id="auth-safe-report" data-testid="auth-safe-report" class="safe-report" aria-label="اطلاعات امن خطا"></pre>
+                    <button id="auth-copy-report" data-testid="auth-copy-report" class="secondary-btn" type="button">کپی اطلاعات خطا</button>
+                </details>
                 <div class="action-row">
                     <button id="auth-retry" data-testid="auth-retry" class="primary-btn" type="button">تلاش دوباره</button>
                     <button id="auth-back" data-testid="auth-back" class="secondary-btn" type="button">بازگشت</button>
@@ -396,16 +402,24 @@
                     </div>
                 </section>
                 <section id="tab-chat" class="panel side-tab-panel" hidden>
-                    <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
-                    <div class="reaction-buttons" aria-label="واکنش سریع">
-                        <button type="button" data-reaction="❤️">❤️</button>
-                        <button type="button" data-reaction="😂">😂</button>
-                        <button type="button" data-reaction="😱">😱</button>
-                        <button type="button" data-reaction="😢">😢</button>
-                        <button type="button" data-reaction="🍿">🍿</button>
+                    <div class="chat-panel-head">
+                        <div>
+                            <h2>گفتگو</h2>
+                            <p>پیام‌ها فقط تا زمان پایان همین اتاق باقی می‌مانند.</p>
+                        </div>
                     </div>
+                    <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+                    <button id="chat-new-messages" class="new-message-pill" type="button" hidden>پیام‌های جدید</button>
                     <form id="chat-form" class="chat-form">
-                        <input id="chat-input" data-testid="chat-input" maxlength="500" placeholder="پیام کوتاه..." autocomplete="off">
+                        <div class="reaction-buttons" aria-label="واکنش سریع">
+                            <button type="button" data-reaction="❤️" aria-label="ارسال واکنش قلب">❤️</button>
+                            <button type="button" data-reaction="😂" aria-label="ارسال واکنش خنده">😂</button>
+                            <button type="button" data-reaction="😱" aria-label="ارسال واکنش تعجب">😱</button>
+                            <button type="button" data-reaction="😢" aria-label="ارسال واکنش ناراحت">😢</button>
+                            <button type="button" data-reaction="🍿" aria-label="ارسال واکنش پاپ‌کورن">🍿</button>
+                        </div>
+                        <textarea id="chat-input" data-testid="chat-input" maxlength="500" rows="1" placeholder="پیام کوتاه..." autocomplete="off" aria-label="متن پیام"></textarea>
+                        <span id="chat-count" class="chat-count" aria-live="polite"></span>
                         <button class="primary-btn" data-testid="chat-send" type="submit">ارسال</button>
                     </form>
                 </section>
@@ -420,25 +434,49 @@
                     </div>
                 </section>
                 <section id="tab-settings" class="panel side-tab-panel" hidden>
-                    <h2>تنظیمات محلی</h2>
-                    <label>اندازه زیرنویس
-                        <input id="caption-size" data-subtitle-pref type="range" min="14" max="32" value="18">
-                    </label>
-                    <label>رنگ زیرنویس
-                        <input id="caption-color" data-subtitle-pref type="color" value="#ffffff">
-                    </label>
-                    <label>پس‌زمینه زیرنویس
-                        <input id="caption-bg" data-subtitle-pref type="range" min="0" max="0.9" value="0.65" step="0.05">
-                    </label>
-                    <label>جایگاه زیرنویس
-                        <input id="caption-position" data-subtitle-pref type="range" min="3" max="22" value="8">
-                    </label>
-                    <div class="button-row">
-                        <button id="fullscreen-button" class="secondary-btn" type="button">تمام صفحه</button>
-                        <button id="pip-button" class="secondary-btn" type="button">تصویر در تصویر</button>
+                    <h2>تنظیمات</h2>
+                    <section class="settings-section">
+                        <div class="settings-section-head">
+                            <h3>فیلم</h3>
+                            <p id="active-media-summary" data-testid="active-media-summary">منبع انتخاب شده</p>
+                        </div>
+                        <div id="active-media-host-controls" class="field-stack host-only">
+                            <label for="active-media-url">لینک جدید فیلم</label>
+                            <input id="active-media-url" data-testid="active-media-url" type="url" placeholder="https://example.com/movie.mp4">
+                            <button id="active-change-media" data-testid="active-change-media" class="secondary-btn" type="button">تغییر لینک فیلم</button>
+                            <p id="active-media-error" data-testid="active-media-error" class="field-error" aria-live="polite"></p>
+                        </div>
+                    </section>
+                    <section class="settings-section">
+                        <h3>زیرنویس</h3>
+                        <label>اندازه زیرنویس
+                            <input id="caption-size" data-subtitle-pref type="range" min="14" max="32" value="18">
+                        </label>
+                        <label>رنگ زیرنویس
+                            <input id="caption-color" data-subtitle-pref type="color" value="#ffffff">
+                        </label>
+                        <label>پس‌زمینه زیرنویس
+                            <input id="caption-bg" data-subtitle-pref type="range" min="0" max="0.9" value="0.65" step="0.05">
+                        </label>
+                        <label>جایگاه زیرنویس
+                            <input id="caption-position" data-subtitle-pref type="range" min="3" max="22" value="8">
+                        </label>
+                    </section>
+                    <section class="settings-section">
+                        <h3>نمایش و صدا</h3>
+                        <div class="button-row">
+                            <button id="fullscreen-button" class="secondary-btn" type="button">تمام صفحه</button>
+                            <button id="pip-button" class="secondary-btn" type="button">تصویر در تصویر</button>
+                        </div>
+                    </section>
+                    <section class="settings-section privacy-note">
+                        <h3>حریم خصوصی</h3>
+                        <p>ویدیو روی Firebase آپلود نمی‌شود. گفتگو، واکنش‌ها و وضعیت اتاق با پایان اتاق حذف می‌شوند؛ پاکسازی زمان‌دار پس از استقرار تابع زمان‌بندی فعال خواهد شد.</p>
+                    </section>
+                    <div class="shared-settings-note">
+                        <h3>تنظیمات مشترک</h3>
+                        <p>پخش، مکث، جستجو، سرعت و زیرنویس برای هر دو نفر همگام می‌شود.</p>
                     </div>
-                    <h3>تنظیمات مشترک</h3>
-                    <p>پخش، مکث، جستجو، سرعت و زیرنویس برای هر دو نفر همگام می‌شود.</p>
                 </section>
             </aside>
         </section>

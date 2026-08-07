@@ -9,7 +9,6 @@ const sourceRoot = resolve(root, "watch-party/js");
 const artifactRoot = resolve(distRoot, "watch-party/js");
 
 const mustMatchSource = [
-    "app.js",
     "firebase-client.js",
     "utils.js",
     "voice/voice-call.js"
@@ -42,6 +41,15 @@ for (const relPath of mustMatchSource) {
     if (source !== artifact) {
         throw new Error(`Production JS artifact was semantically rewritten: watch-party/js/${relPath}`);
     }
+}
+
+const appSource = stripDevelopmentBridge(await readFile(join(sourceRoot, "app.js"), "utf8"));
+const appArtifact = await readFile(join(artifactRoot, "app.js"), "utf8");
+if (appSource !== appArtifact) {
+    throw new Error("Production JS artifact was rewritten beyond the allowed Watch Party development bridge removal.");
+}
+if (/local-test-bridge|__WATCH_PARTY_TEST__|__watchPartyTest/.test(appArtifact)) {
+    throw new Error("Production JS artifact contains Watch Party local test bridge references.");
 }
 
 const files = await listFiles(artifactRoot);
@@ -96,4 +104,11 @@ function parseArgs(argv) {
 
 function normalizePath(path) {
     return path.split(sep).join("/");
+}
+
+function stripDevelopmentBridge(source) {
+    return source.replace(
+        /async function loadDevelopmentBridge\(\) \{[\s\S]*?\r?\n\}\r?\n\r?\nfunction shouldLoadDevelopmentBridge\(\) \{[\s\S]*?\r?\n\}\r?\n/,
+        "async function loadDevelopmentBridge() {\n    return;\n}\n"
+    );
 }

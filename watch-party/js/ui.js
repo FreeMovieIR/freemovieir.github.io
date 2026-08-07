@@ -2,6 +2,7 @@ import { APP_STATES, getVisibleScreenForState } from "./ui-state.js";
 import { formatClock, normalizeRoomCode } from "./utils.js";
 import { FULLSCREEN_CAPABILITY, FullscreenController } from "./fullscreen-controller.js";
 import { getDeviceMediaProfile, summarizeDeviceMediaProfile } from "./device-media-profile.js";
+import { formatSafeErrorReport } from "./user-errors.js";
 
 export function qs(selector, root = document) {
     return root.querySelector(selector);
@@ -37,7 +38,10 @@ export class WatchPartyUI extends EventTarget {
             topBanner: qs("#top-banner"),
             authMessage: qs("#auth-message"),
             authFailedMessage: qs("#auth-failed-message"),
+            authFailedHelp: qs("#auth-failed-help"),
             authDiagnosticCode: qs("#auth-diagnostic-code"),
+            authSafeReport: qs("#auth-safe-report"),
+            authCopyReport: qs("#auth-copy-report"),
             authRetry: qs("#auth-retry"),
             authBack: qs("#auth-back"),
             hostProfileForm: qs("#host-profile-form"),
@@ -120,6 +124,10 @@ export class WatchPartyUI extends EventTarget {
             autoplayOverlay: qs("#autoplay-overlay"),
             countdown: qs("#countdown"),
             mediaUrl: qs("#media-url"),
+            activeMediaUrl: qs("#active-media-url"),
+            activeMediaSummary: qs("#active-media-summary"),
+            activeMediaError: qs("#active-media-error"),
+            activeMediaHostControls: qs("#active-media-host-controls"),
             subtitleUrl: qs("#subtitle-url"),
             subtitleFile: qs("#subtitle-file"),
             activeSubtitleUrl: qs("#active-subtitle-url"),
@@ -135,8 +143,10 @@ export class WatchPartyUI extends EventTarget {
             partnerState: qs("#partner-state"),
             roomStatus: qs("#room-status"),
             chatMessages: qs("#chat-messages"),
+            chatNewMessages: qs("#chat-new-messages"),
             chatForm: qs("#chat-form"),
             chatInput: qs("#chat-input"),
+            chatCount: qs("#chat-count"),
             chatUnread: qs("#chat-unread"),
             subtitleSourceState: qs("#subtitle-source-state"),
             activeSubtitleHostControls: qs("#active-subtitle-host-controls"),
@@ -185,6 +195,10 @@ export class WatchPartyUI extends EventTarget {
         this.els.restoreCancelFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
         this.els.authRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("authRetry")));
         this.els.authBack.addEventListener("click", () => this.dispatchEvent(new CustomEvent("authBack")));
+        this.els.authCopyReport?.addEventListener("click", async () => {
+            await navigator.clipboard?.writeText?.(this.els.authSafeReport.textContent || "").catch(() => {});
+            this.toast("اطلاعات امن خطا کپی شد.");
+        });
         this.els.serviceRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("serviceRetry")));
         this.els.serviceBack.addEventListener("click", () => this.dispatchEvent(new CustomEvent("serviceBack")));
         qsa("input[name='subtitleMode']").forEach((input) => {
@@ -196,7 +210,8 @@ export class WatchPartyUI extends EventTarget {
         qs("#copy-link-active").addEventListener("click", () => this.dispatchEvent(new CustomEvent("copy")));
         this.els.readyButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("ready")));
         qs("#continue-button").addEventListener("click", () => this.dispatchEvent(new CustomEvent("continue")));
-        qs("#change-media").addEventListener("click", () => this.dispatchEvent(new CustomEvent("mediaChange")));
+        qs("#change-media").addEventListener("click", () => this.dispatchEvent(new CustomEvent("mediaChange", { detail: { url: this.els.mediaUrl.value, source: "lobby" } })));
+        qs("#active-change-media")?.addEventListener("click", () => this.dispatchEvent(new CustomEvent("mediaChange", { detail: { url: this.els.activeMediaUrl.value, source: "settings" } })));
         qs("#change-subtitle").addEventListener("click", () => this.dispatchEvent(new CustomEvent("subtitleChange")));
         qs("#active-change-subtitle").addEventListener("click", () => {
             this.els.subtitleUrl.value = this.els.activeSubtitleUrl.value;
@@ -216,6 +231,25 @@ export class WatchPartyUI extends EventTarget {
         this.els.chatForm.addEventListener("submit", (event) => {
             event.preventDefault();
             this.dispatchEvent(new CustomEvent("chat", { detail: this.els.chatInput.value }));
+        });
+        this.els.chatInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey && !isMobileViewport()) {
+                event.preventDefault();
+                this.els.chatForm.requestSubmit();
+            }
+        });
+        this.els.chatInput.addEventListener("input", () => this.updateChatComposer());
+        this.els.chatMessages.addEventListener("scroll", () => {
+            const atBottom = this.isChatAtBottom();
+            if (atBottom) {
+                this.els.chatNewMessages.hidden = true;
+                this.dispatchEvent(new CustomEvent("chatViewed"));
+            }
+        });
+        this.els.chatNewMessages?.addEventListener("click", () => {
+            this.scrollChatToBottom();
+            this.els.chatNewMessages.hidden = true;
+            this.dispatchEvent(new CustomEvent("chatViewed"));
         });
         qsa("[data-reaction]").forEach((button) => {
             button.addEventListener("click", () => this.dispatchEvent(new CustomEvent("reaction", { detail: button.dataset.reaction })));
@@ -352,9 +386,12 @@ export class WatchPartyUI extends EventTarget {
         this.els.restoreRetryFailed.disabled = !canRetry;
     }
 
-    showAuthFailure({ message, code, retryable = true } = {}) {
-        this.els.authFailedMessage.textContent = message || "ورود مهمان انجام نشد. دوباره تلاش کنید.";
+    showAuthFailure({ message, help = "", code, retryable = true, safeReport = null } = {}) {
+        this.els.authFailedMessage.textContent = message || "ورود انجام نشد. لطفاً دوباره امتحان کنید.";
+        this.els.authFailedHelp.textContent = help || "";
+        this.els.authFailedHelp.hidden = !help;
         this.els.authDiagnosticCode.textContent = code || "AUTH-UNKNOWN";
+        this.els.authSafeReport.textContent = formatSafeErrorReport(safeReport || { code });
         this.els.authRetry.disabled = !retryable;
         this.setState(APP_STATES.AUTH_FAILED);
     }
@@ -377,6 +414,7 @@ export class WatchPartyUI extends EventTarget {
         qs("#end-room").hidden = role !== "host";
         qs("#end-room-lobby").hidden = role !== "host";
         this.els.activeSubtitleHostControls.hidden = role !== "host";
+        if (this.els.activeMediaHostControls) this.els.activeMediaHostControls.hidden = role !== "host";
     }
 
     prefill({ videoUrl, subtitleUrl, roomCode }) {
@@ -486,6 +524,12 @@ export class WatchPartyUI extends EventTarget {
         this.els.lobbySubtitleState.textContent = room.subtitle?.mode && room.subtitle.mode !== "none" ? "فعال" : "بدون زیرنویس";
         this.els.lobbyConnectionState.textContent = "اتصال برقرار است";
         this.els.subtitleSourceState.textContent = room.subtitle?.mode && room.subtitle.mode !== "none" ? (room.subtitle.fileName || room.subtitle.url || "زیرنویس فعال") : "بدون زیرنویس";
+        if (room.media?.url) {
+            this.els.activeMediaUrl.value = room.media.url;
+            this.els.activeMediaSummary.textContent = summarizeUrl(room.media.url);
+        } else {
+            this.els.activeMediaSummary.textContent = "منبعی انتخاب نشده است";
+        }
         const self = participants.find(([id]) => id === uid)?.[1];
         this.els.readyButton.textContent = self?.ready ? "آماده هستم" : "آماده‌ام";
         this.els.readyButton.classList.toggle("is-ready", Boolean(self?.ready));
@@ -526,29 +570,56 @@ export class WatchPartyUI extends EventTarget {
         return "هر دو نفر وارد اتاق شده‌اند";
     }
 
-    renderMessages(messages) {
+    renderMessages(messages, { currentUid = "", participants = {} } = {}) {
         const wasChatClosed = this.activeTab !== "chat" && this.state === APP_STATES.ACTIVE_ROOM;
+        const wasAtBottom = this.isChatAtBottom();
         this.els.chatMessages.textContent = "";
         if (!messages.length) {
-            const empty = document.createElement("p");
-            empty.className = "empty-state";
-            empty.textContent = "هنوز پیامی نیست.";
+            const empty = document.createElement("div");
+            empty.className = "empty-state chat-empty";
+            const title = document.createElement("strong");
+            title.textContent = "هنوز پیامی رد و بدل نشده.";
+            const note = document.createElement("span");
+            note.textContent = "گفتگو فقط تا پایان این اتاق باقی می‌ماند.";
+            empty.append(title, note);
             this.els.chatMessages.append(empty);
         }
+        let previous = null;
         messages.forEach((message) => {
+            const mine = message.uid === currentUid;
+            const grouped = previous && previous.uid === message.uid && Math.abs(Number(message.createdAt || 0) - Number(previous.createdAt || 0)) < 120000;
             const row = document.createElement("div");
-            row.className = "chat-message";
+            row.className = `chat-message ${mine ? "is-own" : "is-partner"} ${grouped ? "is-grouped" : ""}`;
+            if (!mine && !grouped) {
+                const sender = document.createElement("div");
+                sender.className = "chat-sender";
+                sender.textContent = message.displayName || participants[message.uid]?.displayName || "مهمان";
+                row.append(sender);
+            }
+            const bubble = document.createElement("div");
+            bubble.className = "chat-bubble";
+            const text = document.createElement("p");
+            text.textContent = message.text || "";
+            bubble.append(text);
             const meta = document.createElement("div");
             meta.className = "chat-meta";
             const time = message.createdAt ? new Date(message.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }) : "";
-            meta.textContent = `${message.displayName || "مهمان"} · ${time}`;
-            const text = document.createElement("p");
-            text.textContent = message.text || "";
-            row.append(meta, text);
+            const partner = Object.entries(participants || {}).find(([uid]) => uid !== currentUid)?.[1];
+            const seen = mine && Number(partner?.chatReadAt || 0) >= Number(message.createdAt || 0);
+            meta.textContent = mine ? `${time} · ${seen ? "دیده شد" : "ارسال شد"}` : time;
+            meta.setAttribute("aria-label", mine ? (seen ? "پیام دیده شد" : "پیام ارسال شد") : "زمان پیام");
+            bubble.append(meta);
+            row.append(bubble);
             this.els.chatMessages.append(row);
+            previous = message;
         });
         if (wasChatClosed && messages.length) this.setUnread(this.unreadChat + 1);
-        this.els.chatMessages.scrollTop = this.els.chatMessages.scrollHeight;
+        if (this.activeTab === "chat" && (wasAtBottom || !messages.length)) {
+            this.scrollChatToBottom();
+            this.els.chatNewMessages.hidden = true;
+        } else if (this.activeTab === "chat" && messages.length && !wasAtBottom) {
+            this.els.chatNewMessages.hidden = false;
+        }
     }
 
     setActiveTab(tab) {
@@ -557,7 +628,12 @@ export class WatchPartyUI extends EventTarget {
         qsa(".side-tab-panel").forEach((panel) => {
             panel.hidden = panel.id !== `tab-${tab}`;
         });
-        if (tab === "chat") this.setUnread(0);
+        if (tab === "chat") {
+            this.setUnread(0);
+            this.scrollChatToBottom();
+            this.els.chatNewMessages.hidden = true;
+            this.dispatchEvent(new CustomEvent("chatViewed"));
+        }
     }
 
     setUnread(count) {
@@ -568,15 +644,43 @@ export class WatchPartyUI extends EventTarget {
 
     clearChatInput() {
         this.els.chatInput.value = "";
+        this.updateChatComposer();
     }
 
-    showReaction(emoji) {
+    showReaction(detail) {
+        const payload = typeof detail === "string" ? { emoji: detail, displayName: "" } : detail || {};
         const span = document.createElement("span");
         span.className = "reaction-float";
-        span.textContent = emoji;
         span.style.left = `${20 + Math.random() * 60}%`;
+        const emoji = document.createElement("strong");
+        emoji.textContent = payload.emoji || "";
+        const name = document.createElement("small");
+        name.textContent = String(payload.displayName || "").slice(0, 32);
+        span.append(emoji, name);
         this.els.reactionLayer.append(span);
-        setTimeout(() => span.remove(), 1800);
+        span.addEventListener("animationend", () => span.remove(), { once: true });
+        setTimeout(() => span.remove(), 2400);
+    }
+
+    isChatAtBottom() {
+        const el = this.els.chatMessages;
+        if (!el) return false;
+        return el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+    }
+
+    scrollChatToBottom() {
+        const el = this.els.chatMessages;
+        if (!el) return;
+        el.scrollTop = el.scrollHeight;
+    }
+
+    updateChatComposer() {
+        const input = this.els.chatInput;
+        if (!input) return;
+        input.style.height = "auto";
+        input.style.height = `${Math.min(140, Math.max(44, input.scrollHeight))}px`;
+        const length = input.value.length;
+        this.els.chatCount.textContent = length >= 430 ? `${length}/500` : "";
     }
 
     toast(message, type = "info") {
@@ -807,6 +911,20 @@ function formatAudioTrackLabel(track) {
     const codec = String(track.codec || track.internalCodecId || "ناشناخته").toUpperCase();
     const channels = track.channelCount ? `${track.channelCount} کانال` : "کانال نامشخص";
     return `${track.title || language} — ${codec} — ${channels}`;
+}
+
+function summarizeUrl(rawUrl) {
+    try {
+        const url = new URL(rawUrl);
+        const fileName = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || url.hostname);
+        return `${url.hostname} · ${fileName}`.slice(0, 96);
+    } catch {
+        return "منبع انتخاب شده";
+    }
+}
+
+function isMobileViewport() {
+    return globalThis.matchMedia?.("(max-width: 720px)")?.matches || false;
 }
 
 function makeIcon(iconClass) {

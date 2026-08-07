@@ -194,6 +194,7 @@ test.describe("Watch Party desktop E2E", () => {
             await expect(guest.page.locator("#chat-unread")).toBeVisible({ timeout: 10_000 });
             await guest.page.getByTestId("chat-tab").click();
             await expect(guest.page.locator("#chat-messages")).toContainText("Hello guest");
+            await expect(owner.page.locator("#chat-messages")).toContainText("دیده شد", { timeout: 10_000 });
             await guest.page.waitForTimeout(950);
             await guest.page.getByTestId("chat-input").fill("Hello owner");
             await guest.page.getByTestId("chat-send").click();
@@ -248,6 +249,7 @@ test.describe("Watch Party desktop E2E", () => {
             await expect(owner.page.getByTestId("room-ended-state")).toBeVisible({ timeout: 15_000 });
             await expect(replacement.page.getByTestId("room-ended-state")).toBeVisible({ timeout: 15_000 });
             await expect(owner.page.getByTestId("active-player")).toBeHidden();
+            await expect.poll(async () => readRoomAs(roomCode, ownerHook.uid)).toBeNull();
             await screenshot(owner.page, "room-ended-owner");
             await screenshot(replacement.page, "room-ended-guest");
 

@@ -103,6 +103,12 @@ npm run pages:smoke
 npm run media-gateway:test
 ```
 
+Functions cleanup tests:
+
+```powershell
+npm run functions:test
+```
+
 `pages:build` requires the five production Firebase environment variables. For local dry-runs, use harmless fake values; do not use real credentials unless you are running the GitHub Actions workflow or an owner-controlled production build.
 `pages:smoke` starts a temporary server for `dist/`, opens representative pages in Chromium, verifies `/watch-party/runtime-config.js` is requested from the artifact, and confirms source-only paths are not served.
 
@@ -141,6 +147,12 @@ Open the generated screenshot index:
 artifacts/watch-party/index.md
 ```
 
+The active-room redesign review set is copied under:
+
+```text
+artifacts/watch-party/redesign-v3/index.md
+```
+
 Generated Playwright output is local-only:
 
 ```text
@@ -163,6 +175,51 @@ Manual test:
 6. Click retry and confirm the selected setup flow continues.
 
 The Playwright regression suite also forces this state with a localhost-only test hook. That hook is ignored on production hosts.
+
+## Authentication Error Diagnostics
+
+To test user-facing authentication errors locally, use the localhost-only E2E hooks or temporarily stop the Auth emulator before selecting a role. The page should show a natural Persian message first, keep the room code/name/form state intact, and put the diagnostic code behind `جزئیات عیب‌یابی`.
+
+The safe copy report may contain:
+
+- diagnostic code
+- build ID
+- browser family bucket
+- online/offline state
+- public endpoint reachability
+
+It must not contain Firebase API keys, tokens, UID, room code, media URLs, chat text, SDP, ICE candidates, stack traces, or raw server responses. Endpoint probes only report public endpoint reachability; they do not create accounts and cannot prove country-level blocking by themselves.
+
+## Privacy Cleanup Testing
+
+Host end-room now deletes `rooms/{ROOMCODE}` completely. Manual local check:
+
+1. Start `npm run watch-party:dev`.
+2. Create a room and join from another browser context.
+3. Send chat, send a reaction, and open microphone controls if needed.
+4. As host, choose `پایان اتاق` and confirm `پایان و حذف اتاق`.
+5. In Emulator UI, verify the room node no longer exists.
+6. Confirm the guest moves to the ended-room state and does not see `اتاق پیدا نشد`.
+
+Scheduled cleanup is source-only until the owner deploys the Function. Local logic is tested with:
+
+```powershell
+npm run functions:test
+```
+
+The cleanup code deletes full room nodes by `deleteAt`, creates no archive, and logs only counts.
+
+## Chat Read Receipts
+
+Read receipts use `participants/{uid}/chatReadAt`. To verify manually:
+
+1. Keep the guest on the Room tab.
+2. Send a message from the owner.
+3. Confirm the guest unread badge appears and the owner message remains `ارسال شد`.
+4. Open the guest Chat tab and scroll to the latest message.
+5. Confirm the owner message changes to `دیده شد`.
+
+Do not expect messages to be marked read while the Chat tab is closed or the browser tab is hidden.
 
 ## Local Media URLs
 
