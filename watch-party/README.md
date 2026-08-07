@@ -4,13 +4,27 @@ Two-person synchronized playback for FreeMovieIR. The feature stays compatible w
 
 ## Configuration
 
-1. Copy `watch-party/firebase-config.example.js` to `watch-party/firebase-config.js`.
-2. Fill in the Firebase Web config and Realtime Database URL for production.
-3. Enable anonymous authentication in Firebase.
-4. Deploy `firebase/database.rules.json`.
-5. Keep TURN credentials out of git. Use temporary TURN credentials for production if restrictive NATs are common.
+Production does not use `firebase-config.js`. GitHub Actions generates `watch-party/runtime-config.js` inside the Pages artifact from Repository Variables.
 
-When `firebase-config.js` is missing, the page shows a Persian setup error instead of crashing. Local emulator testing can use the safe demo config documented in `LOCAL_TESTING.md`.
+Required production variables:
+
+```text
+WATCH_PARTY_FIREBASE_API_KEY
+WATCH_PARTY_FIREBASE_AUTH_DOMAIN
+WATCH_PARTY_FIREBASE_DATABASE_URL
+WATCH_PARTY_FIREBASE_PROJECT_ID
+WATCH_PARTY_FIREBASE_APP_ID
+```
+
+Optional variables may be empty:
+
+```text
+WATCH_PARTY_APP_CHECK_SITE_KEY
+WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT
+WATCH_PARTY_RTC_ICE_SERVERS
+```
+
+Local emulator testing uses an ignored generated `watch-party/runtime-config.js`; see `LOCAL_TESTING.md`.
 
 ## Local Run
 
@@ -22,6 +36,9 @@ Common local checks:
 npm run watch-party:test
 npm run watch-party:test:rules
 npm run watch-party:test:e2e
+npm run pages:build
+npm run pages:test
+npm run pages:smoke
 ```
 
 To start the emulators and static server together for manual work:
@@ -142,13 +159,15 @@ STUN servers are included for development. Reliable production connectivity acro
 
 ## Production Build Path
 
-Production config is generated at deploy time into `watch-party/runtime-config.js`:
+Production config is generated at deploy time into the Pages output directory:
 
 ```powershell
-node scripts/generate-watch-party-config.mjs --mode=production
+node scripts/generate-watch-party-config.mjs --mode=production --output=dist/watch-party/runtime-config.js
 ```
 
 The generator reads `WATCH_PARTY_*` environment variables, refuses private-key/service-account-looking values, and does not print full config values. See `watch-party/PRODUCTION_SETUP.md` for the GitHub Pages and Firebase owner checklist.
+
+The Pages workflow uploads only `dist/`, not the repository root. Development files such as tests, scripts, Firebase rules, local fixtures, Playwright reports, and config templates remain in source control but are excluded from the visitor-facing artifact.
 
 ## Manual Test Checklist
 

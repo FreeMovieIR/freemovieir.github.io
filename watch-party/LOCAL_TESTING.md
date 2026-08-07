@@ -28,6 +28,12 @@ The local E2E configuration can also use installed Chrome or Edge on Windows.
 
 ## Manual Services
 
+Generate the local emulator runtime config:
+
+```powershell
+npm run watch-party:build:test
+```
+
 Recommended combined local launcher:
 
 ```powershell
@@ -87,6 +93,28 @@ Multi-user Playwright E2E tests:
 ```powershell
 npm run watch-party:test:e2e
 ```
+
+Production artifact build and scan:
+
+```powershell
+npm run pages:build
+npm run pages:test
+npm run pages:smoke
+```
+
+`pages:build` requires the five production Firebase environment variables. For local dry-runs, use harmless fake values; do not use real credentials unless you are running the GitHub Actions workflow or an owner-controlled production build.
+`pages:smoke` starts a temporary server for `dist/`, opens representative pages in Chromium, verifies `/watch-party/runtime-config.js` is requested from the artifact, and confirms source-only paths are not served.
+
+Serve only the generated Pages artifact:
+
+```powershell
+npm run pages:preview
+```
+
+Difference:
+
+- `watch-party:dev` serves the repository source with Emulator config and development-only diagnostics.
+- `pages:preview` serves only `dist/`, the same shape uploaded to GitHub Pages.
 
 Headed and UI modes:
 

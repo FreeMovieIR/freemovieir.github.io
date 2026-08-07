@@ -3,6 +3,7 @@ export const ROOM_CODE_LENGTH = 8;
 
 export const MESSAGES = {
     missingConfig: "پیکربندی Firebase برای تماشای دونفره تنظیم نشده است.",
+    productionConfigMissing: "پیکربندی سرویس اتاق بارگذاری نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.",
     authFailed: "ورود ناشناس انجام نشد. تنظیمات Firebase Authentication را بررسی کنید.",
     roomNotFound: "اتاقی با این کد پیدا نشد.",
     roomExpired: "زمان این اتاق به پایان رسیده است.",

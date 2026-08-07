@@ -128,7 +128,7 @@ async function init() {
     bindGlobalUi();
 
     if (config?.missing) {
-        showFatal(MESSAGES.missingConfig);
+        showFatal(config.productionMissing ? MESSAGES.productionConfigMissing : MESSAGES.missingConfig);
         return;
     }
     operationController = new RoomOperationController({
@@ -176,7 +176,7 @@ function bindGlobalUi() {
         } catch (error) {
             if (error instanceof ServiceAvailabilityError) {
                 lastServiceAction = selectedRole === "host" ? "create" : "join";
-                ui.showServiceUnavailable(error.details || {}, { production: false });
+                ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
             } else {
                 showFatal(error.message);
             }
@@ -271,7 +271,7 @@ async function verifyServicesOrShow(actionName) {
         if (error instanceof ServiceAvailabilityError) {
             lastServiceAction = actionName;
             operationController?.cancel(actionName);
-            ui.showServiceUnavailable(error.details || {}, { production: false });
+            ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
             return false;
         }
         throw error;
@@ -327,7 +327,7 @@ async function createRoomGuarded(event) {
     } catch (error) {
         if (error instanceof RoomOperationCancelledError || error?.message === "operation-cancelled") return;
         if (error instanceof RoomOperationTimeoutError) ui.setFieldError("hostVideoError", "ساخت اتاق بیشتر از حد معمول طول کشید. دوباره تلاش کنید.");
-        else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: false });
+        else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
         else if (error.message === MESSAGES.invalidUrl || error.message === MESSAGES.insecureUrl) ui.setFieldError("hostVideoError", error.message);
         else if (/subtitle|زیرنویس|Ø²ÛŒØ±Ù†ÙˆÛŒØ³/i.test(error.message || "")) ui.setFieldError("hostSubtitleError", error.message);
         else ui.setFieldError("hostVideoError", error.message || "امکان ساخت اتاق وجود ندارد.");
@@ -369,7 +369,7 @@ async function joinRoomGuarded(event) {
     } catch (error) {
         if (error instanceof RoomOperationCancelledError || error?.message === "operation-cancelled") return;
         if (error instanceof RoomOperationTimeoutError) ui.setFieldError("guestNameError", "ورود به اتاق بیشتر از حد معمول طول کشید. دوباره تلاش کنید.");
-        else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: false });
+        else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
         else ui.setFieldError("guestNameError", mapJoinError(error));
         if (!(error instanceof ServiceAvailabilityError)) ui.setState(APP_STATES.GUEST_PROFILE);
     } finally {

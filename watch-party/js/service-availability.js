@@ -34,8 +34,8 @@ export function getEmulatorEndpoints(config = {}) {
 }
 
 export function shouldCheckLocalServices(config = {}, hostname = globalThis.location?.hostname || "") {
-    if (hostname === "freemovieir.github.io") return false;
-    return Boolean(config?.useEmulators || config?.firebase?.useEmulators || isLocalHostname(hostname));
+    if (config?.environment === "production") return false;
+    return Boolean((config?.useEmulators || config?.firebase?.useEmulators) && isLocalHostname(hostname));
 }
 
 export async function checkFirebaseServices(config = {}, options = {}) {

@@ -10,21 +10,25 @@
     "watch-party:test:e2e:headed": "node scripts/watch-party-e2e-runner.mjs --headed",
     "watch-party:test:e2e:ui": "node scripts/watch-party-e2e-runner.mjs --ui",
     "watch-party:test:e2e:report": "playwright show-report",
-    "watch-party:build": "node scripts/generate-watch-party-config.mjs --mode=test",
-    "watch-party:test:production": "node scripts/watch-party-production-check.mjs"
+    "watch-party:build": "npm run watch-party:build:production",
+    "watch-party:test:production": "node scripts/watch-party-production-check.mjs",
+    "watch-party:build:local": "node scripts/generate-watch-party-config.mjs --mode=local --output=watch-party/runtime-config.js",
+    "watch-party:build:test": "node scripts/generate-watch-party-config.mjs --mode=test --output=watch-party/runtime-config.js",
+    "watch-party:build:production": "node scripts/generate-watch-party-config.mjs --mode=production --output=watch-party/runtime-config.js",
+    "pages:build": "node scripts/build-pages.mjs --mode=production --output=dist",
+    "pages:test": "node scripts/inspect-pages-artifact.mjs --dir=dist && node scripts/watch-party-production-check.mjs --config=dist/watch-party/runtime-config.js",
+    "pages:smoke": "node scripts/smoke-pages-preview.mjs",
+    "pages:preview": "http-server dist -p 8081 -a 127.0.0.1 -c-1"
   },
   "dependencies": {
     "@mediabunny/ac3": "1.52.3",
-    "@tailwindcss/postcss": "^4.0.15",
-    "mediabunny": "1.52.3",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.15"
+    "mediabunny": "1.52.3"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "3.0.3",
     "@playwright/test": "1.62.1",
     "ffmpeg-static": "5.2.0",
-    "firebase": "^10.12.5",
+    "firebase": "10.12.5",
     "firebase-tools": "13.35.1",
     "http-server": "14.1.1"
   }

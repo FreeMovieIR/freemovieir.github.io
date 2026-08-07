@@ -1,12 +1,11 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const templatePath = resolve(root, "watch-party/runtime-config.template.js");
-const outputPath = resolve(root, "watch-party/runtime-config.js");
-const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
-const environment = modeArg?.split("=")[1] || process.env.WATCH_PARTY_ENVIRONMENT || "test";
+const args = parseArgs(process.argv.slice(2));
+const environment = args.mode || process.env.WATCH_PARTY_ENVIRONMENT || "test";
+const outputPath = resolve(root, args.output || "watch-party/runtime-config.js");
 
 const requiredProduction = [
     "WATCH_PARTY_FIREBASE_API_KEY",
@@ -16,7 +15,7 @@ const requiredProduction = [
     "WATCH_PARTY_FIREBASE_APP_ID"
 ];
 
-const defaults = environment === "production" ? {} : {
+const localDefaults = {
     WATCH_PARTY_FIREBASE_API_KEY: "demo-key",
     WATCH_PARTY_FIREBASE_AUTH_DOMAIN: "demo-freemovieir.firebaseapp.com",
     WATCH_PARTY_FIREBASE_DATABASE_URL: "http://127.0.0.1:9000?ns=demo-freemovieir-default-rtdb",
@@ -30,12 +29,14 @@ const defaults = environment === "production" ? {} : {
     ])
 };
 
-function value(name) {
-    return process.env[name] ?? defaults[name] ?? "";
+function getValue(name) {
+    if (process.env[name] !== undefined) return process.env[name];
+    return environment === "production" ? "" : localDefaults[name] || "";
 }
 
 function assertNoPrivateCredential(name, raw) {
-    if (/BEGIN PRIVATE KEY|service_account|private_key/i.test(String(raw))) {
+    const text = String(raw || "");
+    if (/BEGIN PRIVATE KEY|service_account|private_key|firebase-adminsdk/i.test(text)) {
         throw new Error(`${name} looks like a private credential and must not be placed in frontend config.`);
     }
 }
@@ -43,59 +44,129 @@ function assertNoPrivateCredential(name, raw) {
 function redact(raw) {
     const text = String(raw || "");
     if (text.length <= 8) return "[redacted]";
-    return `${text.slice(0, 4)}…${text.slice(-4)}`;
+    return `${text.slice(0, 4)}...${text.slice(-4)}`;
 }
 
 if (environment === "production") {
-    const missing = requiredProduction.filter((name) => !value(name));
+    const missing = requiredProduction.filter((name) => !getValue(name));
     if (missing.length) {
         throw new Error(`Missing production Watch Party config variables: ${missing.join(", ")}`);
     }
 }
 
-const replacements = {
-    __WATCH_PARTY_ENVIRONMENT__: environment,
-    __WATCH_PARTY_FIREBASE_API_KEY__: value("WATCH_PARTY_FIREBASE_API_KEY"),
-    __WATCH_PARTY_FIREBASE_AUTH_DOMAIN__: value("WATCH_PARTY_FIREBASE_AUTH_DOMAIN"),
-    __WATCH_PARTY_FIREBASE_DATABASE_URL__: value("WATCH_PARTY_FIREBASE_DATABASE_URL"),
-    __WATCH_PARTY_FIREBASE_PROJECT_ID__: value("WATCH_PARTY_FIREBASE_PROJECT_ID"),
-    __WATCH_PARTY_FIREBASE_APP_ID__: value("WATCH_PARTY_FIREBASE_APP_ID"),
-    __WATCH_PARTY_APP_CHECK_SITE_KEY__: value("WATCH_PARTY_APP_CHECK_SITE_KEY"),
-    __WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT__: value("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT")
+const firebase = {
+    apiKey: getValue("WATCH_PARTY_FIREBASE_API_KEY"),
+    authDomain: getValue("WATCH_PARTY_FIREBASE_AUTH_DOMAIN"),
+    databaseURL: getValue("WATCH_PARTY_FIREBASE_DATABASE_URL"),
+    projectId: getValue("WATCH_PARTY_FIREBASE_PROJECT_ID"),
+    appId: getValue("WATCH_PARTY_FIREBASE_APP_ID")
 };
 
-for (const [name, raw] of Object.entries(replacements)) assertNoPrivateCredential(name, raw);
+for (const [key, value] of Object.entries(firebase)) assertNoPrivateCredential(`firebase.${key}`, value);
 
-let iceServers = value("WATCH_PARTY_RTC_ICE_SERVERS") || "[]";
-try {
-    const parsed = JSON.parse(iceServers);
-    if (!Array.isArray(parsed)) throw new Error("not an array");
-    for (const server of parsed) assertNoPrivateCredential("WATCH_PARTY_RTC_ICE_SERVERS", JSON.stringify(server));
-    iceServers = JSON.stringify(parsed, null, 8);
-} catch {
-    throw new Error("WATCH_PARTY_RTC_ICE_SERVERS must be a JSON array.");
+const appCheckSiteKey = getValue("WATCH_PARTY_APP_CHECK_SITE_KEY");
+const turnCredentialsEndpoint = getValue("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT");
+assertNoPrivateCredential("WATCH_PARTY_APP_CHECK_SITE_KEY", appCheckSiteKey);
+assertNoPrivateCredential("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT", turnCredentialsEndpoint);
+
+const iceServers = parseIceServers(getValue("WATCH_PARTY_RTC_ICE_SERVERS") || "[]");
+const isProduction = environment === "production";
+const config = {
+    environment,
+    firebase,
+    useEmulators: !isProduction,
+    appCheck: {
+        enabled: Boolean(isProduction && appCheckSiteKey),
+        provider: "recaptcha-enterprise",
+        siteKey: appCheckSiteKey,
+        autoRefresh: true
+    },
+    rtc: {
+        iceServers,
+        turnCredentialsEndpoint
+    },
+    roomLifetimeMs: 6 * 60 * 60 * 1000,
+    serviceCheckTimeoutMs: 4000,
+    createRoomTimeoutMs: 10000,
+    joinRoomTimeoutMs: 10000,
+    replaceMediaTimeoutMs: 10000,
+    nativeMetadataTimeoutMs: 15000,
+    restoreTimeoutMs: 10000,
+    maxStoredSessionAgeMs: 6 * 60 * 60 * 1000,
+    subtitleSizeLimit: 300 * 1024,
+    chatLengthLimit: 500,
+    maxChatMessages: 75,
+    mediabunny: {
+        moduleUrl: "https://esm.sh/mediabunny@1.52.3",
+        ac3ModuleUrl: "https://esm.sh/@mediabunny/ac3@1.52.3"
+    },
+    sync: {
+        heartbeatMs: 5000,
+        smallDriftMs: 250,
+        hardSeekDriftMs: 1000,
+        softCorrectionRateDelta: 0.06,
+        bufferDebounceMs: 1200
+    }
+};
+
+if (!isProduction) {
+    config.emulators = {
+        auth: { url: "http://127.0.0.1:9099" },
+        database: { host: "127.0.0.1", port: 9000 },
+        ui: { url: "http://127.0.0.1:4000" }
+    };
 }
 
-let template = await readFile(templatePath, "utf8");
-for (const [token, raw] of Object.entries(replacements)) {
-    template = template.replaceAll(token, escapeJsString(raw));
-}
-template = template
-    .replaceAll("__WATCH_PARTY_APP_CHECK_ENABLED__", String(Boolean(value("WATCH_PARTY_APP_CHECK_SITE_KEY"))))
-    .replaceAll("__WATCH_PARTY_RTC_ICE_SERVERS__", iceServers);
-
-if (environment === "production" && /127\.0\.0\.1|localhost/.test(template.replace(/emulators:[\s\S]*?appCheck:/, "appCheck:"))) {
-    throw new Error("Generated production config contains a local URL outside emulator documentation.");
-}
+const js = `export const watchPartyConfig = ${JSON.stringify(config, null, 4)};\n`;
+if (isProduction) validateProductionConfigText(js);
 
 await mkdir(dirname(outputPath), { recursive: true });
-await writeFile(outputPath, template, "utf8");
-console.log(`[watch-party:build] runtime config generated for ${environment}. Values are not printed. Project: ${redact(value("WATCH_PARTY_FIREBASE_PROJECT_ID"))}`);
+await writeFile(outputPath, js, "utf8");
+console.log(`[watch-party:config] generated ${environment} runtime config at ${relativeDisplay(outputPath)}. Values are not printed. Project: ${redact(firebase.projectId)}`);
 
-function escapeJsString(raw) {
-    return String(raw || "")
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\r/g, "\\r")
-        .replace(/\n/g, "\\n");
+function parseArgs(argv) {
+    const parsed = {};
+    for (const arg of argv) {
+        const match = /^--([^=]+)=(.*)$/.exec(arg);
+        if (match) parsed[match[1]] = match[2];
+    }
+    return parsed;
+}
+
+function parseIceServers(raw) {
+    let parsed;
+    try {
+        parsed = JSON.parse(raw || "[]");
+    } catch {
+        throw new Error("WATCH_PARTY_RTC_ICE_SERVERS must be a JSON array.");
+    }
+    if (!Array.isArray(parsed)) throw new Error("WATCH_PARTY_RTC_ICE_SERVERS must be a JSON array.");
+    for (const [index, server] of parsed.entries()) {
+        if (!server || typeof server !== "object" || Array.isArray(server)) {
+            throw new Error(`WATCH_PARTY_RTC_ICE_SERVERS[${index}] must be an object.`);
+        }
+        const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+        if (!urls.length || urls.some((url) => typeof url !== "string" || !/^(stun|turns?):/i.test(url))) {
+            throw new Error(`WATCH_PARTY_RTC_ICE_SERVERS[${index}].urls must contain STUN/TURN URLs.`);
+        }
+        const hasTurn = urls.some((url) => /^turns?:/i.test(url));
+        if (hasTurn && (server.username || server.credential)) {
+            throw new Error("Do not put permanent TURN usernames or credentials in WATCH_PARTY_RTC_ICE_SERVERS. Use WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT.");
+        }
+        assertNoPrivateCredential("WATCH_PARTY_RTC_ICE_SERVERS", JSON.stringify(server));
+    }
+    return parsed;
+}
+
+function validateProductionConfigText(text) {
+    if (/127\.0\.0\.1|localhost|demo-freemovieir|FIREBASE_APPCHECK_DEBUG_TOKEN|BEGIN PRIVATE KEY|service_account|private_key|__WATCH_PARTY_/i.test(text)) {
+        throw new Error("Generated production config contains local, test, template, or private-credential text.");
+    }
+    if (!/environment"\s*:\s*"production"/.test(text) || !/useEmulators"\s*:\s*false/.test(text)) {
+        throw new Error("Generated production config does not have production environment and disabled emulators.");
+    }
+}
+
+function relativeDisplay(path) {
+    return path.startsWith(root) ? path.slice(root.length + 1) : path;
 }

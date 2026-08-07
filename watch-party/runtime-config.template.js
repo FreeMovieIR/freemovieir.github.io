@@ -1,5 +1,5 @@
 export const watchPartyConfig = {
-    environment: "__WATCH_PARTY_ENVIRONMENT__",
+    environment: "production",
     firebase: {
         apiKey: "__WATCH_PARTY_FIREBASE_API_KEY__",
         authDomain: "__WATCH_PARTY_FIREBASE_AUTH_DOMAIN__",
@@ -8,25 +8,15 @@ export const watchPartyConfig = {
         appId: "__WATCH_PARTY_FIREBASE_APP_ID__"
     },
     useEmulators: false,
-    emulators: {
-        auth: { url: "http://127.0.0.1:9099" },
-        database: { host: "127.0.0.1", port: 9000 },
-        ui: { url: "http://127.0.0.1:4000" }
-    },
     appCheck: {
-        enabled: __WATCH_PARTY_APP_CHECK_ENABLED__,
+        enabled: false,
         provider: "recaptcha-enterprise",
-        siteKey: "__WATCH_PARTY_APP_CHECK_SITE_KEY__",
+        siteKey: "",
         autoRefresh: true
     },
     rtc: {
-        iceServers: __WATCH_PARTY_RTC_ICE_SERVERS__,
-        turnCredentialsEndpoint: "__WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT__"
-    },
-    optionalTurn: {
-        enabled: false,
-        note: "Do not put permanent TURN credentials in this static frontend.",
-        iceServers: []
+        iceServers: [],
+        turnCredentialsEndpoint: ""
     },
     roomLifetimeMs: 6 * 60 * 60 * 1000,
     serviceCheckTimeoutMs: 4000,

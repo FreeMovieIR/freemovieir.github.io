@@ -35,8 +35,11 @@ jobs:
       - name: Unit tests
         run: npm run watch-party:test
 
-      - name: Generate Watch Party runtime config
-        run: node scripts/generate-watch-party-config.mjs --mode=production
+      - name: Firebase Rules tests
+        run: npm run watch-party:test:rules
+
+      - name: Build Pages artifact
+        run: npm run pages:build
         env:
           WATCH_PARTY_ENVIRONMENT: production
           WATCH_PARTY_FIREBASE_API_KEY: ${{ vars.WATCH_PARTY_FIREBASE_API_KEY }}
@@ -48,8 +51,23 @@ jobs:
           WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT: ${{ vars.WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT }}
           WATCH_PARTY_RTC_ICE_SERVERS: ${{ vars.WATCH_PARTY_RTC_ICE_SERVERS }}
 
-      - name: Production-shape checks
-        run: npm run watch-party:test:production
+      - name: Inspect Pages artifact
+        run: npm run pages:test
+
+      - name: Artifact statistics
+        shell: bash
+        run: |
+          set -euo pipefail
+          count="$(find dist -type f | wc -l)"
+          bytes="$(du -sb dist | cut -f1)"
+          echo "Artifact files: ${count}"
+          echo "Artifact bytes: ${bytes}"
+          if [ "${bytes}" -gt 78643200 ]; then
+            echo "Artifact exceeds 75 MiB limit" >&2
+            exit 1
+          fi
+          echo "Largest files:"
+          find dist -type f -printf '%s %p\n' | sort -nr | head -20
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -57,7 +75,7 @@ jobs:
       - name: Upload static artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest

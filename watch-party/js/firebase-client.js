@@ -6,14 +6,16 @@ const APP_URL = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase
 const AUTH_URL = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-auth.js`;
 const DB_URL = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-database.js`;
 const APP_CHECK_URL = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app-check.js`;
-const PRODUCTION_HOSTS = new Set(["freemovieir.github.io"]);
 const connectedEmulatorApps = new Set();
 
 export async function loadWatchPartyConfig() {
+    const localPage = isLocalPage();
     try {
-        const module = await import("../runtime-config.js");
+        const module = await import(withBuildQuery("../runtime-config.js"));
         return module.watchPartyConfig;
-    } catch {}
+    } catch (error) {
+        if (!localPage) return { error, missing: true, productionMissing: true };
+    }
     try {
         const module = await import("../firebase-config.js");
         return module.watchPartyConfig;
@@ -85,8 +87,9 @@ async function initializeAppCheckIfConfigured(app, config) {
 }
 
 export function shouldUseEmulators(config, hostname = globalThis.location?.hostname || "") {
-    if (PRODUCTION_HOSTS.has(hostname)) return false;
-    return Boolean(config?.useEmulators || config?.firebase?.useEmulators || hostname === "localhost" || hostname === "127.0.0.1");
+    if (config?.environment === "production") return false;
+    const localHost = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+    return Boolean((config?.useEmulators || config?.firebase?.useEmulators) && localHost);
 }
 
 export async function ensureFirebaseServicesAvailable(config, options = {}) {
@@ -97,13 +100,16 @@ export async function ensureFirebaseServicesAvailable(config, options = {}) {
 function connectEmulatorsOnce({ app, auth, database, authModule, dbModule, config }) {
     const appName = app.name || "[DEFAULT]";
     if (connectedEmulatorApps.has(appName)) return;
+    if (!config?.emulators?.auth?.url || !config?.emulators?.database?.host || !config?.emulators?.database?.port) {
+        throw new Error(MESSAGES.missingConfig);
+    }
     const emulators = {
         auth: {
-            url: config?.emulators?.auth?.url || "http://127.0.0.1:9099"
+            url: config.emulators.auth.url
         },
         database: {
-            host: config?.emulators?.database?.host || "127.0.0.1",
-            port: Number(config?.emulators?.database?.port || 9000)
+            host: config.emulators.database.host,
+            port: Number(config.emulators.database.port)
         }
     };
     authModule.connectAuthEmulator(auth, emulators.auth.url, { disableWarnings: true });
@@ -117,4 +123,13 @@ function withTimeout(promise, timeoutMs, message) {
         timer = setTimeout(() => reject(new Error(message)), timeoutMs);
     });
     return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+function isLocalPage(hostname = globalThis.location?.hostname || "") {
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
+function withBuildQuery(path) {
+    const buildId = String(globalThis.wpBuildId || "");
+    return buildId ? `${path}?v=${encodeURIComponent(buildId)}` : path;
 }
