@@ -72,6 +72,7 @@ function makeHook(context) {
         get voiceGeneration() { return context.getAudioCall?.()?.generationId ? "[set]" : ""; },
         get voiceStarted() { return Boolean(context.getAudioCall?.()?.started); },
         voiceDiagnostics() { return context.getAudioCall?.()?.getDiagnostics?.() || null; },
+        voiceV2Diagnostics() { return context.getVoiceCall?.()?.getDiagnostics?.() || context.getAudioCall?.()?.getDiagnostics?.() || null; },
         get operationActive() {
             const operations = context.getOperationController?.();
             return {

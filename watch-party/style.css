@@ -695,6 +695,21 @@ video::cue {
     background: linear-gradient(90deg, var(--wp-ok), var(--wp-accent-2));
 }
 
+.voice-status,
+.voice-partner-status {
+    margin: 6px 0 0;
+    color: #e5e7eb;
+    font-size: .92rem;
+}
+
+.voice-partner-status {
+    color: #94a3b8;
+}
+
+.voice-actions {
+    margin-top: 8px;
+}
+
 .control-row {
     display: flex;
     align-items: center;

@@ -242,10 +242,16 @@
                     <h3>میکروفن اختیاری</h3>
                     <p>اگر خواستی هنگام تماشا صحبت کنید، میکروفن را فعال کن.</p>
                     <p id="local-mic-state">میکروفن خاموش</p>
+                    <p id="voice-status" data-testid="voice-status" class="voice-status" aria-live="polite">صدا: منتظر همراه</p>
+                    <p id="voice-partner-status" data-testid="voice-partner-status" class="voice-partner-status">میکروفن همراه خاموش است</p>
                     <div class="mic-level" aria-label="سطح صدای میکروفن"><span id="mic-level-bar"></span></div>
                     <div class="button-row">
                         <button id="mic-button" class="secondary-btn" type="button">فعال‌کردن میکروفن</button>
                         <button id="mute-button" class="icon-text-btn" type="button">بی‌صدا</button>
+                    </div>
+                    <div class="button-row voice-actions" aria-live="polite">
+                        <button id="voice-unlock-button" data-testid="voice-unlock" class="secondary-btn" type="button" hidden>فعال‌کردن صدای همراه</button>
+                        <button id="voice-reconnect-button" data-testid="voice-reconnect" class="secondary-btn" type="button" hidden>اتصال دوباره صدا</button>
                     </div>
                     <p class="micro-note">برای جلوگیری از برگشت صدا، هدفون پیشنهاد می‌شود.</p>
                 </section>

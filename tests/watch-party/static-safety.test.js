@@ -29,10 +29,16 @@ test("production Watch Party runtime modules do not embed browser test hooks", (
         "getLocalTestControl",
         "getLocalVoiceTestControl"
     ];
-    for (const file of ["watch-party/js/app.js", "watch-party/js/audio-call.js", "watch-party/js/service-availability.js"]) {
+    for (const file of ["watch-party/js/app.js", "watch-party/js/voice/voice-call.js", "watch-party/js/voice/voice-media.js", "watch-party/js/service-availability.js"]) {
         const text = readFileSync(file, "utf8");
         for (const token of forbidden) {
             assert.equal(text.includes(token), false, `${token} leaked into ${file}`);
         }
     }
+});
+
+test("production app does not import legacy voice V1", () => {
+    const app = readFileSync("watch-party/js/app.js", "utf8");
+    assert.equal(app.includes("./audio-call.js"), false);
+    assert.equal(app.includes("new AudioCall"), false);
 });

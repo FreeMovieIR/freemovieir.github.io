@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
-import { AudioCall, isValidIceServer, validateTurnResponse } from "../../watch-party/js/audio-call.js";
+import { AudioCall, isValidIceServer, validateTurnResponse } from "../../watch-party/dev/legacy/audio-call-v1.js";
 
 class FakeTrack {
     constructor(id = "track") {

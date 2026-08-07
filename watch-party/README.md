@@ -152,13 +152,15 @@ Synthetic local MKV fixtures are generated under `test-assets/media/` for AAC, O
 
 ## Voice
 
-Microphone audio is optional and off by default. The browser requests audio permission only after the user presses the microphone button. Audio is sent peer-to-peer with WebRTC and is never recorded or stored in Firebase. Firebase only carries generation-scoped SDP and ICE signaling.
+Microphone audio is optional and off by default. The browser requests audio permission only after the user presses the microphone button. Audio is sent peer-to-peer with WebRTC and is never recorded or stored in Firebase. Firebase only carries Voice V2 `voiceV2` session-scoped SDP and ICE signaling.
 
 The active room includes local microphone on/off, mute, partner voice volume, and partner voice mute controls. Movie volume and partner voice volume are separate local channels.
 
-The voice connection is created on room entry with one `RTCPeerConnection`, one `audio` transceiver, and one sender. Mic on/off only uses `sender.replaceTrack(track)` or `sender.replaceTrack(null)`, so users should not need repeated mic toggles to trigger signaling.
+Voice Engine V2 uses a deterministic two-person flow: the owner creates one offer and the guest creates one answer. Each active voice session has one `RTCPeerConnection`, one `audio` transceiver, and one sender. Mic on/off only uses `sender.replaceTrack(track)` or `sender.replaceTrack(null)`, so microphone changes do not renegotiate the call.
 
-Pinned STUN servers are included by default. Reliable production connectivity across restrictive NATs may require TURN. Configure `rtc.turnCredentialsEndpoint` to return short-lived TURN credentials generated securely outside this static site. Permanent TURN usernames/passwords must not be committed to frontend configuration. See `watch-party/VOICE_TESTING.md` for safe diagnostics, force-relay testing, and the two-device manual matrix.
+Pinned STUN servers are included by default. Reliable production connectivity across restrictive NATs may require TURN. Configure `rtc.turnCredentialsEndpoint` to return short-lived TURN credentials generated securely outside this static site. Permanent TURN usernames/passwords must not be committed to frontend configuration. See `watch-party/VOICE_V2_TESTING.md` for safe diagnostics, force-relay testing, and the two-device manual matrix.
+
+The previous `AudioCall` implementation is archived in `watch-party/dev/legacy/audio-call-v1.js` for rollback comparison only and is excluded from the production Pages artifact.
 
 ## iPhone and Compatibility
 

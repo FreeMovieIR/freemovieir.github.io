@@ -7,6 +7,7 @@ import { get, push, ref, remove, set, update } from "firebase/database";
 const PROJECT_ID = "demo-freemovieir";
 const ROOM = "ABCDEFGH";
 const GENERATION = "owner-voice-generation";
+const VOICE_V2_SESSION = "v2-owner-session";
 const now = Date.now();
 
 let testEnv;
@@ -224,6 +225,105 @@ test("owner and guest signaling writes are restricted to expected roles", async 
         uid: "guest1",
         createdAt: now
     }));
+});
+
+test("owner and guest voiceV2 signaling writes are restricted to expected roles", async () => {
+    await seedRoom();
+    await set(ref(db("guest1"), `rooms/${ROOM}/guestUid`), "guest1");
+    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/sessionId`), VOICE_V2_SESSION));
+    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/createdAt`), now));
+    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/offer`), {
+        sessionId: VOICE_V2_SESSION,
+        type: "offer",
+        sdp: "v=0",
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertFails(set(ref(db("guest1"), `rooms/${ROOM}/voiceV2/offer`), {
+        sessionId: VOICE_V2_SESSION,
+        type: "offer",
+        sdp: "v=0",
+        uid: "guest1",
+        createdAt: now
+    }));
+    await assertSucceeds(set(ref(db("guest1"), `rooms/${ROOM}/voiceV2/answer`), {
+        sessionId: VOICE_V2_SESSION,
+        type: "answer",
+        sdp: "v=0",
+        uid: "guest1",
+        createdAt: now
+    }));
+    await assertFails(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/answer`), {
+        sessionId: VOICE_V2_SESSION,
+        type: "answer",
+        sdp: "v=0",
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertSucceeds(push(ref(db("owner"), `rooms/${ROOM}/voiceV2/hostCandidates`), {
+        sessionId: VOICE_V2_SESSION,
+        candidate: "candidate",
+        sdpMid: "0",
+        sdpMLineIndex: 0,
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertSucceeds(push(ref(db("guest1"), `rooms/${ROOM}/voiceV2/guestCandidates`), {
+        sessionId: VOICE_V2_SESSION,
+        candidate: "candidate",
+        sdpMid: "0",
+        sdpMLineIndex: 0,
+        uid: "guest1",
+        createdAt: now
+    }));
+    await assertFails(push(ref(db("guest1"), `rooms/${ROOM}/voiceV2/hostCandidates`), {
+        sessionId: VOICE_V2_SESSION,
+        candidate: "candidate",
+        uid: "guest1",
+        createdAt: now
+    }));
+    await assertFails(push(ref(db("owner"), `rooms/${ROOM}/voiceV2/guestCandidates`), {
+        sessionId: VOICE_V2_SESSION,
+        candidate: "candidate",
+        uid: "owner",
+        createdAt: now
+    }));
+});
+
+test("voiceV2 rejects stale sessions, oversized payloads, unauthorized users, and unknown children", async () => {
+    await seedRoom();
+    await set(ref(db("guest1"), `rooms/${ROOM}/guestUid`), "guest1");
+    await set(ref(db("owner"), `rooms/${ROOM}/voiceV2/sessionId`), VOICE_V2_SESSION);
+    await set(ref(db("owner"), `rooms/${ROOM}/voiceV2/createdAt`), now);
+    await assertFails(set(ref(db("third"), `rooms/${ROOM}/voiceV2/offer`), {
+        sessionId: VOICE_V2_SESSION,
+        type: "offer",
+        sdp: "v=0",
+        uid: "third",
+        createdAt: now
+    }));
+    await assertFails(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/sessionId`), "x".repeat(81)));
+    await assertFails(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/offer`), {
+        sessionId: "old-session",
+        type: "offer",
+        sdp: "v=0",
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertFails(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/offer`), {
+        sessionId: VOICE_V2_SESSION,
+        type: "offer",
+        sdp: "x".repeat(12000),
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertFails(push(ref(db("owner"), `rooms/${ROOM}/voiceV2/hostCandidates`), {
+        sessionId: VOICE_V2_SESSION,
+        candidate: "x".repeat(2000),
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertFails(set(ref(db("owner"), `rooms/${ROOM}/voiceV2/debug`), true));
 });
 
 test("oversized subtitles and URLs are rejected", async () => {

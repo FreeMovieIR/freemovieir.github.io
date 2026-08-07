@@ -1,5 +1,5 @@
-import { isLocalHostname, MESSAGES, safeLog } from "./utils.js";
-import { MICROPHONE_STATES, MicrophoneStateMachine } from "./microphone-state-machine.js";
+import { isLocalHostname, MESSAGES, safeLog } from "../../js/utils.js";
+import { MICROPHONE_STATES, MicrophoneStateMachine } from "../../js/microphone-state-machine.js";
 
 const DEFAULT_STUN_SERVERS = Object.freeze([
     { urls: "stun:stun.l.google.com:19302" },

@@ -57,6 +57,7 @@ const watchPartyExcluded = new Set([
     "LOCAL_TESTING.md",
     "PRODUCTION_SETUP.md",
     "README.md",
+    "VOICE_V2_TESTING.md",
     "VOICE_TESTING.md",
     "firebase-config.example.js",
     "firebase-config.js",

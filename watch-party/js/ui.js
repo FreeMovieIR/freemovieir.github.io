@@ -120,6 +120,10 @@ export class WatchPartyUI extends EventTarget {
             subtitleFile: qs("#subtitle-file"),
             activeSubtitleUrl: qs("#active-subtitle-url"),
             localMicState: qs("#local-mic-state"),
+            voiceStatus: qs("#voice-status"),
+            voicePartnerStatus: qs("#voice-partner-status"),
+            voiceUnlockButton: qs("#voice-unlock-button"),
+            voiceReconnectButton: qs("#voice-reconnect-button"),
             micLevelBar: qs("#mic-level-bar"),
             micButton: qs("#mic-button"),
             muteButton: qs("#mute-button"),
@@ -201,6 +205,8 @@ export class WatchPartyUI extends EventTarget {
         qs("#end-room-lobby").addEventListener("click", () => this.dispatchEvent(new CustomEvent("end")));
         this.els.micButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("mic")));
         this.els.muteButton.addEventListener("click", () => this.dispatchEvent(new CustomEvent("mute")));
+        this.els.voiceUnlockButton?.addEventListener("click", () => this.dispatchEvent(new CustomEvent("voiceUnlock")));
+        this.els.voiceReconnectButton?.addEventListener("click", () => this.dispatchEvent(new CustomEvent("voiceReconnect")));
         this.els.chatForm.addEventListener("submit", (event) => {
             event.preventDefault();
             this.dispatchEvent(new CustomEvent("chat", { detail: this.els.chatInput.value }));
@@ -684,6 +690,20 @@ export class WatchPartyUI extends EventTarget {
         });
         this.els.muteButton.disabled = !enabled || Boolean(busy);
         if (this.els.micLevelBar) this.els.micLevelBar.style.transform = `scaleX(${enabled && !muted ? 0.68 : 0.08})`;
+    }
+
+    setVoiceStatus({ label = "", remoteAudioBlocked = false, failed = false, reconnectable = false, busy = false } = {}) {
+        const text = label || "صدا: منتظر همراه";
+        if (this.els.voiceStatus) this.els.voiceStatus.textContent = text;
+        if (this.els.voiceUnlockButton) this.els.voiceUnlockButton.hidden = !remoteAudioBlocked;
+        if (this.els.voiceReconnectButton) {
+            this.els.voiceReconnectButton.hidden = !(failed || reconnectable);
+            this.els.voiceReconnectButton.disabled = Boolean(busy);
+        }
+    }
+
+    setVoicePartnerStatus(message = "") {
+        if (this.els.voicePartnerStatus) this.els.voicePartnerStatus.textContent = message || "میکروفن همراه خاموش است";
     }
 
     loadLocalControlPrefs() {

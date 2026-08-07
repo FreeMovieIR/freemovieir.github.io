@@ -3,7 +3,7 @@ import { RoomService } from "./room-service.js";
 import { MediaController } from "./media-controller.js";
 import { SyncController } from "./sync-controller.js";
 import { SubtitleController } from "./subtitle-controller.js";
-import { AudioCall } from "./audio-call.js";
+import { VoiceCall } from "./voice/voice-call.js";
 import { ChatController } from "./chat-controller.js";
 import { WatchPartyUI } from "./ui.js";
 import { APP_STATES } from "./ui-state.js";
@@ -21,7 +21,7 @@ let roomService;
 let mediaController;
 let subtitleController;
 let syncController;
-let audioCall;
+let voiceCall;
 let chatController;
 let currentRoom;
 let localDisplayName = "مهمان";
@@ -121,7 +121,8 @@ async function loadDevelopmentBridge() {
             getCurrentRoom: () => currentRoom,
             getSelectedRole: () => selectedRole,
             getMediaController: () => mediaController,
-            getAudioCall: () => audioCall,
+            getAudioCall: () => voiceCall,
+            getVoiceCall: () => voiceCall,
             getOperationController: () => operationController,
             getRestoreCoordinator: () => restoreCoordinator
         });
@@ -596,10 +597,10 @@ function setupRoomControllers(code, isOwner, generation = null) {
     ui.enterLobby(code, inviteLink, isOwner);
     syncController = new SyncController(ui.els.video, roomService, config);
     syncController.attach();
-    audioCall = new AudioCall(roomService, config, ui.els.remoteAudio, localTestBridge?.getVoiceOptions?.());
-    audioCall.start().catch((error) => {
+    voiceCall = new VoiceCall(roomService, config, ui.els.remoteAudio, localTestBridge?.getVoiceOptions?.());
+    voiceCall.start().catch((error) => {
         safeLog("voice start failed", { error: error?.message || String(error) });
-        ui.toast("اتصال صوتی آماده نشد. تماشای فیلم بدون صدا ادامه دارد.", "error");
+        ui.setVoiceStatus({ label: "اتصال صوتی برقرار نشد", failed: true, reconnectable: true });
     });
     chatController = new ChatController(roomService, config);
     chatController.listen();
@@ -625,7 +626,8 @@ function bindRoomEvents(generation = null) {
         }
         ui.renderRoom(currentRoom, roomService.uid);
         const partner = Object.entries(currentRoom.participants || {}).find(([uid]) => uid !== roomService.uid)?.[1];
-        audioCall?.setPartnerMicEnabled(Boolean(partner?.micEnabled));
+        voiceCall?.updateRoom(currentRoom);
+        voiceCall?.setPartnerMicEnabled(Boolean(partner?.micEnabled));
         syncController.startHeartbeat(roomService.role === "owner" && ui.state === APP_STATES.ACTIVE_ROOM);
         await applyRoomMedia(currentRoom);
         if (!currentRoom) return;
@@ -666,15 +668,15 @@ function bindRoomEvents(generation = null) {
         ui.renderAudioTracks(event.detail);
         if (event.detail?.status === "unsupported") ui.toast(event.detail?.message || MESSAGES.mkvAudioUnsupported, "error");
     });
-    audioCall.addEventListener("error", (event) => ui.toast(event.detail, "error"));
-    audioCall.addEventListener("remoteAudioBlocked", (event) => {
-        ui.toast(event.detail || MESSAGES.remoteAudioBlocked);
-        ui.showAutoplayOverlay();
+    voiceCall.addEventListener("userError", (event) => ui.toast(event.detail, "error"));
+    voiceCall.addEventListener("remoteAudioBlocked", (event) => {
+        ui.setVoiceStatus({ label: event.detail || MESSAGES.remoteAudioBlocked, remoteAudioBlocked: true });
     });
-    audioCall.addEventListener("state", (event) => {
-        ui.toast(event.detail);
-        ui.setMicState({ enabled: micEnabled, muted, label: event.detail, busy: micOperationActive });
+    voiceCall.addEventListener("status", (event) => {
+        ui.setVoiceStatus(event.detail);
+        ui.setMicState({ enabled: micEnabled, muted, label: event.detail?.label, busy: micOperationActive });
     });
+    voiceCall.addEventListener("partnerStatus", (event) => ui.setVoicePartnerStatus(event.detail));
     chatController.addEventListener("messages", (event) => ui.renderMessages(event.detail));
     chatController.addEventListener("reaction", (event) => ui.showReaction(event.detail.emoji));
     ui.addEventListener("copyCode", copyCode);
@@ -684,7 +686,14 @@ function bindRoomEvents(generation = null) {
     ui.addEventListener("continue", async () => {
         ui.hideAutoplayOverlay();
         try { await ui.els.video.play(); } catch {}
-        try { await audioCall?.unlockRemoteAudio(); } catch {}
+    });
+    ui.addEventListener("voiceUnlock", async () => {
+        const ok = await voiceCall?.unlockRemoteAudio();
+        ui.setVoiceStatus({ label: ok ? "صدا: اتصال برقرار است" : MESSAGES.remoteAudioBlocked, remoteAudioBlocked: !ok });
+    });
+    ui.addEventListener("voiceReconnect", async () => {
+        ui.setVoiceStatus({ label: "صدا: در حال اتصال دوباره", busy: true });
+        await voiceCall?.reconnect?.();
     });
     ui.addEventListener("mediaChange", changeMedia);
     ui.addEventListener("subtitleChange", changeSubtitle);
@@ -710,12 +719,12 @@ function bindRoomEvents(generation = null) {
         try { localStorage.setItem("watchPartyMovieMuted", event.detail ? "1" : "0"); } catch {}
     });
     ui.addEventListener("voiceVolume", (event) => {
-        audioCall?.setRemoteVolume(event.detail);
+        voiceCall?.setRemoteVolume(event.detail);
         try { localStorage.setItem("watchPartyVoiceVolume", String(event.detail)); } catch {}
     });
     ui.addEventListener("voiceMute", (event) => {
         voiceMuted = Boolean(event.detail);
-        audioCall?.setRemoteMuted(voiceMuted);
+        voiceCall?.setRemoteMuted(voiceMuted);
     });
     ui.addEventListener("audioTrackChange", async (event) => {
         try {
@@ -880,7 +889,7 @@ async function shareInvite() {
 }
 
 async function toggleMic() {
-    if (micOperationActive || !audioCall) return;
+    if (micOperationActive || !voiceCall) return;
     micOperationActive = true;
     const nextEnabled = !micEnabled;
     ui.setMicState({
@@ -891,10 +900,10 @@ async function toggleMic() {
     });
     try {
         if (nextEnabled) {
-            const ok = await audioCall.enableMicrophone();
+            const ok = await voiceCall.enableMicrophone();
             micEnabled = ok;
         } else {
-            await audioCall.disableMicrophone();
+            await voiceCall.disableMicrophone();
             micEnabled = false;
             muted = false;
         }
@@ -906,7 +915,7 @@ async function toggleMic() {
 
 function toggleMute() {
     muted = !muted;
-    audioCall.setMuted(muted);
+    voiceCall.setMuted(muted);
     ui.els.muteButton.textContent = muted ? "لغو بی‌صدا" : "بی‌صدا";
     ui.setMicState({ enabled: micEnabled, muted, label: muted ? "میکروفن بی‌صدا شد" : (micEnabled ? "میکروفن روشن" : "میکروفن خاموش") });
 }
@@ -953,7 +962,8 @@ function cleanup() {
     bufferTimer = null;
     countdownToken += 1;
     syncController?.destroy();
-    audioCall?.destroy();
+    voiceCall?.destroy();
+    voiceCall = null;
     chatController?.destroy();
     subtitleController?.clear();
     mediaController?.destroySource();
