@@ -6,6 +6,7 @@ import { get, push, ref, remove, set, update } from "firebase/database";
 
 const PROJECT_ID = "demo-freemovieir";
 const ROOM = "ABCDEFGH";
+const GENERATION = "owner-voice-generation";
 const now = Date.now();
 
 let testEnv;
@@ -163,6 +164,7 @@ test("unauthorized users cannot read chat or write chat/signaling data", async (
         createdAt: now
     }));
     await assertFails(set(ref(db("third"), `rooms/${ROOM}/signaling/offer`), {
+        generationId: GENERATION,
         type: "offer",
         sdp: "v=0",
         uid: "third",
@@ -173,27 +175,53 @@ test("unauthorized users cannot read chat or write chat/signaling data", async (
 test("owner and guest signaling writes are restricted to expected roles", async () => {
     await seedRoom();
     await set(ref(db("guest1"), `rooms/${ROOM}/guestUid`), "guest1");
+    await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/signaling/generationId`), GENERATION));
     await assertSucceeds(set(ref(db("owner"), `rooms/${ROOM}/signaling/offer`), {
+        generationId: GENERATION,
         type: "offer",
         sdp: "v=0",
         uid: "owner",
         createdAt: now
     }));
     await assertFails(set(ref(db("guest1"), `rooms/${ROOM}/signaling/offer`), {
+        generationId: GENERATION,
         type: "offer",
         sdp: "v=0",
         uid: "guest1",
         createdAt: now
     }));
     await assertSucceeds(set(ref(db("guest1"), `rooms/${ROOM}/signaling/answer`), {
+        generationId: GENERATION,
         type: "answer",
         sdp: "v=0",
         uid: "guest1",
         createdAt: now
     }));
     await assertFails(push(ref(db("owner"), `rooms/${ROOM}/signaling/guestCandidates`), {
+        generationId: GENERATION,
         candidate: "candidate",
         uid: "owner",
+        createdAt: now
+    }));
+    await assertSucceeds(push(ref(db("owner"), `rooms/${ROOM}/signaling/hostCandidates`), {
+        generationId: GENERATION,
+        candidate: "candidate",
+        sdpMid: "0",
+        sdpMLineIndex: 0,
+        uid: "owner",
+        createdAt: now
+    }));
+    await assertFails(set(ref(db("guest1"), `rooms/${ROOM}/signaling/answer`), {
+        generationId: "stale-generation",
+        type: "answer",
+        sdp: "v=0",
+        uid: "guest1",
+        createdAt: now
+    }));
+    await assertFails(push(ref(db("guest1"), `rooms/${ROOM}/signaling/guestCandidates`), {
+        generationId: "stale-generation",
+        candidate: "candidate",
+        uid: "guest1",
         createdAt: now
     }));
 });

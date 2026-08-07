@@ -131,24 +131,28 @@
 
         "signaling": {
           ".write": "auth != null && data.parent().child('ownerUid').val() === auth.uid && !newData.exists()",
+          "generationId": {
+            ".write": "auth != null && data.parent().parent().child('ownerUid').val() === auth.uid",
+            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,80}$/)"
+          },
           "offer": {
             ".write": "auth != null && data.parent().parent().child('ownerUid').val() === auth.uid",
-            ".validate": "newData.hasChildren(['type','sdp','uid','createdAt']) && newData.child('type').val() === 'offer' && newData.child('uid').val() === auth.uid && newData.child('sdp').isString() && newData.child('sdp').val().length < 12000"
+            ".validate": "newData.hasChildren(['generationId','type','sdp','uid','createdAt']) && newData.child('generationId').val() === newData.parent().child('generationId').val() && newData.child('type').val() === 'offer' && newData.child('uid').val() === auth.uid && newData.child('sdp').isString() && newData.child('sdp').val().length < 12000 && (newData.child('createdAt').isNumber() || newData.child('createdAt').val() === now)"
           },
           "answer": {
             ".write": "auth != null && data.parent().parent().child('guestUid').val() === auth.uid",
-            ".validate": "newData.hasChildren(['type','sdp','uid','createdAt']) && newData.child('type').val() === 'answer' && newData.child('uid').val() === auth.uid && newData.child('sdp').isString() && newData.child('sdp').val().length < 12000"
+            ".validate": "newData.hasChildren(['generationId','type','sdp','uid','createdAt']) && newData.child('generationId').val() === newData.parent().child('generationId').val() && newData.child('type').val() === 'answer' && newData.child('uid').val() === auth.uid && newData.child('sdp').isString() && newData.child('sdp').val().length < 12000 && (newData.child('createdAt').isNumber() || newData.child('createdAt').val() === now)"
           },
           "hostCandidates": {
             "$candidateId": {
               ".write": "auth != null && data.parent().parent().parent().child('ownerUid').val() === auth.uid",
-              ".validate": "newData.child('uid').val() === auth.uid && newData.child('candidate').isString() && newData.child('candidate').val().length < 2000"
+              ".validate": "newData.hasChildren(['generationId','candidate','uid','createdAt']) && newData.child('generationId').val() === newData.parent().parent().child('generationId').val() && newData.child('uid').val() === auth.uid && newData.child('candidate').isString() && newData.child('candidate').val().length < 2000 && (!newData.child('sdpMid').exists() || (newData.child('sdpMid').isString() && newData.child('sdpMid').val().length <= 32)) && (!newData.child('sdpMLineIndex').exists() || (newData.child('sdpMLineIndex').isNumber() && newData.child('sdpMLineIndex').val() >= 0 && newData.child('sdpMLineIndex').val() <= 64)) && (newData.child('createdAt').isNumber() || newData.child('createdAt').val() === now)"
             }
           },
           "guestCandidates": {
             "$candidateId": {
               ".write": "auth != null && data.parent().parent().parent().child('guestUid').val() === auth.uid",
-              ".validate": "newData.child('uid').val() === auth.uid && newData.child('candidate').isString() && newData.child('candidate').val().length < 2000"
+              ".validate": "newData.hasChildren(['generationId','candidate','uid','createdAt']) && newData.child('generationId').val() === newData.parent().parent().child('generationId').val() && newData.child('uid').val() === auth.uid && newData.child('candidate').isString() && newData.child('candidate').val().length < 2000 && (!newData.child('sdpMid').exists() || (newData.child('sdpMid').isString() && newData.child('sdpMid').val().length <= 32)) && (!newData.child('sdpMLineIndex').exists() || (newData.child('sdpMLineIndex').isNumber() && newData.child('sdpMLineIndex').val() >= 0 && newData.child('sdpMLineIndex').val() <= 64)) && (newData.child('createdAt').isNumber() || newData.child('createdAt').val() === now)"
             }
           },
           "$other": { ".validate": false }

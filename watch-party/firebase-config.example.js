@@ -23,7 +23,10 @@ export const watchPartyConfig = {
             { urls: "stun:stun.l.google.com:19302" },
             { urls: "stun:stun1.l.google.com:19302" }
         ],
-        turnCredentialsEndpoint: null
+        turnCredentialsEndpoint: "",
+        connectionTimeoutMs: 10000,
+        maxIceRestarts: 2,
+        relayFallback: true
     },
     optionalTurn: {
         enabled: false,

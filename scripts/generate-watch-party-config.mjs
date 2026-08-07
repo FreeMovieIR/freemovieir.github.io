@@ -30,6 +30,11 @@ const localDefaults = {
     ])
 };
 
+const defaultStunServers = Object.freeze([
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+]);
+
 function getValue(name) {
     if (process.env[name] !== undefined) return process.env[name];
     return environment === "production" ? "" : localDefaults[name] || "";
@@ -66,14 +71,18 @@ const firebase = {
 for (const [key, value] of Object.entries(firebase)) assertNoPrivateCredential(`firebase.${key}`, value);
 
 const appCheckSiteKey = getValue("WATCH_PARTY_APP_CHECK_SITE_KEY");
-const turnCredentialsEndpoint = getValue("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT");
+const isProduction = environment === "production";
+const turnCredentialsEndpoint = normalizeOptionalEndpoint(
+    getValue("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT"),
+    "WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT",
+    isProduction
+);
 const mediaGatewayUrl = normalizeOptionalHttpsUrl(getValue("WATCH_PARTY_MEDIA_GATEWAY_URL"), "WATCH_PARTY_MEDIA_GATEWAY_URL");
 assertNoPrivateCredential("WATCH_PARTY_APP_CHECK_SITE_KEY", appCheckSiteKey);
 assertNoPrivateCredential("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT", turnCredentialsEndpoint);
 assertNoPrivateCredential("WATCH_PARTY_MEDIA_GATEWAY_URL", mediaGatewayUrl);
 
 const iceServers = parseIceServers(getValue("WATCH_PARTY_RTC_ICE_SERVERS") || "[]");
-const isProduction = environment === "production";
 const config = {
     environment,
     firebase,
@@ -85,8 +94,11 @@ const config = {
         autoRefresh: true
     },
     rtc: {
-        iceServers,
-        turnCredentialsEndpoint
+        iceServers: iceServers.length ? iceServers : defaultStunServers,
+        turnCredentialsEndpoint,
+        connectionTimeoutMs: 10000,
+        maxIceRestarts: 2,
+        relayFallback: true
     },
     mediaGateway: {
         enabled: Boolean(mediaGatewayUrl),
@@ -178,6 +190,23 @@ function normalizeOptionalHttpsUrl(raw, name) {
         throw new Error(`${name} must be a valid HTTPS URL when provided.`);
     }
     if (parsed.protocol !== "https:") throw new Error(`${name} must use HTTPS in frontend config.`);
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.href.replace(/\/+$/, "/");
+}
+
+function normalizeOptionalEndpoint(raw, name, production) {
+    const value = String(raw || "").trim();
+    if (!value) return "";
+    let parsed;
+    try {
+        parsed = new URL(value);
+    } catch {
+        throw new Error(`${name} must be a valid URL when provided.`);
+    }
+    if (parsed.protocol !== "https:" && (production || !["127.0.0.1", "localhost", "[::1]"].includes(parsed.hostname))) {
+        throw new Error(`${name} must use HTTPS in production. Local HTTP endpoints are allowed only on loopback hosts.`);
+    }
     parsed.username = "";
     parsed.password = "";
     return parsed.href.replace(/\/+$/, "/");

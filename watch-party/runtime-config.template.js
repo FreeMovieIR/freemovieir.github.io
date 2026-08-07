@@ -15,8 +15,14 @@ export const watchPartyConfig = {
         autoRefresh: true
     },
     rtc: {
-        iceServers: [],
-        turnCredentialsEndpoint: ""
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" }
+        ],
+        turnCredentialsEndpoint: "",
+        connectionTimeoutMs: 10000,
+        maxIceRestarts: 2,
+        relayFallback: true
     },
     mediaGateway: {
         enabled: false,

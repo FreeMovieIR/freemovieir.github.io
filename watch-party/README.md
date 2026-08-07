@@ -152,11 +152,13 @@ Synthetic local MKV fixtures are generated under `test-assets/media/` for AAC, O
 
 ## Voice
 
-Microphone audio is optional and off by default. The browser requests audio permission only after the user presses the microphone button. Audio is sent peer-to-peer with WebRTC and is never recorded or stored in Firebase. Firebase only carries SDP and ICE signaling.
+Microphone audio is optional and off by default. The browser requests audio permission only after the user presses the microphone button. Audio is sent peer-to-peer with WebRTC and is never recorded or stored in Firebase. Firebase only carries generation-scoped SDP and ICE signaling.
 
 The active room includes local microphone on/off, mute, partner voice volume, and partner voice mute controls. Movie volume and partner voice volume are separate local channels.
 
-STUN servers are included for development. Reliable production connectivity across restrictive NATs may require TURN. Configure `rtc.turnCredentialsEndpoint` to return short-lived TURN credentials generated securely outside this static site.
+The voice connection is created on room entry with one `RTCPeerConnection`, one `audio` transceiver, and one sender. Mic on/off only uses `sender.replaceTrack(track)` or `sender.replaceTrack(null)`, so users should not need repeated mic toggles to trigger signaling.
+
+Pinned STUN servers are included by default. Reliable production connectivity across restrictive NATs may require TURN. Configure `rtc.turnCredentialsEndpoint` to return short-lived TURN credentials generated securely outside this static site. Permanent TURN usernames/passwords must not be committed to frontend configuration. See `watch-party/VOICE_TESTING.md` for safe diagnostics, force-relay testing, and the two-device manual matrix.
 
 ## iPhone and Compatibility
 

@@ -9,7 +9,7 @@ import { WatchPartyUI } from "./ui.js";
 import { APP_STATES } from "./ui-state.js";
 import { RestoreCoordinator, RestoreError, RESTORE_FAILURES, canRetryRestoreFailure, classifyRestoreFailure, getRestoreFailureMessage } from "./restore-controller.js";
 import { clearStoredRoomSession, hasAnyStoredRoomSession, readStoredRoomSession, saveRoomSession } from "./session-storage.js";
-import { describeMediaError, isHttpsUrl, isLocalHostname, isValidRoomCode, MESSAGES, normalizeRoomCode, parseUrl, sanitizeDisplayName } from "./utils.js";
+import { describeMediaError, isHttpsUrl, isLocalHostname, isValidRoomCode, MESSAGES, normalizeRoomCode, parseUrl, safeLog, sanitizeDisplayName } from "./utils.js";
 import { ServiceAvailabilityError, checkFirebaseServices } from "./service-availability.js";
 import { RoomOperationCancelledError, RoomOperationController, RoomOperationTimeoutError } from "./room-operation-controller.js";
 
@@ -77,6 +77,11 @@ function installLocalTestHook() {
                 return ui.els.video.dataset.e2eToken;
             },
             get mediaDiagnostics() { return mediaController?.diagnostics || globalThis.__watchPartyMediaDiagnostics || null; },
+            get voicePeerCount() { return audioCall?.peer ? 1 : 0; },
+            get voicePeerCreateCount() { return audioCall?.peerCreateCount || 0; },
+            get voiceGeneration() { return audioCall?.generationId ? "[set]" : ""; },
+            get voiceStarted() { return Boolean(audioCall?.started); },
+            voiceDiagnostics() { return audioCall?.getDiagnostics?.() || null; },
             get operationActive() {
                 return {
                     create: Boolean(operationController?.isActive("create")),
@@ -595,6 +600,10 @@ function setupRoomControllers(code, isOwner, generation = null) {
     syncController = new SyncController(ui.els.video, roomService, config);
     syncController.attach();
     audioCall = new AudioCall(roomService, config, ui.els.remoteAudio);
+    audioCall.start().catch((error) => {
+        safeLog("voice start failed", { error: error?.message || String(error) });
+        ui.toast("اتصال صوتی آماده نشد. تماشای فیلم بدون صدا ادامه دارد.", "error");
+    });
     chatController = new ChatController(roomService, config);
     chatController.listen();
     bindRoomEvents(generation);
@@ -618,6 +627,8 @@ function bindRoomEvents(generation = null) {
             return;
         }
         ui.renderRoom(currentRoom, roomService.uid);
+        const partner = Object.entries(currentRoom.participants || {}).find(([uid]) => uid !== roomService.uid)?.[1];
+        audioCall?.setPartnerMicEnabled(Boolean(partner?.micEnabled));
         syncController.startHeartbeat(roomService.role === "owner" && ui.state === APP_STATES.ACTIVE_ROOM);
         await applyRoomMedia(currentRoom);
         if (!currentRoom) return;

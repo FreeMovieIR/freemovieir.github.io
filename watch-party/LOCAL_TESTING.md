@@ -311,8 +311,30 @@ This hook is ignored outside local hosts and must not be used for production beh
 - Mute and unmute toggle local audio tracks.
 - Remote audio element receives a stream when WebRTC connects.
 - Leaving or ending the room stops local microphone tracks.
-- Refresh recreates signaling without repeated offers.
+- Refresh recreates generation-scoped signaling without repeated offers.
 - Firebase Emulator UI contains only room state, chat, subtitles, and SDP/ICE signaling. It must not contain media bytes or microphone audio.
+
+### Voice Diagnostics
+
+On localhost, safe voice diagnostics are available from the console:
+
+```js
+await window.__watchPartyTest.voiceDiagnostics()
+```
+
+This reports ICE state, selected path, sender/transceiver counts, remote audio playback status, and packet counters without logging SDP, ICE addresses, TURN credentials, full UIDs, media URLs, subtitle text, or chat text.
+
+To test relay-only behavior, set this before entering the room:
+
+```js
+window.__WATCH_PARTY_TEST__ = {
+  voice: {
+    forceRelay: true
+  }
+};
+```
+
+Force-relay success requires a working local or production-safe `rtc.turnCredentialsEndpoint`; otherwise the expected result is a voice failure message while movie synchronization remains usable. The full manual matrix is in `watch-party/VOICE_TESTING.md`.
 
 ## Mobile Checks
 
