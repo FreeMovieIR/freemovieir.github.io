@@ -20,3 +20,19 @@ test("Firebase rules do not contain globally open read/write", () => {
     assert.equal(rules.includes('".read": true'), false);
     assert.equal(rules.includes('".write": true'), false);
 });
+
+test("production Watch Party runtime modules do not embed browser test hooks", () => {
+    const forbidden = [
+        "__WATCH_PARTY_",
+        "__watchPartyTest",
+        "installLocalTestHook",
+        "getLocalTestControl",
+        "getLocalVoiceTestControl"
+    ];
+    for (const file of ["watch-party/js/app.js", "watch-party/js/audio-call.js", "watch-party/js/service-availability.js"]) {
+        const text = readFileSync(file, "utf8");
+        for (const token of forbidden) {
+            assert.equal(text.includes(token), false, `${token} leaked into ${file}`);
+        }
+    }
+});

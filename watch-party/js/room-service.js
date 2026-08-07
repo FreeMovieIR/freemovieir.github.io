@@ -185,20 +185,25 @@ export class RoomService extends EventTarget {
                 this.dispatchEvent(new CustomEvent("connection", { detail: "offline" }));
                 return;
             }
-            await db.onDisconnect(participantRef).update({
-                online: false,
-                ready: false,
-                buffering: false,
-                micEnabled: false,
-                lastSeen: this.firebase.serverTimestamp(),
-                connectionState: MESSAGES.reconnecting
-            });
-            await db.update(participantRef, {
-                online: true,
-                lastSeen: this.firebase.serverTimestamp(),
-                connectionState: "متصل"
-            });
-            this.dispatchEvent(new CustomEvent("connection", { detail: "online" }));
+            try {
+                await db.onDisconnect(participantRef).update({
+                    online: false,
+                    ready: false,
+                    buffering: false,
+                    micEnabled: false,
+                    lastSeen: this.firebase.serverTimestamp(),
+                    connectionState: MESSAGES.reconnecting
+                });
+                await db.update(participantRef, {
+                    online: true,
+                    lastSeen: this.firebase.serverTimestamp(),
+                    connectionState: "متصل"
+                });
+                this.dispatchEvent(new CustomEvent("connection", { detail: "online" }));
+            } catch (error) {
+                safeLog("presence update failed", { error: error?.message || String(error) });
+                this.dispatchEvent(new CustomEvent("roomError", { detail: error }));
+            }
         });
     }
 
@@ -209,7 +214,7 @@ export class RoomService extends EventTarget {
             this.dispatchEvent(new CustomEvent("room", { detail: room }));
         }, (error) => {
             safeLog("room listener error", { error: error.message });
-            this.dispatchEvent(new CustomEvent("error", { detail: error }));
+            this.dispatchEvent(new CustomEvent("roomError", { detail: error }));
         });
     }
 

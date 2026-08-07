@@ -46,80 +46,19 @@ let restoreCancelled = false;
 let roomEventGeneration = null;
 let operationController;
 let lastServiceAction = null;
-
-installLocalTestHook();
+let localTestBridge = null;
+let globalRuntimeErrorsBound = false;
 
 init().catch((error) => showFatal(error.message || MESSAGES.missingConfig));
 
-function installLocalTestHook() {
-    if (!isLocalHostname(location.hostname)) return;
-    Object.defineProperty(window, "__watchPartyTest", {
-        configurable: true,
-        value: {
-            get state() { return ui.state; },
-            get selectedRole() { return selectedRole; },
-            get uid() { return firebase?.user?.uid || null; },
-            get roomCode() { return roomService?.roomCode || null; },
-            get roomRole() { return roomService?.role || null; },
-            get room() {
-                if (!currentRoom) return null;
-                return {
-                    status: currentRoom.status,
-                    ownerUid: currentRoom.ownerUid,
-                    guestUid: currentRoom.guestUid,
-                    participantUids: Object.keys(currentRoom.participants || {})
-                };
-            },
-            get videoElementToken() {
-                if (!ui.els.video.dataset.e2eToken) {
-                    ui.els.video.dataset.e2eToken = crypto.randomUUID?.() || String(Date.now());
-                }
-                return ui.els.video.dataset.e2eToken;
-            },
-            get mediaDiagnostics() { return mediaController?.diagnostics || globalThis.__watchPartyMediaDiagnostics || null; },
-            get voicePeerCount() { return audioCall?.peer ? 1 : 0; },
-            get voicePeerCreateCount() { return audioCall?.peerCreateCount || 0; },
-            get voiceGeneration() { return audioCall?.generationId ? "[set]" : ""; },
-            get voiceStarted() { return Boolean(audioCall?.started); },
-            voiceDiagnostics() { return audioCall?.getDiagnostics?.() || null; },
-            get operationActive() {
-                return {
-                    create: Boolean(operationController?.isActive("create")),
-                    join: Boolean(operationController?.isActive("join")),
-                    media: Boolean(operationController?.isActive("media"))
-                };
-            },
-            get restoreAttemptCount() { return restoreCoordinator?.attemptCount || 0; },
-            get restoreActive() { return Boolean(restoreCoordinator?.active); },
-            get roomListenerActive() { return Boolean(roomService?.unsubscribeRoom); },
-            get connectionListenerActive() { return Boolean(roomService?.unsubscribeConnected); }
-        }
-    });
-    if (!window.__WATCH_PARTY_TEST__) {
-        Object.defineProperty(window, "__WATCH_PARTY_TEST__", {
-            configurable: true,
-            value: {}
-        });
-    }
-}
-
-function getLocalTestControl() {
-    if (!isLocalHostname(location.hostname)) return {};
-    return window.__WATCH_PARTY_TEST__ || {};
-}
-
 function getRestoreTimeoutMs() {
-    const localOverride = Number(getLocalTestControl().restoreTimeoutMs);
+    const localOverride = Number(localTestBridge?.getRestoreTimeoutOverride?.());
     if (Number.isFinite(localOverride) && localOverride > 0) return localOverride;
     return Number(config?.restoreTimeoutMs || 10000);
 }
 
 function getMaxStoredSessionAgeMs() {
     return Number(config?.maxStoredSessionAgeMs || config?.roomLifetimeMs || 6 * 60 * 60 * 1000);
-}
-
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function init() {
@@ -132,6 +71,7 @@ async function init() {
     ui.prefill(prefillData);
     ui.loadRememberedName();
     bindGlobalUi();
+    await loadDevelopmentBridge();
 
     if (config?.missing) {
         showFatal(config.productionMissing ? MESSAGES.productionConfigMissing : MESSAGES.missingConfig);
@@ -170,7 +110,35 @@ async function init() {
     ui.setState(APP_STATES.WELCOME);
 }
 
+async function loadDevelopmentBridge() {
+    if (!shouldLoadDevelopmentBridge()) return;
+    try {
+        const bridge = await import("../dev/local-test-bridge.js");
+        localTestBridge = bridge.installLocalTestBridge({
+            ui,
+            getFirebase: () => firebase,
+            getRoomService: () => roomService,
+            getCurrentRoom: () => currentRoom,
+            getSelectedRole: () => selectedRole,
+            getMediaController: () => mediaController,
+            getAudioCall: () => audioCall,
+            getOperationController: () => operationController,
+            getRestoreCoordinator: () => restoreCoordinator
+        });
+    } catch (error) {
+        safeLog("local test bridge unavailable", { error: error?.message || String(error) });
+    }
+}
+
+function shouldLoadDevelopmentBridge() {
+    if (config?.environment === "production") return false;
+    if (!isLocalHostname(location.hostname)) return false;
+    return Boolean(config?.useEmulators || config?.environment === "local" || config?.environment === "test");
+}
+
 function bindGlobalUi() {
+    bindGlobalRuntimeErrors();
+
     ui.addEventListener("selectRole", async (event) => {
         selectedRole = event.detail;
         ui.setSelectedRole(selectedRole);
@@ -259,9 +227,29 @@ function bindGlobalUi() {
     });
 }
 
+function bindGlobalRuntimeErrors() {
+    if (globalRuntimeErrorsBound || typeof window === "undefined") return;
+    globalRuntimeErrorsBound = true;
+    window.addEventListener("unhandledrejection", (event) => {
+        const reason = classifyRestoreFailure(event.reason);
+        if (reason !== RESTORE_FAILURES.PERMISSION_DENIED || !roomService) return;
+        event.preventDefault();
+        handleRoomAccessLoss(event.reason);
+    });
+}
+
+function handleRoomAccessLoss(error) {
+    safeLog("room access lost", { error: error?.message || String(error || "") });
+    cleanup();
+    ui.showRestoreFailed({
+        message: getRestoreFailureMessage(classifyRestoreFailure(error)),
+        canRetry: false
+    });
+}
+
 async function ensureFirebase() {
     if (firebase) return firebase;
-    firebase = await createFirebaseClient(config);
+    firebase = await createFirebaseClient(config, getServiceCheckOptions());
     mediaController = new MediaController(ui.els.video, config);
     subtitleController = new SubtitleController(ui.els.video, ui.els.track, config);
     if (firebase.emulatorMode) ui.banner(MESSAGES.emulatorMode, true);
@@ -271,7 +259,7 @@ async function ensureFirebase() {
 async function verifyServicesOrShow(actionName) {
     if (!shouldUseEmulators(config)) return true;
     try {
-        await ensureFirebaseServicesAvailable(config, { timeoutMs: Number(config.serviceCheckTimeoutMs || 4000) });
+        await ensureFirebaseServicesAvailable(config, getServiceCheckOptions());
         return true;
     } catch (error) {
         if (error instanceof ServiceAvailabilityError) {
@@ -285,7 +273,7 @@ async function verifyServicesOrShow(actionName) {
 }
 
 async function retryAfterServiceUnavailable() {
-    const status = await checkFirebaseServices(config, { timeoutMs: Number(config.serviceCheckTimeoutMs || 4000) });
+    const status = await checkFirebaseServices(config, getServiceCheckOptions());
     if (status.status !== "available") {
         ui.showServiceUnavailable(status, { production: !shouldUseEmulators(config) });
         return;
@@ -296,6 +284,13 @@ async function retryAfterServiceUnavailable() {
     if (action === "create") ui.setState(APP_STATES.HOST_MEDIA);
     else if (action === "join") ui.setState(APP_STATES.GUEST_PROFILE);
     else ui.setState(selectedRole === "guest" ? APP_STATES.GUEST_PROFILE : selectedRole === "host" ? APP_STATES.HOST_MEDIA : APP_STATES.WELCOME);
+}
+
+function getServiceCheckOptions() {
+    return {
+        timeoutMs: Number(config.serviceCheckTimeoutMs || 4000),
+        forcedStatus: localTestBridge?.getForcedServiceStatus?.()
+    };
 }
 
 async function createRoomGuarded(event) {
@@ -529,7 +524,12 @@ async function performRestore(session, generation) {
         return;
     }
     validateRestoredMembership(room, stored);
-    await roomService.enterRoom(stored.roomCode, stored.role === "host" ? "owner" : "guest", localDisplayName);
+    try {
+        await roomService.enterRoom(stored.roomCode, stored.role === "host" ? "owner" : "guest", localDisplayName);
+    } catch (error) {
+        roomService.detach();
+        throw new RestoreError(classifyRestoreFailure(error));
+    }
     if (!isCurrentRestore(generation)) {
         roomService.detach();
         return;
@@ -540,10 +540,7 @@ async function performRestore(session, generation) {
 }
 
 async function maybeDelayRestore() {
-    const controls = getLocalTestControl();
-    if (controls.forceRestoreFailure) throw new RestoreError(controls.forceRestoreFailure);
-    const delayMs = Number(controls.delayRestoreMs || 0);
-    if (Number.isFinite(delayMs) && delayMs > 0) await delay(delayMs);
+    await localTestBridge?.beforeRestoreRead?.((reason) => new RestoreError(reason));
 }
 
 async function readRestorableRoom(session) {
@@ -599,7 +596,7 @@ function setupRoomControllers(code, isOwner, generation = null) {
     ui.enterLobby(code, inviteLink, isOwner);
     syncController = new SyncController(ui.els.video, roomService, config);
     syncController.attach();
-    audioCall = new AudioCall(roomService, config, ui.els.remoteAudio);
+    audioCall = new AudioCall(roomService, config, ui.els.remoteAudio, localTestBridge?.getVoiceOptions?.());
     audioCall.start().catch((error) => {
         safeLog("voice start failed", { error: error?.message || String(error) });
         ui.toast("اتصال صوتی آماده نشد. تماشای فیلم بدون صدا ادامه دارد.", "error");
@@ -645,6 +642,14 @@ function bindRoomEvents(generation = null) {
     roomService.addEventListener("connection", (event) => {
         if (generation && !isRoomGenerationValid(generation)) return;
         ui.banner(event.detail === "online" ? "" : MESSAGES.reconnecting, event.detail !== "online");
+    });
+    roomService.addEventListener("roomError", (event) => {
+        if (generation && !isRoomGenerationValid(generation)) return;
+        if (restoreCoordinator?.active) {
+            handleRestoreFailure(event.detail, generation);
+            return;
+        }
+        handleRoomAccessLoss(event.detail);
     });
     syncController.addEventListener("autoplay", () => ui.showAutoplayOverlay());
     mediaController.addEventListener("error", (event) => ui.toast(event.detail || MESSAGES.network, "error"));

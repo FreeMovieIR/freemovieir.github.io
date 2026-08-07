@@ -53,3 +53,16 @@ test("database emulator unavailable is reported before room operations", async (
     });
     assert.equal(result.status, SERVICE_STATUS.DATABASE_UNAVAILABLE);
 });
+
+test("forced service status is injected through options instead of browser globals", async () => {
+    const result = await checkFirebaseServices(config, {
+        hostname: "127.0.0.1",
+        forcedStatus: SERVICE_STATUS.BOTH_UNAVAILABLE,
+        fetchFn: async () => {
+            throw new Error("fetch should not run when forced");
+        }
+    });
+    assert.equal(result.status, SERVICE_STATUS.BOTH_UNAVAILABLE);
+    assert.equal(result.authAvailable, false);
+    assert.equal(result.databaseAvailable, false);
+});

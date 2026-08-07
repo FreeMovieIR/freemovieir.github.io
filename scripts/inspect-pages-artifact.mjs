@@ -13,6 +13,7 @@ const forbiddenPathParts = new Set([
     "tests",
     "scripts",
     "firebase",
+    "dev",
     "services",
     "test-assets",
     "artifacts",

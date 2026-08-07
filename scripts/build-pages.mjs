@@ -57,6 +57,7 @@ const watchPartyExcluded = new Set([
     "LOCAL_TESTING.md",
     "PRODUCTION_SETUP.md",
     "README.md",
+    "VOICE_TESTING.md",
     "firebase-config.example.js",
     "firebase-config.js",
     "runtime-config.js",
@@ -102,6 +103,7 @@ async function copyPublicTree(sourceDir, targetDir) {
 function shouldExclude(rel, entry) {
     const parts = rel.split("/");
     if (excludedNames.has(parts[0]) || parts.some((part) => excludedNames.has(part))) return true;
+    if (parts[0] === "watch-party" && parts[1] === "dev") return true;
     if (!entry.isDirectory() && excludedFiles.has(basename(rel))) return true;
     if (!entry.isDirectory() && excludedExtensions.has(extname(rel).toLowerCase())) return true;
     if (parts[0] === "watch-party" && !entry.isDirectory() && watchPartyExcluded.has(basename(rel))) return true;
@@ -153,18 +155,9 @@ async function transformJsTree(jsDir) {
         let text = await readFile(file, "utf8");
         text = text.replace(/from "(\.\/[^"]+\.js)"/g, `from "$1?v=${buildId}"`);
         text = text.replace(/from "(\.\.\/[^"]+\.js)"/g, `from "$1?v=${buildId}"`);
-        if (entry.name === "app.js") {
-            text = stripLocalTestHook(text);
-        }
         text = hardenProductionOnlyText(text);
         await writeFile(file, text, "utf8");
     }
-}
-
-function stripLocalTestHook(text) {
-    return text
-        .replace(/installLocalTestHook\(\);\s*/, "")
-        .replace(/function installLocalTestHook\(\) \{[\s\S]*?\n\}\n\nfunction getLocalTestControl\(\) \{[\s\S]*?\n\}/, "function getLocalTestControl() {\n    return {};\n}");
 }
 
 function hardenProductionOnlyText(text) {

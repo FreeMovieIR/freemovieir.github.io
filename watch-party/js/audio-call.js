@@ -22,7 +22,7 @@ const VOICE_LABELS = Object.freeze({
 });
 
 export class AudioCall extends EventTarget {
-    constructor(roomService, config, remoteAudio) {
+    constructor(roomService, config, remoteAudio, options = {}) {
         super();
         this.roomService = roomService;
         this.config = normalizeRtcConfig(config);
@@ -47,7 +47,7 @@ export class AudioCall extends EventTarget {
         this.ignoreOffer = false;
         this.isSettingRemoteAnswerPending = false;
         this.polite = this.roomService.role === "guest";
-        this.relayMode = Boolean(getLocalVoiceTestControl().forceRelay);
+        this.relayMode = Boolean(options.forceRelay);
         this.relayFallbackAttempted = this.relayMode;
         this.iceRestartAttempts = 0;
         this.connectionTimer = null;
@@ -663,10 +663,4 @@ function loadLocalNumber(key, fallback) {
     } catch {
         return fallback;
     }
-}
-
-function getLocalVoiceTestControl() {
-    const hostname = globalThis.location?.hostname || "";
-    if (!isLocalHostname(hostname)) return {};
-    return globalThis.window?.__WATCH_PARTY_TEST__?.voice || globalThis.__WATCH_PARTY_TEST__?.voice || {};
 }

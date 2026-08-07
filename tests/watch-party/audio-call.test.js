@@ -193,7 +193,7 @@ function makeRoomService({ role = "owner", uid = role, db = makeDb() } = {}) {
     };
 }
 
-function makeAudio(roomService, config = {}) {
+function makeAudio(roomService, config = {}, options = {}) {
     const remoteAudio = {
         srcObject: null,
         paused: true,
@@ -214,7 +214,7 @@ function makeAudio(roomService, config = {}) {
             ...config.rtc
         },
         ...config
-    }, remoteAudio);
+    }, remoteAudio, options);
     audioInstances.push(audio);
     return audio;
 }
@@ -241,7 +241,7 @@ beforeEach(() => {
     Object.defineProperty(globalThis, "RTCSessionDescription", { configurable: true, value: FakeSessionDescription });
     Object.defineProperty(globalThis, "MediaStream", { configurable: true, value: FakeStream });
     Object.defineProperty(globalThis, "location", { configurable: true, value: { hostname: "127.0.0.1", href: "http://127.0.0.1:8080/watch-party/" } });
-    Object.defineProperty(globalThis, "window", { configurable: true, value: { __WATCH_PARTY_TEST__: { voice: {} } } });
+    Object.defineProperty(globalThis, "window", { configurable: true, value: {} });
     Object.defineProperty(globalThis, "localStorage", { configurable: true, value: { getItem: () => null, setItem: () => {} } });
     Object.defineProperty(globalThis, "isSecureContext", { configurable: true, value: true });
     Object.defineProperty(globalThis, "navigator", {
@@ -361,12 +361,19 @@ test("candidates before remote description are queued, stale and duplicate candi
 });
 
 test("forceRelay local test mode creates relay-only peer", async () => {
-    globalThis.window.__WATCH_PARTY_TEST__.voice.forceRelay = true;
-    const audio = makeAudio(makeRoomService({ role: "owner", uid: "owner", db: makeDb() }));
+    const audio = makeAudio(makeRoomService({ role: "owner", uid: "owner", db: makeDb() }), {}, { forceRelay: true });
 
     await audio.start();
 
     assert.equal(audio.peer.config.iceTransportPolicy, "relay");
+});
+
+test("production AudioCall defaults to normal ICE policy without injected controls", async () => {
+    const audio = makeAudio(makeRoomService({ role: "owner", uid: "owner", db: makeDb() }));
+
+    await audio.start();
+
+    assert.equal(audio.peer.config.iceTransportPolicy, "all");
 });
 
 test("TURN endpoint uses Firebase ID token and rejects invalid or expired responses", async () => {

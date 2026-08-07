@@ -24,13 +24,13 @@ export async function loadWatchPartyConfig() {
     }
 }
 
-export async function createFirebaseClient(config) {
+export async function createFirebaseClient(config, serviceCheckOptions = {}) {
     if (!config?.firebase?.apiKey || !config?.firebase?.databaseURL) {
         throw new Error(MESSAGES.missingConfig);
     }
 
     if (shouldUseEmulators(config)) {
-        await assertFirebaseServicesAvailable(config);
+        await assertFirebaseServicesAvailable(config, serviceCheckOptions);
     }
 
     const [{ initializeApp }, authModule, dbModule] = await Promise.all([

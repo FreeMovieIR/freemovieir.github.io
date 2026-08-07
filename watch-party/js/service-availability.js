@@ -44,7 +44,7 @@ export async function checkFirebaseServices(config = {}, options = {}) {
     if (!shouldCheckLocalServices(config, hostname)) {
         return makeResult(SERVICE_STATUS.AVAILABLE, true, true);
     }
-    const forcedStatus = getForcedServiceStatus(hostname);
+    const forcedStatus = Object.values(SERVICE_STATUS).includes(options.forcedStatus) ? options.forcedStatus : null;
     if (forcedStatus) {
         return makeResult(
             forcedStatus,
@@ -65,12 +65,6 @@ export async function checkFirebaseServices(config = {}, options = {}) {
     ]);
     const status = getStatus(auth.ok, database.ok);
     return makeResult(status, auth.ok, database.ok, endpoints, { auth, database });
-}
-
-function getForcedServiceStatus(hostname) {
-    if (!isLocalHostname(hostname)) return null;
-    const forced = globalThis.__WATCH_PARTY_TEST__?.forceServiceStatus;
-    return Object.values(SERVICE_STATUS).includes(forced) ? forced : null;
 }
 
 export async function assertFirebaseServicesAvailable(config = {}, options = {}) {

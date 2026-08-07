@@ -121,14 +121,27 @@ try {
     if (requests.some((url) => url.includes("/watch-party/firebase-config.js"))) {
         throw new Error("Production artifact requested watch-party/firebase-config.js.");
     }
+    if (requests.some((url) => url.includes("/watch-party/dev/local-test-bridge.js"))) {
+        throw new Error("Production artifact requested the Watch Party development bridge.");
+    }
     if (requests.some((url) => /:(9000|9099)\b/.test(url))) {
         throw new Error("Production artifact attempted to contact Firebase emulator ports.");
+    }
+
+    await page.goto(`${BASE_URL}/watch-party/`, { waitUntil: "domcontentloaded" });
+    const productionHookState = await page.evaluate(() => ({
+        e2eHook: typeof window.__watchPartyTest,
+        controlHook: typeof window.__WATCH_PARTY_TEST__
+    }));
+    if (productionHookState.e2eHook !== "undefined" || productionHookState.controlHook !== "undefined") {
+        throw new Error("Production artifact exposed Watch Party local test globals.");
     }
 
     await assertNotServed("/scripts/build-pages.mjs");
     await assertNotServed("/tests/watch-party/utils.test.js");
     await assertNotServed("/firebase/database.rules.json");
     await assertNotServed("/package.json");
+    await assertNotServed("/watch-party/dev/local-test-bridge.js");
 
     if (sameOriginFailures.length) {
         throw new Error(`Same-origin preview failures:\n${sameOriginFailures.join("\n")}`);
