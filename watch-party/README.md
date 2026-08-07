@@ -98,12 +98,6 @@ Create and join operations are guarded by bounded timeouts:
 
 These values are documented in `firebase-config.example.js` and can be adjusted for local debugging.
 
-## Anonymous Auth Diagnostics
-
-Anonymous sign-in failures are classified before they reach the UI. The app preserves the original Firebase error internally as the error cause, but users only see a safe Persian message plus one diagnostic code: `AUTH-NETWORK`, `AUTH-TIMEOUT`, `AUTH-DISABLED`, `AUTH-CONFIG`, `AUTH-RATE`, or `AUTH-UNKNOWN`.
-
-The retry action retries authentication without clearing the selected role, room code, display name, or current setup form. The development log for auth failures is limited to `{ category, firebaseCode, online }`. The optional endpoint probe checks reachability for `www.gstatic.com` and `identitytoolkit.googleapis.com` without sending the Firebase API key or creating an account. An unreachable endpoint is not proof of a country or carrier restriction by itself.
-
 ## Room Restoration
 
 After a successful create or join, the browser stores a small namespaced room session at `freemovie.watchParty.roomSession`. It contains only the room code, role, Firebase anonymous UID, last known stage, schema version, and timestamp.

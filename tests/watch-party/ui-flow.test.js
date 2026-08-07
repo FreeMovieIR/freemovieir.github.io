@@ -19,7 +19,6 @@ test("state model maps loading substates to the intended visible screen", () => 
     assert.equal(getVisibleScreenForState(APP_STATES.JOINING_ROOM), APP_STATES.GUEST_PROFILE);
     assert.equal(getVisibleScreenForState(APP_STATES.RESTORING_ROOM), APP_STATES.RESTORING_ROOM);
     assert.equal(getVisibleScreenForState(APP_STATES.RESTORE_FAILED), APP_STATES.RESTORE_FAILED);
-    assert.equal(getVisibleScreenForState(APP_STATES.AUTH_FAILED), APP_STATES.AUTH_FAILED);
 });
 
 test("initial welcome screen contains only role selection, not room tools", () => {
@@ -66,15 +65,4 @@ test("restore screens expose retry and cancel without room controls", () => {
     assert.match(failed, /restore-retry-failed/);
     assert.match(failed, /restore-cancel-failed/);
     assert.doesNotMatch(restoring + failed, /party-video|chat-input|mic-button|invite-code|movie-controls/);
-});
-
-test("auth failure screen exposes safe retry diagnostics without room controls", () => {
-    const authFailed = section("screen-auth-failed");
-    assert.match(authFailed, /auth-failed-message/);
-    assert.match(authFailed, /auth-diagnostic-code/);
-    assert.match(authFailed, /AUTH-UNKNOWN/);
-    assert.match(authFailed, /auth-retry/);
-    assert.match(authFailed, /auth-back/);
-    assert.doesNotMatch(authFailed, /party-video|chat-input|mic-button|invite-code|movie-controls/);
-    assert.doesNotMatch(authFailed, /Firebase UID|access token|refresh token|apiKey/i);
 });

@@ -1,7 +1,6 @@
 export const APP_STATES = Object.freeze({
     WELCOME: "welcome",
     AUTHENTICATING: "authenticating",
-    AUTH_FAILED: "auth-failed",
     HOST_PROFILE: "host-profile",
     HOST_MEDIA: "host-media",
     GUEST_CODE: "guest-code",
@@ -25,7 +24,6 @@ export function getVisibleScreenForState(state) {
     if (state === APP_STATES.RESTORING_ROOM) return APP_STATES.RESTORING_ROOM;
     if (state === APP_STATES.RESTORE_FAILED) return APP_STATES.RESTORE_FAILED;
     if (state === APP_STATES.SERVICE_UNAVAILABLE) return APP_STATES.SERVICE_UNAVAILABLE;
-    if (state === APP_STATES.AUTH_FAILED) return APP_STATES.AUTH_FAILED;
     if (state === APP_STATES.RECONNECTING) return APP_STATES.AUTHENTICATING;
     return state;
 }

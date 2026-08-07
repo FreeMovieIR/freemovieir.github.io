@@ -74,21 +74,6 @@ Realtime Database emulator: http://127.0.0.1:9000
 Static frontend: http://127.0.0.1:8080
 ```
 
-## Anonymous Auth Diagnostics
-
-If anonymous sign-in fails, the app now shows a safe Persian message and one temporary diagnostic code instead of the raw Firebase error:
-
-```text
-AUTH-NETWORK
-AUTH-TIMEOUT
-AUTH-DISABLED
-AUTH-CONFIG
-AUTH-RATE
-AUTH-UNKNOWN
-```
-
-The Retry button only retries authentication and keeps the current role, room code, display name, and form values. The optional endpoint probe checks only public Firebase endpoints (`www.gstatic.com` and `identitytoolkit.googleapis.com`) without using the Firebase API key. A failed probe means the endpoint was unreachable from that browser; it does not prove the cause of the network restriction.
-
 ## Automated Checks
 
 Unit tests:

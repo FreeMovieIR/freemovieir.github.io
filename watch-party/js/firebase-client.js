@@ -1,5 +1,4 @@
-import { AuthTimeoutError, getSafeFirebaseCode, probeFirebaseAuthEndpoints, toAuthInitializationError } from "./auth-diagnostics.js";
-import { MESSAGES, safeLog } from "./utils.js";
+import { MESSAGES } from "./utils.js";
 import { assertFirebaseServicesAvailable } from "./service-availability.js";
 
 const FIREBASE_VERSION = "10.12.5";
@@ -34,13 +33,13 @@ export async function createFirebaseClient(config, serviceCheckOptions = {}) {
         await assertFirebaseServicesAvailable(config, serviceCheckOptions);
     }
 
-    const [appModule, authModule, dbModule] = await Promise.all([
+    const [{ initializeApp }, authModule, dbModule] = await Promise.all([
         import(APP_URL),
         import(AUTH_URL),
         import(DB_URL)
     ]);
 
-    const app = appModule.getApps().length ? appModule.getApp() : appModule.initializeApp(config.firebase);
+    const app = initializeApp(config.firebase);
     await initializeAppCheckIfConfigured(app, config);
     const auth = authModule.getAuth(app);
     const database = dbModule.getDatabase(app);
@@ -50,20 +49,13 @@ export async function createFirebaseClient(config, serviceCheckOptions = {}) {
         connectEmulatorsOnce({ app, auth, database, authModule, dbModule, config });
     }
 
-    try {
-        await withTimeout(
-            authModule.signInAnonymously(auth),
-            Number(config?.authTimeoutMs || config?.createRoomTimeoutMs || 10000)
-        );
-    } catch (error) {
-        const authError = toAuthInitializationError(error);
-        safeLog("anonymous auth failed", {
-            category: authError.category,
-            firebaseCode: getSafeFirebaseCode(authError),
-            online: globalThis.navigator?.onLine ?? null
-        });
-        throw authError;
-    }
+    await withTimeout(
+        authModule.signInAnonymously(auth),
+        Number(config?.authTimeoutMs || config?.createRoomTimeoutMs || 10000),
+        MESSAGES.authFailed
+    ).catch(() => {
+        throw new Error(MESSAGES.authFailed);
+    });
 
     return {
         app,
@@ -125,15 +117,10 @@ function connectEmulatorsOnce({ app, auth, database, authModule, dbModule, confi
     connectedEmulatorApps.add(appName);
 }
 
-export function maybeProbeFirebaseAuthEndpoints(config, options = {}) {
-    if (config?.authDiagnosticsProbe === false) return Promise.resolve(null);
-    return probeFirebaseAuthEndpoints(options);
-}
-
-function withTimeout(promise, timeoutMs) {
+function withTimeout(promise, timeoutMs, message) {
     let timer;
     const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new AuthTimeoutError()), timeoutMs);
+        timer = setTimeout(() => reject(new Error(message)), timeoutMs);
     });
     return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }

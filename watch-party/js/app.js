@@ -1,4 +1,4 @@
-import { loadWatchPartyConfig, createFirebaseClient, ensureFirebaseServicesAvailable, maybeProbeFirebaseAuthEndpoints, shouldUseEmulators } from "./firebase-client.js";
+import { loadWatchPartyConfig, createFirebaseClient, ensureFirebaseServicesAvailable, shouldUseEmulators } from "./firebase-client.js";
 import { RoomService } from "./room-service.js";
 import { MediaController } from "./media-controller.js";
 import { SyncController } from "./sync-controller.js";
@@ -12,7 +12,6 @@ import { clearStoredRoomSession, hasAnyStoredRoomSession, readStoredRoomSession,
 import { describeMediaError, isHttpsUrl, isLocalHostname, isValidRoomCode, MESSAGES, normalizeRoomCode, parseUrl, safeLog, sanitizeDisplayName } from "./utils.js";
 import { ServiceAvailabilityError, checkFirebaseServices } from "./service-availability.js";
 import { RoomOperationCancelledError, RoomOperationController, RoomOperationTimeoutError } from "./room-operation-controller.js";
-import { AuthInitializationError, getAuthDiagnosticCode, getAuthUserMessage, resolveAuthRetryTarget } from "./auth-diagnostics.js";
 
 const ui = new WatchPartyUI();
 
@@ -47,9 +46,6 @@ let restoreCancelled = false;
 let roomEventGeneration = null;
 let operationController;
 let lastServiceAction = null;
-let lastAuthAction = null;
-let lastAuthTargetState = APP_STATES.WELCOME;
-let authRetryInFlight = false;
 let localTestBridge = null;
 let globalRuntimeErrorsBound = false;
 
@@ -146,8 +142,6 @@ function bindGlobalUi() {
 
     ui.addEventListener("selectRole", async (event) => {
         selectedRole = event.detail;
-        lastAuthAction = "role";
-        lastAuthTargetState = resolveAuthTargetState({ role: selectedRole, action: lastAuthAction });
         ui.setSelectedRole(selectedRole);
         ui.clearFieldErrors();
         ui.setState(APP_STATES.AUTHENTICATING);
@@ -158,8 +152,6 @@ function bindGlobalUi() {
             if (error instanceof ServiceAvailabilityError) {
                 lastServiceAction = selectedRole === "host" ? "create" : "join";
                 ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
-            } else if (error instanceof AuthInitializationError) {
-                showAuthFailure(error);
             } else {
                 showFatal(error.message);
             }
@@ -222,8 +214,6 @@ function bindGlobalUi() {
         beginRestoreAttempt({ manual: true });
     });
     ui.addEventListener("restoreCancel", () => cancelRestoreToWelcome());
-    ui.addEventListener("authRetry", retryAuthentication);
-    ui.addEventListener("authBack", () => returnFromAuthFailure());
     ui.addEventListener("serviceRetry", retryAfterServiceUnavailable);
     ui.addEventListener("serviceBack", () => {
         operationController?.cancelAll();
@@ -297,73 +287,6 @@ async function retryAfterServiceUnavailable() {
     else ui.setState(selectedRole === "guest" ? APP_STATES.GUEST_PROFILE : selectedRole === "host" ? APP_STATES.HOST_MEDIA : APP_STATES.WELCOME);
 }
 
-async function retryAuthentication() {
-    if (authRetryInFlight) return;
-    authRetryInFlight = true;
-    ui.setState(APP_STATES.AUTHENTICATING);
-    ui.els.authMessage.textContent = "در حال تلاش دوباره برای ورود مهمان...";
-    try {
-        await ensureFirebase();
-        ui.toast("ورود مهمان آماده شد.");
-        ui.setState(lastAuthTargetState || resolveAuthTargetState({ role: selectedRole, action: lastAuthAction }));
-    } catch (error) {
-        if (error instanceof ServiceAvailabilityError) {
-            lastServiceAction = selectedRole === "host" ? "create" : "join";
-            ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
-        } else if (error instanceof AuthInitializationError) {
-            showAuthFailure(error);
-        } else {
-            showFatal(error.message || MESSAGES.authFailed);
-        }
-    } finally {
-        authRetryInFlight = false;
-    }
-}
-
-function returnFromAuthFailure() {
-    operationController?.cancelAll();
-    createInFlight = false;
-    joinInFlight = false;
-    ui.setState(lastAuthTargetState || resolveAuthTargetState({ role: selectedRole, action: lastAuthAction }));
-}
-
-function showAuthFailure(error) {
-    const authError = error instanceof AuthInitializationError ? error : null;
-    ui.showAuthFailed({
-        message: authError ? getAuthUserMessage(authError) : MESSAGES.authFailed,
-        diagnosticCode: authError ? getAuthDiagnosticCode(authError) : "AUTH-UNKNOWN",
-        retryable: authError?.retryable !== false
-    });
-    runAuthConnectivityProbe();
-}
-
-async function runAuthConnectivityProbe() {
-    try {
-        const result = await maybeProbeFirebaseAuthEndpoints(config, {
-            timeoutMs: Number(config?.authProbeTimeoutMs || 2500)
-        });
-        if (ui.state === APP_STATES.AUTH_FAILED) ui.setAuthProbeStatus(result);
-    } catch {
-        if (ui.state === APP_STATES.AUTH_FAILED) {
-            ui.setAuthProbeStatus({
-                gstatic: { reachable: false, reason: "unreachable" },
-                identityToolkit: { reachable: false, reason: "unreachable" }
-            });
-        }
-    }
-}
-
-function resolveAuthTargetState({ role, action } = {}) {
-    const target = resolveAuthRetryTarget({ role, action });
-    return {
-        "host-media": APP_STATES.HOST_MEDIA,
-        "guest-profile": APP_STATES.GUEST_PROFILE,
-        "host-profile": APP_STATES.HOST_PROFILE,
-        "guest-code": APP_STATES.GUEST_CODE,
-        welcome: APP_STATES.WELCOME
-    }[target] || APP_STATES.WELCOME;
-}
-
 function getServiceCheckOptions() {
     return {
         timeoutMs: Number(config.serviceCheckTimeoutMs || 4000),
@@ -374,8 +297,6 @@ function getServiceCheckOptions() {
 async function createRoomGuarded(event) {
     if (createInFlight || operationController?.isActive("create")) return;
     createInFlight = true;
-    lastAuthAction = "create";
-    lastAuthTargetState = resolveAuthTargetState({ role: "host", action: lastAuthAction });
     ui.clearFieldErrors();
     ui.setState(APP_STATES.CREATING_ROOM);
     try {
@@ -409,11 +330,10 @@ async function createRoomGuarded(event) {
         if (error instanceof RoomOperationCancelledError || error?.message === "operation-cancelled") return;
         if (error instanceof RoomOperationTimeoutError) ui.setFieldError("hostVideoError", "ساخت اتاق بیشتر از حد معمول طول کشید. دوباره تلاش کنید.");
         else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
-        else if (error instanceof AuthInitializationError) showAuthFailure(error);
         else if (error.message === MESSAGES.invalidUrl || error.message === MESSAGES.insecureUrl) ui.setFieldError("hostVideoError", error.message);
         else if (/subtitle|زیرنویس|Ø²ÛŒØ±Ù†ÙˆÛŒØ³/i.test(error.message || "")) ui.setFieldError("hostSubtitleError", error.message);
         else ui.setFieldError("hostVideoError", error.message || "امکان ساخت اتاق وجود ندارد.");
-        if (!(error instanceof ServiceAvailabilityError) && !(error instanceof AuthInitializationError)) ui.setState(APP_STATES.HOST_MEDIA);
+        if (!(error instanceof ServiceAvailabilityError)) ui.setState(APP_STATES.HOST_MEDIA);
     } finally {
         createInFlight = false;
     }
@@ -422,8 +342,6 @@ async function createRoomGuarded(event) {
 async function joinRoomGuarded(event) {
     if (joinInFlight || operationController?.isActive("join")) return;
     joinInFlight = true;
-    lastAuthAction = "join";
-    lastAuthTargetState = resolveAuthTargetState({ role: "guest", action: lastAuthAction });
     ui.clearFieldErrors();
     ui.setState(APP_STATES.JOINING_ROOM);
     try {
@@ -454,9 +372,8 @@ async function joinRoomGuarded(event) {
         if (error instanceof RoomOperationCancelledError || error?.message === "operation-cancelled") return;
         if (error instanceof RoomOperationTimeoutError) ui.setFieldError("guestNameError", "ورود به اتاق بیشتر از حد معمول طول کشید. دوباره تلاش کنید.");
         else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
-        else if (error instanceof AuthInitializationError) showAuthFailure(error);
         else ui.setFieldError("guestNameError", mapJoinError(error));
-        if (!(error instanceof ServiceAvailabilityError) && !(error instanceof AuthInitializationError)) ui.setState(APP_STATES.GUEST_PROFILE);
+        if (!(error instanceof ServiceAvailabilityError)) ui.setState(APP_STATES.GUEST_PROFILE);
     } finally {
         joinInFlight = false;
     }
