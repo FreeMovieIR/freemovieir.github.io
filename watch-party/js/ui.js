@@ -36,6 +36,11 @@ export class WatchPartyUI extends EventTarget {
             screens: qsa(".app-screen"),
             topBanner: qs("#top-banner"),
             authMessage: qs("#auth-message"),
+            authFailedMessage: qs("#auth-failed-message"),
+            authDiagnosticCode: qs("#auth-diagnostic-code"),
+            authProbeStatus: qs("#auth-probe-status"),
+            authRetry: qs("#auth-retry"),
+            authBack: qs("#auth-back"),
             hostProfileForm: qs("#host-profile-form"),
             hostDisplayName: qs("#host-display-name"),
             hostRememberName: qs("#host-remember-name"),
@@ -176,6 +181,8 @@ export class WatchPartyUI extends EventTarget {
             this.els.guestRoomCode.value = normalizeRoomCode(extractRoomCodeInput(this.els.guestRoomCode.value)).slice(0, 8);
         });
         this.els.restoreRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreRetry")));
+        this.els.authRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("authRetry")));
+        this.els.authBack.addEventListener("click", () => this.dispatchEvent(new CustomEvent("authBack")));
         this.els.restoreRetryFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreRetry")));
         this.els.restoreCancel.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
         this.els.restoreCancelFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
@@ -321,6 +328,7 @@ export class WatchPartyUI extends EventTarget {
         this.els.joinButton.disabled = state === APP_STATES.JOINING_ROOM;
         this.els.checkCodeButton.disabled = state === APP_STATES.JOINING_ROOM;
         this.els.serviceRetry.disabled = state === APP_STATES.AUTHENTICATING || state === APP_STATES.CREATING_ROOM || state === APP_STATES.JOINING_ROOM;
+        this.els.authRetry.disabled = state === APP_STATES.AUTHENTICATING;
         const restoring = state === APP_STATES.RESTORING_ROOM;
         this.els.restoreRetry.disabled = restoring;
         this.els.restoreRetryFailed.disabled = restoring;
@@ -342,6 +350,33 @@ export class WatchPartyUI extends EventTarget {
         this.setState(APP_STATES.RESTORE_FAILED);
         this.els.restoreRetryFailed.hidden = !canRetry;
         this.els.restoreRetryFailed.disabled = !canRetry;
+    }
+
+    showAuthFailed({ message, diagnosticCode = "AUTH-UNKNOWN", retryable = true } = {}) {
+        this.els.authFailedMessage.textContent = message || "ورود مهمان انجام نشد. دوباره تلاش کنید.";
+        this.els.authDiagnosticCode.textContent = diagnosticCode;
+        this.els.authRetry.hidden = !retryable;
+        this.els.authRetry.disabled = !retryable;
+        this.els.authProbeStatus.textContent = "در حال بررسی دسترسی به سرویس‌های عمومی ورود...";
+        this.setState(APP_STATES.AUTH_FAILED);
+    }
+
+    setAuthProbeStatus(result) {
+        if (!result) {
+            this.els.authProbeStatus.textContent = "";
+            return;
+        }
+        const gstatic = result.gstatic?.reachable;
+        const identityToolkit = result.identityToolkit?.reachable;
+        if (gstatic && identityToolkit) {
+            this.els.authProbeStatus.textContent = "سرویس‌های عمومی ورود از این مرورگر در دسترس به نظر می‌رسند.";
+        } else if (!gstatic && !identityToolkit) {
+            this.els.authProbeStatus.textContent = "دسترسی به سرویس‌های عمومی ورود برقرار نشد. این فقط به معنی در دسترس نبودن endpoint است و علت آن را ثابت نمی‌کند.";
+        } else if (!gstatic) {
+            this.els.authProbeStatus.textContent = "دسترسی به www.gstatic.com برقرار نشد. علت محدودیت شبکه از این نتیجه به‌تنهایی قابل اثبات نیست.";
+        } else {
+            this.els.authProbeStatus.textContent = "دسترسی به identitytoolkit.googleapis.com برقرار نشد. علت محدودیت شبکه از این نتیجه به‌تنهایی قابل اثبات نیست.";
+        }
     }
 
     showServiceUnavailable(status = {}, { production = false } = {}) {

@@ -710,6 +710,22 @@ video::cue {
     margin-top: 8px;
 }
 
+.diagnostic-note {
+    color: #cbd5e1;
+    font-size: .9rem;
+}
+
+.diagnostic-note b {
+    display: inline-block;
+    margin-inline-start: 6px;
+    padding: 3px 8px;
+    border: 1px solid rgba(245, 158, 11, .35);
+    border-radius: 8px;
+    background: rgba(245, 158, 11, .1);
+    color: #fbbf24;
+    letter-spacing: .04em;
+}
+
 .control-row {
     display: flex;
     align-items: center;
