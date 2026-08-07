@@ -12,6 +12,13 @@ import { clearStoredRoomSession, hasAnyStoredRoomSession, readStoredRoomSession,
 import { describeMediaError, isHttpsUrl, isLocalHostname, isValidRoomCode, MESSAGES, normalizeRoomCode, parseUrl, safeLog, sanitizeDisplayName } from "./utils.js";
 import { ServiceAvailabilityError, checkFirebaseServices } from "./service-availability.js";
 import { RoomOperationCancelledError, RoomOperationController, RoomOperationTimeoutError } from "./room-operation-controller.js";
+import {
+    AuthInitializationError,
+    FirebaseInitializationError,
+    getAuthUserMessage,
+    getFirebaseInitUserMessage,
+    getSafeDiagnostic
+} from "./auth-diagnostics.js";
 
 const ui = new WatchPartyUI();
 
@@ -46,6 +53,7 @@ let restoreCancelled = false;
 let roomEventGeneration = null;
 let operationController;
 let lastServiceAction = null;
+let lastAuthAction = null;
 let localTestBridge = null;
 let globalRuntimeErrorsBound = false;
 
@@ -74,7 +82,8 @@ async function init() {
     await loadDevelopmentBridge();
 
     if (config?.missing) {
-        showFatal(config.productionMissing ? MESSAGES.productionConfigMissing : MESSAGES.missingConfig);
+        if (config.error instanceof FirebaseInitializationError) showAuthFailure(config.error, "config");
+        else showFatal(config.productionMissing ? MESSAGES.productionConfigMissing : MESSAGES.missingConfig);
         return;
     }
     operationController = new RoomOperationController({
@@ -152,6 +161,8 @@ function bindGlobalUi() {
             if (error instanceof ServiceAvailabilityError) {
                 lastServiceAction = selectedRole === "host" ? "create" : "join";
                 ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
+            } else if (isFirebaseAuthFailure(error)) {
+                showAuthFailure(error, "role");
             } else {
                 showFatal(error.message);
             }
@@ -214,6 +225,8 @@ function bindGlobalUi() {
         beginRestoreAttempt({ manual: true });
     });
     ui.addEventListener("restoreCancel", () => cancelRestoreToWelcome());
+    ui.addEventListener("authRetry", retryAfterAuthFailure);
+    ui.addEventListener("authBack", backAfterAuthFailure);
     ui.addEventListener("serviceRetry", retryAfterServiceUnavailable);
     ui.addEventListener("serviceBack", () => {
         operationController?.cancelAll();
@@ -287,6 +300,69 @@ async function retryAfterServiceUnavailable() {
     else ui.setState(selectedRole === "guest" ? APP_STATES.GUEST_PROFILE : selectedRole === "host" ? APP_STATES.HOST_MEDIA : APP_STATES.WELCOME);
 }
 
+async function retryAfterAuthFailure() {
+    if (firebase) {
+        returnFromAuthFailure();
+        return;
+    }
+    ui.setState(APP_STATES.AUTHENTICATING);
+    try {
+        await ensureFirebase();
+        returnFromAuthFailure();
+    } catch (error) {
+        if (isFirebaseAuthFailure(error)) showAuthFailure(error, lastAuthAction);
+        else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
+        else showFatal(error.message || MESSAGES.authFailed);
+    }
+}
+
+function backAfterAuthFailure() {
+    returnFromAuthFailure({ back: true });
+}
+
+function returnFromAuthFailure({ back = false } = {}) {
+    const action = lastAuthAction;
+    if (back) lastAuthAction = null;
+    if (action === "create") ui.setState(APP_STATES.HOST_MEDIA);
+    else if (action === "join") ui.setState(APP_STATES.GUEST_PROFILE);
+    else if (selectedRole === "host") {
+        if (back) {
+            selectedRole = null;
+            ui.setSelectedRole(null);
+            ui.setState(APP_STATES.WELCOME);
+        } else {
+            ui.setState(APP_STATES.HOST_PROFILE);
+        }
+    }
+    else if (selectedRole === "guest") {
+        if (back) {
+            selectedRole = null;
+            ui.setSelectedRole(null);
+            ui.setState(APP_STATES.WELCOME);
+        } else {
+            ui.setState(APP_STATES.GUEST_CODE);
+        }
+    }
+    else ui.setState(APP_STATES.WELCOME);
+}
+
+function showAuthFailure(error, action = null) {
+    lastAuthAction = action || lastAuthAction;
+    const diagnostic = getSafeDiagnostic(error);
+    const message = error instanceof FirebaseInitializationError
+        ? getFirebaseInitUserMessage(error)
+        : getAuthUserMessage(error);
+    ui.showAuthFailure({
+        message,
+        code: diagnostic.code,
+        retryable: diagnostic.retryable
+    });
+}
+
+function isFirebaseAuthFailure(error) {
+    return error instanceof AuthInitializationError || error instanceof FirebaseInitializationError;
+}
+
 function getServiceCheckOptions() {
     return {
         timeoutMs: Number(config.serviceCheckTimeoutMs || 4000),
@@ -330,10 +406,11 @@ async function createRoomGuarded(event) {
         if (error instanceof RoomOperationCancelledError || error?.message === "operation-cancelled") return;
         if (error instanceof RoomOperationTimeoutError) ui.setFieldError("hostVideoError", "ساخت اتاق بیشتر از حد معمول طول کشید. دوباره تلاش کنید.");
         else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
+        else if (isFirebaseAuthFailure(error)) showAuthFailure(error, "create");
         else if (error.message === MESSAGES.invalidUrl || error.message === MESSAGES.insecureUrl) ui.setFieldError("hostVideoError", error.message);
         else if (/subtitle|زیرنویس|Ø²ÛŒØ±Ù†ÙˆÛŒØ³/i.test(error.message || "")) ui.setFieldError("hostSubtitleError", error.message);
         else ui.setFieldError("hostVideoError", error.message || "امکان ساخت اتاق وجود ندارد.");
-        if (!(error instanceof ServiceAvailabilityError)) ui.setState(APP_STATES.HOST_MEDIA);
+        if (!(error instanceof ServiceAvailabilityError) && !isFirebaseAuthFailure(error)) ui.setState(APP_STATES.HOST_MEDIA);
     } finally {
         createInFlight = false;
     }
@@ -372,8 +449,9 @@ async function joinRoomGuarded(event) {
         if (error instanceof RoomOperationCancelledError || error?.message === "operation-cancelled") return;
         if (error instanceof RoomOperationTimeoutError) ui.setFieldError("guestNameError", "ورود به اتاق بیشتر از حد معمول طول کشید. دوباره تلاش کنید.");
         else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
+        else if (isFirebaseAuthFailure(error)) showAuthFailure(error, "join");
         else ui.setFieldError("guestNameError", mapJoinError(error));
-        if (!(error instanceof ServiceAvailabilityError)) ui.setState(APP_STATES.GUEST_PROFILE);
+        if (!(error instanceof ServiceAvailabilityError) && !isFirebaseAuthFailure(error)) ui.setState(APP_STATES.GUEST_PROFILE);
     } finally {
         joinInFlight = false;
     }

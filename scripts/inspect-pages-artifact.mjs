@@ -35,20 +35,18 @@ const forbiddenFiles = new Set([
 ]);
 
 const forbiddenText = [
-    [/127\.0\.0\.1/i, "loopback address"],
-    [/localhost/i, "localhost"],
+    [/https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):(?:9000|9099)\b/i, "Firebase emulator endpoint"],
     [/demo-freemovieir/i, "demo Firebase project"],
     [/FIREBASE_APPCHECK_DEBUG_TOKEN/i, "App Check debug token"],
     [/BEGIN PRIVATE KEY/i, "private key"],
     [/"type"\s*:\s*"service_account"/i, "service account JSON"],
     [/private_key/i, "private key field"],
+    [/firebase-adminsdk/i, "Firebase Admin credential text"],
+    [/\bturn(?:s)?:\/\/[^"'\s]+["'][^}]*\bcredential\s*:\s*["'][^"']+["']/i, "inline TURN credential"],
     [/TURN password/i, "TURN password text"],
-    [/__WATCH_PARTY_/i, "Watch Party test hook/template token"],
-    [/__watchPartyTest/i, "Watch Party test hook"],
     [/__WATCH_PARTY_[A-Z0-9_]+__/i, "unexpanded template token"],
-    [/Firebase Emulator|npm run watch-party:emulators|port 9000|port 9099/i, "local emulator UI text"],
-    [/firebase-config\.js/i, "local firebase-config fallback"]
-    , [/media-gateway-output|MEDIA_GATEWAY_|freemovieir-media-gateway/i, "media gateway source/config text"]
+    [/__watchPartyTest|__WATCH_PARTY_TEST__/i, "Watch Party test hook"],
+    [/media-gateway-output|MEDIA_GATEWAY_|freemovieir-media-gateway/i, "media gateway source/config text"]
 ];
 
 const files = await listFiles(root);
@@ -92,10 +90,11 @@ const config = runtimeModule.watchPartyConfig;
 if (!config) throw new Error("watch-party/runtime-config.js did not export watchPartyConfig.");
 if (config.environment !== "production") throw new Error("runtime config environment is not production.");
 if (config.useEmulators !== false) throw new Error("runtime config useEmulators is not false.");
+if ("emulators" in config) throw new Error("runtime config must not contain an emulators block in production.");
 for (const key of ["apiKey", "authDomain", "databaseURL", "projectId", "appId"]) {
     if (!config.firebase?.[key]) throw new Error(`runtime config missing firebase.${key}.`);
 }
-if (JSON.stringify(config).match(/127\.0\.0\.1|localhost|demo-freemovieir|service_account|private_key|__WATCH_PARTY_/i)) {
+if (JSON.stringify(config).match(/127\.0\.0\.1|localhost|demo-freemovieir|service_account|private_key|firebase-adminsdk|__WATCH_PARTY_|FIREBASE_APPCHECK_DEBUG_TOKEN/i)) {
     throw new Error("runtime config contains forbidden local/test/private text.");
 }
 

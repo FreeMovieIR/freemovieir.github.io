@@ -17,6 +17,7 @@ if (!config) throw new Error("Runtime config does not export watchPartyConfig.")
 
 if (config.environment === "production") {
     if (config.useEmulators !== false) throw new Error("Production runtime config enables emulators.");
+    if ("emulators" in config) throw new Error("Production runtime config must not include emulator endpoints.");
     if (runtimeConfig.match(/127\.0\.0\.1|localhost|demo-freemovieir|__WATCH_PARTY_/i)) {
         throw new Error("Production runtime config contains local/test/template text.");
     }

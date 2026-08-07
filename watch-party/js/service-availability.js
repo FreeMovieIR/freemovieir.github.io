@@ -19,10 +19,11 @@ export class ServiceAvailabilityError extends Error {
 }
 
 export function getEmulatorEndpoints(config = {}) {
-    const authUrl = config?.emulators?.auth?.url || "http://127.0.0.1:9099";
-    const dbHost = config?.emulators?.database?.host || "127.0.0.1";
-    const dbPort = Number(config?.emulators?.database?.port || 9000);
-    const projectId = config?.firebase?.projectId || "demo-freemovieir";
+    const authUrl = config?.emulators?.auth?.url;
+    const dbHost = config?.emulators?.database?.host;
+    const dbPort = Number(config?.emulators?.database?.port);
+    const projectId = config?.firebase?.projectId;
+    if (!authUrl || !dbHost || !dbPort || !projectId) return null;
     const authHealthUrl = `${authUrl.replace(/\/$/, "")}/emulator/v1/projects/${encodeURIComponent(projectId)}/config`;
     return {
         authUrl,
@@ -46,15 +47,19 @@ export async function checkFirebaseServices(config = {}, options = {}) {
     }
     const forcedStatus = Object.values(SERVICE_STATUS).includes(options.forcedStatus) ? options.forcedStatus : null;
     if (forcedStatus) {
+        const endpoints = getEmulatorEndpoints(config);
         return makeResult(
             forcedStatus,
             forcedStatus !== SERVICE_STATUS.AUTH_UNAVAILABLE && forcedStatus !== SERVICE_STATUS.BOTH_UNAVAILABLE,
             forcedStatus !== SERVICE_STATUS.DATABASE_UNAVAILABLE && forcedStatus !== SERVICE_STATUS.BOTH_UNAVAILABLE,
-            getEmulatorEndpoints(config)
+            endpoints
         );
     }
 
     const endpoints = getEmulatorEndpoints(config);
+    if (!endpoints) {
+        return makeResult(SERVICE_STATUS.BOTH_UNAVAILABLE, false, false, null);
+    }
     const fetchFn = options.fetchFn || globalThis.fetch?.bind(globalThis);
     if (!fetchFn) {
         return makeResult(SERVICE_STATUS.BOTH_UNAVAILABLE, false, false, endpoints);

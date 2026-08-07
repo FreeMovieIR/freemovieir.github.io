@@ -1,6 +1,7 @@
 export const APP_STATES = Object.freeze({
     WELCOME: "welcome",
     AUTHENTICATING: "authenticating",
+    AUTH_FAILED: "auth-failed",
     HOST_PROFILE: "host-profile",
     HOST_MEDIA: "host-media",
     GUEST_CODE: "guest-code",

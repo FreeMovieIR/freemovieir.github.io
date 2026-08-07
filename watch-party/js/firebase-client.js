@@ -1,5 +1,12 @@
-import { MESSAGES } from "./utils.js";
+import { MESSAGES, safeLog } from "./utils.js";
 import { assertFirebaseServicesAvailable } from "./service-availability.js";
+import {
+    FIREBASE_INIT_ERROR_CATEGORIES,
+    getSafeAuthLogDetails,
+    toAuthInitializationError,
+    toFirebaseInitializationError,
+    withAuthTimeout
+} from "./auth-diagnostics.js";
 
 const FIREBASE_VERSION = "10.12.5";
 const APP_URL = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`;
@@ -14,32 +21,37 @@ export async function loadWatchPartyConfig() {
         const module = await import(withBuildQuery("../runtime-config.js"));
         return module.watchPartyConfig;
     } catch (error) {
-        if (!localPage) return { error, missing: true, productionMissing: true };
+        if (!localPage) {
+            return {
+                error: toFirebaseInitializationError(error, FIREBASE_INIT_ERROR_CATEGORIES.CONFIG_LOAD_FAILED),
+                missing: true,
+                productionMissing: true
+            };
+        }
     }
     try {
         const module = await import("../firebase-config.js");
         return module.watchPartyConfig;
     } catch (error) {
-        return { error, missing: true };
+        return {
+            error: toFirebaseInitializationError(error, FIREBASE_INIT_ERROR_CATEGORIES.CONFIG_LOAD_FAILED),
+            missing: true
+        };
     }
 }
 
 export async function createFirebaseClient(config, serviceCheckOptions = {}) {
     if (!config?.firebase?.apiKey || !config?.firebase?.databaseURL) {
-        throw new Error(MESSAGES.missingConfig);
+        throw toFirebaseInitializationError(new Error("firebase-config-missing"), FIREBASE_INIT_ERROR_CATEGORIES.CONFIG_LOAD_FAILED);
     }
 
     if (shouldUseEmulators(config)) {
         await assertFirebaseServicesAvailable(config, serviceCheckOptions);
     }
 
-    const [{ initializeApp }, authModule, dbModule] = await Promise.all([
-        import(APP_URL),
-        import(AUTH_URL),
-        import(DB_URL)
-    ]);
+    const { appModule, authModule, dbModule } = await loadFirebaseSdkModules(serviceCheckOptions.sdkImporter);
 
-    const app = initializeApp(config.firebase);
+    const app = appModule.getApps?.().length ? appModule.getApp() : appModule.initializeApp(config.firebase);
     await initializeAppCheckIfConfigured(app, config);
     const auth = authModule.getAuth(app);
     const database = dbModule.getDatabase(app);
@@ -49,12 +61,13 @@ export async function createFirebaseClient(config, serviceCheckOptions = {}) {
         connectEmulatorsOnce({ app, auth, database, authModule, dbModule, config });
     }
 
-    await withTimeout(
+    await withAuthTimeout(
         authModule.signInAnonymously(auth),
-        Number(config?.authTimeoutMs || config?.createRoomTimeoutMs || 10000),
-        MESSAGES.authFailed
-    ).catch(() => {
-        throw new Error(MESSAGES.authFailed);
+        Number(config?.authTimeoutMs || config?.createRoomTimeoutMs || 10000)
+    ).catch((error) => {
+        const authError = toAuthInitializationError(error);
+        safeLog("anonymous auth failed", getSafeAuthLogDetails(error));
+        throw authError;
     });
 
     return {
@@ -69,13 +82,30 @@ export async function createFirebaseClient(config, serviceCheckOptions = {}) {
     };
 }
 
+async function loadFirebaseSdkModules(sdkImporter) {
+    const importer = sdkImporter || ((url) => import(url));
+    try {
+        const [appModule, authModule, dbModule] = await Promise.all([
+            importer(APP_URL),
+            importer(AUTH_URL),
+            importer(DB_URL)
+        ]);
+        return { appModule, authModule, dbModule };
+    } catch (error) {
+        const initError = toFirebaseInitializationError(error);
+        safeLog("firebase sdk load failed", {
+            category: initError.category,
+            firebaseCode: "",
+            online: typeof globalThis.navigator?.onLine === "boolean" ? globalThis.navigator.onLine : null
+        });
+        throw initError;
+    }
+}
+
 async function initializeAppCheckIfConfigured(app, config) {
     const appCheck = config?.appCheck || {};
     if (!appCheck.enabled) return;
     try {
-        if (appCheck.debugToken && shouldUseEmulators(config)) {
-            globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = appCheck.debugToken === true ? true : String(appCheck.debugToken);
-        }
         const { initializeAppCheck, ReCaptchaEnterpriseProvider } = await import(APP_CHECK_URL);
         initializeAppCheck(app, {
             provider: new ReCaptchaEnterpriseProvider(appCheck.siteKey || ""),
@@ -115,14 +145,6 @@ function connectEmulatorsOnce({ app, auth, database, authModule, dbModule, confi
     authModule.connectAuthEmulator(auth, emulators.auth.url, { disableWarnings: true });
     dbModule.connectDatabaseEmulator(database, emulators.database.host, emulators.database.port);
     connectedEmulatorApps.add(appName);
-}
-
-function withTimeout(promise, timeoutMs, message) {
-    let timer;
-    const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error(message)), timeoutMs);
-    });
-    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 function isLocalPage(hostname = globalThis.location?.hostname || "") {

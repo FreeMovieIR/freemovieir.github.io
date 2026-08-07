@@ -36,6 +36,10 @@ export class WatchPartyUI extends EventTarget {
             screens: qsa(".app-screen"),
             topBanner: qs("#top-banner"),
             authMessage: qs("#auth-message"),
+            authFailedMessage: qs("#auth-failed-message"),
+            authDiagnosticCode: qs("#auth-diagnostic-code"),
+            authRetry: qs("#auth-retry"),
+            authBack: qs("#auth-back"),
             hostProfileForm: qs("#host-profile-form"),
             hostDisplayName: qs("#host-display-name"),
             hostRememberName: qs("#host-remember-name"),
@@ -179,6 +183,8 @@ export class WatchPartyUI extends EventTarget {
         this.els.restoreRetryFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreRetry")));
         this.els.restoreCancel.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
         this.els.restoreCancelFailed.addEventListener("click", () => this.dispatchEvent(new CustomEvent("restoreCancel")));
+        this.els.authRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("authRetry")));
+        this.els.authBack.addEventListener("click", () => this.dispatchEvent(new CustomEvent("authBack")));
         this.els.serviceRetry.addEventListener("click", () => this.dispatchEvent(new CustomEvent("serviceRetry")));
         this.els.serviceBack.addEventListener("click", () => this.dispatchEvent(new CustomEvent("serviceBack")));
         qsa("input[name='subtitleMode']").forEach((input) => {
@@ -320,6 +326,8 @@ export class WatchPartyUI extends EventTarget {
         this.els.createButton.disabled = state === APP_STATES.CREATING_ROOM;
         this.els.joinButton.disabled = state === APP_STATES.JOINING_ROOM;
         this.els.checkCodeButton.disabled = state === APP_STATES.JOINING_ROOM;
+        if (state === APP_STATES.AUTHENTICATING) this.els.authRetry.disabled = true;
+        else if (state !== APP_STATES.AUTH_FAILED) this.els.authRetry.disabled = false;
         this.els.serviceRetry.disabled = state === APP_STATES.AUTHENTICATING || state === APP_STATES.CREATING_ROOM || state === APP_STATES.JOINING_ROOM;
         const restoring = state === APP_STATES.RESTORING_ROOM;
         this.els.restoreRetry.disabled = restoring;
@@ -342,6 +350,13 @@ export class WatchPartyUI extends EventTarget {
         this.setState(APP_STATES.RESTORE_FAILED);
         this.els.restoreRetryFailed.hidden = !canRetry;
         this.els.restoreRetryFailed.disabled = !canRetry;
+    }
+
+    showAuthFailure({ message, code, retryable = true } = {}) {
+        this.els.authFailedMessage.textContent = message || "ورود مهمان انجام نشد. دوباره تلاش کنید.";
+        this.els.authDiagnosticCode.textContent = code || "AUTH-UNKNOWN";
+        this.els.authRetry.disabled = !retryable;
+        this.setState(APP_STATES.AUTH_FAILED);
     }
 
     showServiceUnavailable(status = {}, { production = false } = {}) {

@@ -350,6 +350,17 @@ button:disabled {
     font-size: .88rem;
 }
 
+.diagnostic-code {
+    color: var(--wp-muted);
+    font-size: .9rem;
+}
+
+.diagnostic-code code {
+    direction: ltr;
+    display: inline-block;
+    color: var(--wp-accent);
+}
+
 .success-note {
     color: #bbf7d0;
     background: rgba(34, 197, 94, .12);

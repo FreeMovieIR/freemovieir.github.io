@@ -16,8 +16,8 @@
     "watch-party:build:test": "node scripts/generate-watch-party-config.mjs --mode=test --output=watch-party/runtime-config.js",
     "watch-party:build:production": "node scripts/generate-watch-party-config.mjs --mode=production --output=watch-party/runtime-config.js",
     "pages:build": "node scripts/build-pages.mjs --mode=production --output=dist",
-    "pages:test": "node scripts/inspect-pages-artifact.mjs --dir=dist && node scripts/watch-party-production-check.mjs --config=dist/watch-party/runtime-config.js",
-    "pages:smoke": "node scripts/smoke-pages-preview.mjs",
+    "pages:test": "node scripts/inspect-pages-artifact.mjs --dir=dist && node scripts/watch-party-production-check.mjs --config=dist/watch-party/runtime-config.js && node scripts/check-watch-party-artifact-semantics.mjs --dir=dist",
+    "pages:smoke": "node scripts/smoke-pages-preview.mjs && node scripts/smoke-watch-party-production-artifact.mjs",
     "pages:preview": "http-server dist -p 8081 -a 127.0.0.1 -c-1",
     "media-gateway:test": "node --test services/media-gateway/tests/**/*.test.js",
     "media-gateway:docker:build": "docker build -t freemovieir-media-gateway:local services/media-gateway"
