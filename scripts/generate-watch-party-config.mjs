@@ -23,6 +23,7 @@ const localDefaults = {
     WATCH_PARTY_FIREBASE_APP_ID: "1:1:web:demo",
     WATCH_PARTY_APP_CHECK_SITE_KEY: "",
     WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT: "",
+    WATCH_PARTY_MEDIA_GATEWAY_URL: "",
     WATCH_PARTY_RTC_ICE_SERVERS: JSON.stringify([
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" }
@@ -66,8 +67,10 @@ for (const [key, value] of Object.entries(firebase)) assertNoPrivateCredential(`
 
 const appCheckSiteKey = getValue("WATCH_PARTY_APP_CHECK_SITE_KEY");
 const turnCredentialsEndpoint = getValue("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT");
+const mediaGatewayUrl = normalizeOptionalHttpsUrl(getValue("WATCH_PARTY_MEDIA_GATEWAY_URL"), "WATCH_PARTY_MEDIA_GATEWAY_URL");
 assertNoPrivateCredential("WATCH_PARTY_APP_CHECK_SITE_KEY", appCheckSiteKey);
 assertNoPrivateCredential("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT", turnCredentialsEndpoint);
+assertNoPrivateCredential("WATCH_PARTY_MEDIA_GATEWAY_URL", mediaGatewayUrl);
 
 const iceServers = parseIceServers(getValue("WATCH_PARTY_RTC_ICE_SERVERS") || "[]");
 const isProduction = environment === "production";
@@ -84,6 +87,13 @@ const config = {
     rtc: {
         iceServers,
         turnCredentialsEndpoint
+    },
+    mediaGateway: {
+        enabled: Boolean(mediaGatewayUrl),
+        baseUrl: mediaGatewayUrl,
+        requestTimeoutMs: 15000,
+        jobTimeoutMs: 120000,
+        preferRemux: true
     },
     roomLifetimeMs: 6 * 60 * 60 * 1000,
     serviceCheckTimeoutMs: 4000,
@@ -156,6 +166,21 @@ function parseIceServers(raw) {
         assertNoPrivateCredential("WATCH_PARTY_RTC_ICE_SERVERS", JSON.stringify(server));
     }
     return parsed;
+}
+
+function normalizeOptionalHttpsUrl(raw, name) {
+    const value = String(raw || "").trim();
+    if (!value) return "";
+    let parsed;
+    try {
+        parsed = new URL(value);
+    } catch {
+        throw new Error(`${name} must be a valid HTTPS URL when provided.`);
+    }
+    if (parsed.protocol !== "https:") throw new Error(`${name} must use HTTPS in frontend config.`);
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.href.replace(/\/+$/, "/");
 }
 
 function validateProductionConfigText(text) {

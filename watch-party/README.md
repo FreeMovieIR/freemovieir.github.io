@@ -39,6 +39,7 @@ npm run watch-party:test:e2e
 npm run pages:build
 npm run pages:test
 npm run pages:smoke
+npm run media-gateway:test
 ```
 
 To start the emulators and static server together for manual work:
@@ -156,6 +157,18 @@ Microphone audio is optional and off by default. The browser requests audio perm
 The active room includes local microphone on/off, mute, partner voice volume, and partner voice mute controls. Movie volume and partner voice volume are separate local channels.
 
 STUN servers are included for development. Reliable production connectivity across restrictive NATs may require TURN. Configure `rtc.turnCredentialsEndpoint` to return short-lived TURN credentials generated securely outside this static site.
+
+## iPhone and Compatibility
+
+Fullscreen uses capability detection rather than only browser names:
+
+1. Standard element fullscreen where supported.
+2. iPhone Safari native `video.webkitEnterFullscreen()` after video metadata is loaded.
+3. Local `حالت سینمایی` CSS fallback when true fullscreen is unavailable.
+
+Direct Mode remains the default for MP4, WebM, HLS, and best-effort MKV. iPhone Safari does not provide universal MKV container/codec support, so incompatible MKV sources show a clear compatibility message. The optional Media Compatibility Gateway in `services/media-gateway/` can later remux/transcode public media URLs to Apple-compatible HLS. It is separately deployable and excluded from GitHub Pages.
+
+Real iPhone validation steps are documented in `watch-party/IOS_TESTING.md`.
 
 ## Production Build Path
 

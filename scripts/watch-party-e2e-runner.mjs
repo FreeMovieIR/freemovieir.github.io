@@ -103,6 +103,10 @@ try {
     console.log("[watch-party:e2e] Starting Firebase emulators...");
     spawnLocal("firebase.cmd", ["emulators:start", "--only", "auth,database", "--project", "demo-freemovieir"]);
     await Promise.all([waitForPort(9099), waitForPort(9000)]);
+    await Promise.all([
+        waitForHttp("http://127.0.0.1:9099/emulator/v1/projects/demo-freemovieir/config"),
+        waitForHttp("http://127.0.0.1:9000/.json?ns=demo-freemovieir")
+    ]);
 
     console.log("[watch-party:e2e] Starting static server...");
     spawnLocal("http-server.cmd", [".", "-p", "8080", "-a", "127.0.0.1", "-c-1"]);

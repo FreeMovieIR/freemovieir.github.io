@@ -13,6 +13,7 @@ const forbiddenPathParts = new Set([
     "tests",
     "scripts",
     "firebase",
+    "services",
     "test-assets",
     "artifacts",
     "playwright-report",
@@ -46,6 +47,7 @@ const forbiddenText = [
     [/__WATCH_PARTY_[A-Z0-9_]+__/i, "unexpanded template token"],
     [/Firebase Emulator|npm run watch-party:emulators|port 9000|port 9099/i, "local emulator UI text"],
     [/firebase-config\.js/i, "local firebase-config fallback"]
+    , [/media-gateway-output|MEDIA_GATEWAY_|freemovieir-media-gateway/i, "media gateway source/config text"]
 ];
 
 const files = await listFiles(root);

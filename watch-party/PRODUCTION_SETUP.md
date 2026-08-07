@@ -30,13 +30,15 @@ This page documents the production architecture. Do not place real private crede
    - `WATCH_PARTY_APP_CHECK_SITE_KEY`
    - `WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT`
    - `WATCH_PARTY_RTC_ICE_SERVERS`
+   - `WATCH_PARTY_MEDIA_GATEWAY_URL`
 10. Register Firebase App Check with reCAPTCHA Enterprise when ready.
 11. Add `WATCH_PARTY_APP_CHECK_SITE_KEY` only after registration.
 12. Start App Check in monitoring mode.
 13. Enable App Check enforcement only after metrics show legitimate traffic is healthy.
 14. Configure optional TURN with `WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT`.
-15. Run production smoke tests.
-16. Roll back by disabling the workflow deployment or restoring the previous Pages artifact.
+15. Configure optional Media Gateway with `WATCH_PARTY_MEDIA_GATEWAY_URL` only after deploying and securing `services/media-gateway/`.
+16. Run production smoke tests.
+17. Roll back by disabling the workflow deployment or restoring the previous Pages artifact.
 
 ## Runtime Config Generation
 
@@ -111,10 +113,11 @@ Before first deployment:
 10. Test MP4, WebM, HLS, subtitles, chat, restoration, and room ending.
 11. Test microphone on HTTPS.
 12. Test voice on two different networks and add TURN if direct WebRTC fails.
+13. Run `watch-party/IOS_TESTING.md` on a physical iPhone before claiming iPhone Safari support.
 
 ## Limitations
 
 - Voice may fail without TURN on restrictive NATs.
-- MKV playback depends on browser support, WebCodecs availability, CORS, HTTP Range behavior, and codec support.
+- Direct MKV playback depends on browser support, WebCodecs availability, CORS, HTTP Range behavior, container support, codec support, and device memory. Reliable iPhone MKV support requires the optional Media Gateway fallback.
 - DTS, DTS-HD, TrueHD, HEVC, and uncommon Matroska features are not guaranteed.
 - Subtitle URLs require CORS because the browser fetches subtitle text.

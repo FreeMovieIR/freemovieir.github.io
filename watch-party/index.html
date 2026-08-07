@@ -222,10 +222,17 @@
                     <button id="copy-link" data-testid="copy-invite" class="secondary-btn" type="button">کپی لینک</button>
                     <button id="share-link" class="secondary-btn" type="button">اشتراک‌گذاری</button>
                 </div>
+                <div class="invite-qr-card" aria-label="کد QR دعوت">
+                    <canvas id="invite-qr" width="132" height="132"></canvas>
+                    <p>برای ورود با گوشی، QR را اسکن کنید.</p>
+                </div>
                 <div class="lobby-status-grid">
                     <div><span>فیلم</span><b id="lobby-media-state">آماده</b></div>
                     <div><span>زیرنویس</span><b id="lobby-subtitle-state">بدون زیرنویس</b></div>
                     <div><span>اتصال</span><b id="lobby-connection-state">در حال اتصال</b></div>
+                    <div><span>سازگاری دستگاه</span><b id="lobby-device-state">در حال بررسی</b></div>
+                    <div><span>تمام صفحه</span><b id="lobby-fullscreen-state">در حال بررسی</b></div>
+                    <div><span>حالت پخش</span><b id="lobby-playback-mode">مستقیم</b></div>
                 </div>
                 <ul id="participants" class="participants participant-cards"></ul>
                 <button id="ready-button" data-testid="ready-button" class="primary-btn ready-btn" type="button">آماده‌ام</button>
@@ -235,10 +242,12 @@
                     <h3>میکروفن اختیاری</h3>
                     <p>اگر خواستی هنگام تماشا صحبت کنید، میکروفن را فعال کن.</p>
                     <p id="local-mic-state">میکروفن خاموش</p>
+                    <div class="mic-level" aria-label="سطح صدای میکروفن"><span id="mic-level-bar"></span></div>
                     <div class="button-row">
                         <button id="mic-button" class="secondary-btn" type="button">فعال‌کردن میکروفن</button>
                         <button id="mute-button" class="icon-text-btn" type="button">بی‌صدا</button>
                     </div>
+                    <p class="micro-note">برای جلوگیری از برگشت صدا، هدفون پیشنهاد می‌شود.</p>
                 </section>
                 <section id="lobby-host-actions" class="panel host-only">
                     <h3>تنظیمات سازنده</h3>
@@ -269,7 +278,7 @@
                     <video id="party-video" data-testid="active-player" controls playsinline preload="metadata">
                         <track id="subtitle-track" kind="subtitles" srclang="fa" label="فارسی">
                     </video>
-                    <audio id="remote-audio" autoplay></audio>
+                    <audio id="remote-audio" autoplay playsinline></audio>
                     <div id="reaction-layer" class="reaction-layer" aria-hidden="true"></div>
                     <div id="autoplay-overlay" class="autoplay-overlay" hidden>
                         <p>برای شروع پخش هم‌زمان، روی ادامه بزنید</p>

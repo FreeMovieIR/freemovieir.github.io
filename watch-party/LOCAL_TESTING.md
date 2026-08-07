@@ -100,6 +100,7 @@ Production artifact build and scan:
 npm run pages:build
 npm run pages:test
 npm run pages:smoke
+npm run media-gateway:test
 ```
 
 `pages:build` requires the five production Firebase environment variables. For local dry-runs, use harmless fake values; do not use real credentials unless you are running the GitHub Actions workflow or an owner-controlled production build.
@@ -115,6 +116,9 @@ Difference:
 
 - `watch-party:dev` serves the repository source with Emulator config and development-only diagnostics.
 - `pages:preview` serves only `dist/`, the same shape uploaded to GitHub Pages.
+- `media-gateway:test` validates the optional server-assisted compatibility gateway without deploying it.
+
+Physical iPhone Safari fullscreen, direct MKV behavior, audible microphone, Bluetooth switching, and restrictive NAT/TURN behavior remain manual tests. Use `watch-party/IOS_TESTING.md`.
 
 Headed and UI modes:
 

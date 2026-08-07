@@ -31,6 +31,7 @@ let prefillData = {};
 let micEnabled = false;
 let muted = false;
 let voiceMuted = false;
+let micOperationActive = false;
 let mediaSignature = "";
 let subtitleSignature = "";
 let countdownToken = 0;
@@ -636,6 +637,10 @@ function bindRoomEvents(generation = null) {
     });
     syncController.addEventListener("autoplay", () => ui.showAutoplayOverlay());
     mediaController.addEventListener("error", (event) => ui.toast(event.detail || MESSAGES.network, "error"));
+    mediaController.addEventListener("compatibilityNeeded", (event) => {
+        const detail = event.detail || {};
+        ui.toast(detail.gatewayAvailable ? `${detail.message} ${MESSAGES.gatewayOffer}` : detail.message, "error");
+    });
     mediaController.addEventListener("audioStatus", (event) => {
         const message = event.detail?.message || "";
         ui.setMkvAudioStatus(message);
@@ -646,9 +651,13 @@ function bindRoomEvents(generation = null) {
         if (event.detail?.status === "unsupported") ui.toast(event.detail?.message || MESSAGES.mkvAudioUnsupported, "error");
     });
     audioCall.addEventListener("error", (event) => ui.toast(event.detail, "error"));
+    audioCall.addEventListener("remoteAudioBlocked", (event) => {
+        ui.toast(event.detail || MESSAGES.remoteAudioBlocked);
+        ui.showAutoplayOverlay();
+    });
     audioCall.addEventListener("state", (event) => {
         ui.toast(event.detail);
-        ui.setMicState({ enabled: micEnabled, muted, label: event.detail });
+        ui.setMicState({ enabled: micEnabled, muted, label: event.detail, busy: micOperationActive });
     });
     chatController.addEventListener("messages", (event) => ui.renderMessages(event.detail));
     chatController.addEventListener("reaction", (event) => ui.showReaction(event.detail.emoji));
@@ -659,6 +668,7 @@ function bindRoomEvents(generation = null) {
     ui.addEventListener("continue", async () => {
         ui.hideAutoplayOverlay();
         try { await ui.els.video.play(); } catch {}
+        try { await audioCall?.unlockRemoteAudio(); } catch {}
     });
     ui.addEventListener("mediaChange", changeMedia);
     ui.addEventListener("subtitleChange", changeSubtitle);
@@ -854,15 +864,28 @@ async function shareInvite() {
 }
 
 async function toggleMic() {
-    micEnabled = !micEnabled;
-    if (micEnabled) {
-        ui.setMicState({ enabled: false, label: "درخواست دسترسی..." });
-        const ok = await audioCall.enableMicrophone();
-        micEnabled = ok;
-    } else {
-        await audioCall.disableMicrophone();
+    if (micOperationActive || !audioCall) return;
+    micOperationActive = true;
+    const nextEnabled = !micEnabled;
+    ui.setMicState({
+        enabled: micEnabled,
+        muted,
+        busy: true,
+        label: nextEnabled ? "درخواست دسترسی..." : "در حال خاموش کردن میکروفن..."
+    });
+    try {
+        if (nextEnabled) {
+            const ok = await audioCall.enableMicrophone();
+            micEnabled = ok;
+        } else {
+            await audioCall.disableMicrophone();
+            micEnabled = false;
+            muted = false;
+        }
+    } finally {
+        micOperationActive = false;
+        ui.setMicState({ enabled: micEnabled, muted, label: micEnabled ? "میکروفن روشن" : "میکروفن خاموش" });
     }
-    ui.setMicState({ enabled: micEnabled, muted, label: micEnabled ? "میکروفن روشن" : "میکروفن خاموش" });
 }
 
 function toggleMute() {

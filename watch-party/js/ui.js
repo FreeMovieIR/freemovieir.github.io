@@ -1,5 +1,7 @@
 import { APP_STATES, getVisibleScreenForState } from "./ui-state.js";
 import { formatClock, normalizeRoomCode } from "./utils.js";
+import { FULLSCREEN_CAPABILITY, FullscreenController } from "./fullscreen-controller.js";
+import { getDeviceMediaProfile, summarizeDeviceMediaProfile } from "./device-media-profile.js";
 
 export function qs(selector, root = document) {
     return root.querySelector(selector);
@@ -20,6 +22,11 @@ export class WatchPartyUI extends EventTarget {
         this.createSubmitLocked = false;
         this.joinSubmitLocked = false;
         this.els = this.collectElements();
+        this.fullscreenController = new FullscreenController({
+            wrapper: this.els.videoShell,
+            video: this.els.video,
+            controlsRoot: this.els.movieControls
+        });
         this.bindStaticEvents();
         this.setState(APP_STATES.WELCOME);
     }
@@ -66,17 +73,22 @@ export class WatchPartyUI extends EventTarget {
             roomPreview: qs("#room-preview"),
             joinButton: qs("#join-room-button"),
             inviteCode: qs("#invite-code"),
+            inviteQr: qs("#invite-qr"),
             activeInviteCode: qs("#active-invite-code"),
             inviteLink: qs("#invite-link"),
             lobbyMessage: qs("#lobby-message"),
             lobbyMediaState: qs("#lobby-media-state"),
             lobbySubtitleState: qs("#lobby-subtitle-state"),
             lobbyConnectionState: qs("#lobby-connection-state"),
+            lobbyDeviceState: qs("#lobby-device-state"),
+            lobbyFullscreenState: qs("#lobby-fullscreen-state"),
+            lobbyPlaybackMode: qs("#lobby-playback-mode"),
             lobbyHostActions: qs("#lobby-host-actions"),
             participants: qs("#participants"),
             activeParticipants: qs("#active-participants"),
             readyButton: qs("#ready-button"),
             video: qs("#party-video"),
+            videoShell: qs(".video-shell"),
             remoteAudio: qs("#remote-audio"),
             track: qs("#subtitle-track"),
             movieControls: qs("#movie-controls"),
@@ -108,6 +120,7 @@ export class WatchPartyUI extends EventTarget {
             subtitleFile: qs("#subtitle-file"),
             activeSubtitleUrl: qs("#active-subtitle-url"),
             localMicState: qs("#local-mic-state"),
+            micLevelBar: qs("#mic-level-bar"),
             micButton: qs("#mic-button"),
             muteButton: qs("#mute-button"),
             playbackState: qs("#playback-state"),
@@ -180,7 +193,7 @@ export class WatchPartyUI extends EventTarget {
             this.dispatchEvent(new CustomEvent("subtitleChange"));
         });
         qs("#restart-button").addEventListener("click", () => this.dispatchEvent(new CustomEvent("restart")));
-        qs("#fullscreen-button").addEventListener("click", () => this.els.video.requestFullscreen?.());
+        qs("#fullscreen-button").addEventListener("click", () => this.enterFullscreen());
         qs("#pip-button").addEventListener("click", () => this.els.video.requestPictureInPicture?.());
         this.bindPlayerControls();
         qs("#leave-room").addEventListener("click", () => this.dispatchEvent(new CustomEvent("leave")));
@@ -248,14 +261,45 @@ export class WatchPartyUI extends EventTarget {
             this.els.controlVoiceMute.setAttribute("aria-pressed", String(next));
             this.dispatchEvent(new CustomEvent("voiceMute", { detail: next }));
         });
-        this.els.controlFullscreen.addEventListener("click", () => this.els.video.requestFullscreen?.());
+        this.els.controlFullscreen.addEventListener("click", () => this.enterFullscreen());
         this.els.controlPip.addEventListener("click", () => this.els.video.requestPictureInPicture?.());
         ["loadedmetadata", "timeupdate", "durationchange", "play", "pause", "ratechange", "volumechange"].forEach((eventName) => {
             this.els.video.addEventListener(eventName, () => this.updatePlayerControls());
         });
         this.els.controlPip.hidden = !("pictureInPictureEnabled" in document);
+        this.fullscreenController.addEventListener("change", (event) => this.updateFullscreenButton(event.detail));
+        this.fullscreenController.addEventListener("unavailable", () => this.toast("تمام‌صفحه در این مرورگر در دسترس نیست.", "error"));
+        this.bindTouchPlayerGestures();
         this.loadLocalControlPrefs();
         this.updatePlayerControls();
+    }
+
+    bindTouchPlayerGestures() {
+        let lastTapAt = 0;
+        let hideTimer = null;
+        const reveal = () => {
+            this.els.movieControls.classList.remove("controls-auto-hidden");
+            clearTimeout(hideTimer);
+            if (!this.els.video.paused) {
+                hideTimer = setTimeout(() => this.els.movieControls.classList.add("controls-auto-hidden"), 3200);
+            }
+        };
+        this.els.videoShell.addEventListener("pointerup", (event) => {
+            if (event.target.closest?.("button,input,select")) return;
+            const now = Date.now();
+            const isDoubleTap = now - lastTapAt < 320;
+            lastTapAt = now;
+            reveal();
+            if (!isDoubleTap) return;
+            const rect = this.els.videoShell.getBoundingClientRect();
+            const direction = event.clientX < rect.left + rect.width / 2 ? -10 : 10;
+            this.seekRelative(direction);
+        });
+        this.els.video.addEventListener("play", reveal);
+        this.els.video.addEventListener("pause", () => {
+            clearTimeout(hideTimer);
+            this.els.movieControls.classList.remove("controls-auto-hidden");
+        });
     }
 
     setState(state, options = {}) {
@@ -364,7 +408,44 @@ export class WatchPartyUI extends EventTarget {
         this.els.inviteCode.textContent = code;
         this.els.activeInviteCode.textContent = code;
         this.els.inviteLink.value = link;
+        this.renderDevicePreflight();
+        this.renderInviteQr(link);
         this.setState(APP_STATES.LOBBY);
+    }
+
+    renderDevicePreflight() {
+        const profile = getDeviceMediaProfile({ video: this.els.video, wrapper: this.els.videoShell });
+        const summary = summarizeDeviceMediaProfile(profile);
+        this.els.lobbyDeviceState.textContent = summary.video;
+        this.els.lobbyFullscreenState.textContent = summary.fullscreen;
+        this.els.lobbyPlaybackMode.textContent = profile.recommendedStrategy === "direct-first-gateway-if-configured" ? "مستقیم / سازگار" : "مستقیم";
+    }
+
+    async renderInviteQr(link) {
+        const canvas = this.els.inviteQr;
+        if (!canvas || !link) return;
+        try {
+            await ensureQrLibrary();
+            const qr = globalThis.qrcode(0, "M");
+            qr.addData(link);
+            qr.make();
+            const ctx = canvas.getContext("2d");
+            const modules = qr.getModuleCount();
+            const size = canvas.width;
+            const cell = Math.floor(size / modules);
+            const offset = Math.floor((size - cell * modules) / 2);
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = "#111827";
+            for (let row = 0; row < modules; row += 1) {
+                for (let col = 0; col < modules; col += 1) {
+                    if (qr.isDark(row, col)) ctx.fillRect(offset + col * cell, offset + row * cell, cell, cell);
+                }
+            }
+        } catch {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
     }
 
     renderRoom(room, uid) {
@@ -590,17 +671,19 @@ export class WatchPartyUI extends EventTarget {
         this.els.mkvAudioStatus.textContent = message || "";
     }
 
-    setMicState({ enabled = false, muted = false, label = "" } = {}) {
+    setMicState({ enabled = false, muted = false, label = "", busy = false } = {}) {
         const text = label || (enabled ? "میکروفن روشن" : "میکروفن خاموش");
         this.els.localMicState.textContent = text;
-        this.els.micButton.textContent = enabled ? "خاموش کردن میکروفن" : "فعال‌کردن میکروفن";
+        this.els.micButton.textContent = busy ? "لطفاً صبر کنید..." : (enabled ? "خاموش کردن میکروفن" : "فعال‌کردن میکروفن");
         this.els.playerMicButton.textContent = "";
-        this.els.playerMicButton.append(makeIcon(enabled ? "fa-microphone" : "fa-microphone-slash"), document.createTextNode(enabled ? " روشن" : " میکروفن"));
+        this.els.playerMicButton.append(makeIcon(enabled ? "fa-microphone" : "fa-microphone-slash"), document.createTextNode(busy ? " در حال آماده‌سازی" : (enabled ? " روشن" : " میکروفن")));
         [this.els.micButton, this.els.playerMicButton].forEach((button) => {
             button.setAttribute("aria-pressed", String(Boolean(enabled && !muted)));
             button.setAttribute("aria-label", text);
+            button.disabled = Boolean(busy);
         });
-        this.els.muteButton.disabled = !enabled;
+        this.els.muteButton.disabled = !enabled || Boolean(busy);
+        if (this.els.micLevelBar) this.els.micLevelBar.style.transform = `scaleX(${enabled && !muted ? 0.68 : 0.08})`;
     }
 
     loadLocalControlPrefs() {
@@ -643,11 +726,34 @@ export class WatchPartyUI extends EventTarget {
             this.toggleSubtitleVisibility();
         } else if (key === "f") {
             event.preventDefault();
-            this.els.video.requestFullscreen?.();
+            this.enterFullscreen();
         } else if (key === "p") {
             event.preventDefault();
             this.els.video.requestPictureInPicture?.();
         }
+    }
+
+    enterFullscreen() {
+        const capability = this.fullscreenController.getCapability();
+        const didStart = this.fullscreenController.enterFromUserGesture();
+        if (didStart && capability === FULLSCREEN_CAPABILITY.CSS_CINEMA_MODE) {
+            this.toast("حالت سینمایی فعال شد.");
+        }
+    }
+
+    updateFullscreenButton({ mode, active }) {
+        const label = mode === FULLSCREEN_CAPABILITY.CSS_CINEMA_MODE ? "حالت سینمایی" : "تمام صفحه";
+        [this.els.controlFullscreen, qs("#fullscreen-button")].forEach((button) => {
+            if (!button) return;
+            button.setAttribute("aria-pressed", String(Boolean(active)));
+            button.setAttribute("aria-label", active ? `خروج از ${label}` : label);
+            const span = button.querySelector("span");
+            if (span) {
+                span.textContent = active ? "خروج" : label;
+            } else {
+                button.textContent = active ? `خروج از ${label}` : label;
+            }
+        });
     }
 }
 
@@ -673,6 +779,20 @@ function makeIcon(iconClass) {
     icon.className = `fas ${iconClass}`;
     icon.setAttribute("aria-hidden", "true");
     return icon;
+}
+
+function ensureQrLibrary() {
+    if (globalThis.qrcode) return Promise.resolve();
+    if (globalThis.__watchPartyQrLoading) return globalThis.__watchPartyQrLoading;
+    globalThis.__watchPartyQrLoading = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js";
+        script.crossOrigin = "anonymous";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.append(script);
+    });
+    return globalThis.__watchPartyQrLoading;
 }
 
 function isTypingTarget(target) {

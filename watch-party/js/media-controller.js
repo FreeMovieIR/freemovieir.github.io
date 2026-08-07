@@ -1,6 +1,8 @@
 import { isHlsUrl, isHttpsUrl, MESSAGES, safeLog } from "./utils.js";
 import { classifyMediaElementError, diagnoseMediaElement, MEDIA_ADAPTERS, MEDIA_ERROR_KIND, selectMediaAdapter } from "./media-probe.js";
 import { MkvAudioCompanion } from "./mkv-audio.js";
+import { getDeviceMediaProfile } from "./device-media-profile.js";
+import { isGatewayConfigured } from "./media-gateway-client.js";
 
 const HLS_VERSION = "1.5.13";
 const HLS_URL = `https://cdn.jsdelivr.net/npm/hls.js@${HLS_VERSION}/dist/hls.min.js`;
@@ -38,6 +40,24 @@ export class MediaController extends EventTarget {
         if (selection.adapter === MEDIA_ADAPTERS.UNSUPPORTED) throw new Error(MESSAGES.invalidUrl);
         this.abortController = new AbortController();
         if (selection.adapter === MEDIA_ADAPTERS.MKV) {
+            const profile = getDeviceMediaProfile({ video: this.video, wrapper: this.video?.parentElement });
+            if (isMobileSafariMkvRisk(profile)) {
+                const detail = {
+                    message: MESSAGES.mkvIphoneIncompatible,
+                    gatewayAvailable: isGatewayConfigured(this.config),
+                    profile: {
+                        profile: profile.profile,
+                        browserFamily: profile.browserFamily,
+                        recommendedStrategy: profile.recommendedStrategy
+                    }
+                };
+                this.updateDiagnostics(selection, MEDIA_ADAPTERS.MKV, {
+                    mkvProbeStatus: "mobile-safari-direct-blocked",
+                    gatewayAvailable: detail.gatewayAvailable
+                });
+                this.dispatchEvent(new CustomEvent("compatibilityNeeded", { detail }));
+                throw new Error(detail.gatewayAvailable ? `${MESSAGES.mkvIphoneIncompatible} ${MESSAGES.gatewayOffer}` : MESSAGES.mkvIphoneIncompatible);
+            }
             this.updateDiagnostics(selection, MEDIA_ADAPTERS.MKV, { mkvProbeStatus: "native-compatibility-attempt" });
             try {
                 await this.loadNative(url, startTime, generation, selection, MEDIA_ADAPTERS.MKV);
@@ -192,6 +212,10 @@ export class MediaController extends EventTarget {
     isCurrent(generation) {
         return generation === this.generation;
     }
+}
+
+function isMobileSafariMkvRisk(profile = {}) {
+    return profile.profile === "mobile" && profile.browserFamily === "safari" && !profile.directMkvLikely;
 }
 
 function makeMediaError(video, timeout = false) {

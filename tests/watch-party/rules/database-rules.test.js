@@ -270,6 +270,34 @@ test("shared audio track selection is bounded and participant-only", async () =>
     }));
 });
 
+test("media compatibility fields are optional, bounded, and participant-only", async () => {
+    await seedRoom();
+    await assertSucceeds(update(ref(db("owner"), `rooms/${ROOM}/media`), {
+        playbackMode: "gateway-hls",
+        compatibilityJobId: "job_ABC123",
+        compatibilityManifestUrl: "https://gateway.example.test/jobs/job_ABC123/index.m3u8",
+        compatibilityExpiresAt: now + 600000,
+        originalContainer: "matroska",
+        updatedAt: now,
+        updatedBy: "owner"
+    }));
+    await assertFails(update(ref(db("owner"), `rooms/${ROOM}/media`), {
+        playbackMode: "bad-mode",
+        updatedAt: now,
+        updatedBy: "owner"
+    }));
+    await assertFails(update(ref(db("owner"), `rooms/${ROOM}/media`), {
+        compatibilityManifestUrl: "http://gateway.example.test/index.m3u8",
+        updatedAt: now,
+        updatedBy: "owner"
+    }));
+    await assertFails(update(ref(db("third"), `rooms/${ROOM}/media`), {
+        playbackMode: "gateway-hls",
+        updatedAt: now,
+        updatedBy: "third"
+    }));
+});
+
 test("undefined paths are denied by default", async () => {
     await seedRoom();
     await assertFails(set(ref(db("owner"), `rooms/${ROOM}/unexpected`), true));

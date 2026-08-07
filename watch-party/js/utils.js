@@ -40,6 +40,13 @@ Object.assign(MESSAGES, {
     mkvAudioDtsUnsupported: "صدای این فایل با DTS فشرده شده و نسخه مرورگری پلیر فعلاً امکان پخش آن را ندارد."
 });
 
+Object.assign(MESSAGES, {
+    mkvIphoneIncompatible: "این فایل برای پخش مستقیم روی آیفون سازگار نیست.",
+    gatewayOffer: "نسخه سازگار برای آیفون آماده شود؟",
+    gatewayPreparing: "در حال آماده‌سازی نسخه مناسب برای دستگاه شما...",
+    remoteAudioBlocked: "برای شنیدن صدای همراه لمس کنید."
+});
+
 export function generateRoomCode() {
     const bytes = new Uint8Array(ROOM_CODE_LENGTH);
     crypto.getRandomValues(bytes);

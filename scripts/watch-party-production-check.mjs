@@ -29,6 +29,13 @@ if (!config.rtc || !("turnCredentialsEndpoint" in config.rtc)) {
     throw new Error("Runtime config does not expose TURN credential endpoint field.");
 }
 
+if (!config.mediaGateway || !("enabled" in config.mediaGateway) || !("baseUrl" in config.mediaGateway)) {
+    throw new Error("Runtime config does not expose mediaGateway fields.");
+}
+if (config.environment === "production" && config.mediaGateway.enabled && !/^https:\/\//i.test(config.mediaGateway.baseUrl || "")) {
+    throw new Error("Production mediaGateway.baseUrl must use HTTPS when enabled.");
+}
+
 const rules = await readFile(resolve(root, "firebase/database.rules.json"), "utf8");
 if (/\"\.read\"\s*:\s*true|\"\.write\"\s*:\s*true/.test(rules)) {
     throw new Error("Open Firebase rule pattern found in firebase/database.rules.json.");

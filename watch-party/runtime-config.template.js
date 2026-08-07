@@ -18,6 +18,13 @@ export const watchPartyConfig = {
         iceServers: [],
         turnCredentialsEndpoint: ""
     },
+    mediaGateway: {
+        enabled: false,
+        baseUrl: "",
+        requestTimeoutMs: 15000,
+        jobTimeoutMs: 120000,
+        preferRemux: true
+    },
     roomLifetimeMs: 6 * 60 * 60 * 1000,
     serviceCheckTimeoutMs: 4000,
     createRoomTimeoutMs: 10000,

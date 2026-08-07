@@ -63,6 +63,11 @@ export class RoomService extends EventTarget {
             media: {
                 url: mediaUrl,
                 type: "direct",
+                playbackMode: "direct",
+                compatibilityJobId: null,
+                compatibilityManifestUrl: null,
+                compatibilityExpiresAt: null,
+                originalContainer: null,
                 audioTrackId: null,
                 updatedAt: now,
                 updatedBy: this.uid
@@ -237,11 +242,28 @@ export class RoomService extends EventTarget {
         await this.firebase.db.update(this.firebase.db.child(this.roomRef(), "media"), {
             url,
             type: "direct",
+            playbackMode: "direct",
+            compatibilityJobId: null,
+            compatibilityManifestUrl: null,
+            compatibilityExpiresAt: null,
+            originalContainer: null,
             audioTrackId: null,
             updatedAt: this.firebase.serverTimestamp(),
             updatedBy: this.uid
         });
         return this.setPlaybackPatch({ paused: true, pauseReason: "manual", currentTime: 0, action: "media" });
+    }
+
+    async updateCompatibilityMedia(patch) {
+        return this.firebase.db.update(this.firebase.db.child(this.roomRef(), "media"), {
+            playbackMode: patch.playbackMode || "gateway-hls",
+            compatibilityJobId: patch.compatibilityJobId || null,
+            compatibilityManifestUrl: patch.compatibilityManifestUrl || null,
+            compatibilityExpiresAt: patch.compatibilityExpiresAt || null,
+            originalContainer: patch.originalContainer || null,
+            updatedAt: this.firebase.serverTimestamp(),
+            updatedBy: this.uid
+        });
     }
 
     async updateAudioTrack(audioTrackId) {

@@ -1,0 +1,12 @@
+{
+  "name": "freemovieir-media-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "dependencies": {}
+}

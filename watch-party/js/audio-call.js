@@ -1,4 +1,17 @@
 import { MESSAGES, safeLog } from "./utils.js";
+import { MICROPHONE_STATES, MicrophoneStateMachine } from "./microphone-state-machine.js";
+
+const VOICE_LABELS = Object.freeze({
+    off: "میکروفن خاموش",
+    requesting: "درخواست دسترسی...",
+    connecting: "در حال اتصال صدا",
+    on: "میکروفن روشن",
+    muted: "میکروفن بی‌صدا شد",
+    connected: "صدای همراه متصل است",
+    disconnected: "ارتباط صوتی قطع شد",
+    retrying: "تلاش مجدد",
+    blocked: "برای شنیدن صدای همراه لمس کنید."
+});
 
 export class AudioCall extends EventTarget {
     constructor(roomService, config, remoteAudio) {
@@ -9,6 +22,7 @@ export class AudioCall extends EventTarget {
         this.peer = null;
         this.localStream = null;
         this.localSender = null;
+        this.audioTransceiver = null;
         this.remoteDescriptionSet = false;
         this.pendingCandidates = [];
         this.seenCandidates = new Set();
@@ -16,82 +30,114 @@ export class AudioCall extends EventTarget {
         this.remoteVolume = loadLocalNumber("watchPartyVoiceVolume", 1);
         this.remoteMuted = false;
         this.turnCache = null;
+        this.generation = 0;
+        this.makingOffer = false;
+        this.ignoreOffer = false;
+        this.iceRestartAttempts = 0;
+        this.stateMachine = new MicrophoneStateMachine();
+        this.stateMachine.addEventListener("state", (event) => {
+            this.dispatchEvent(new CustomEvent("micState", { detail: event.detail }));
+        });
         this.applyRemoteVolume();
     }
 
     async enableMicrophone() {
-        try {
-            if (!isMicrophoneRuntimeAvailable()) throw new DOMException("Microphone unavailable", "NotFoundError");
-            this.dispatchState("درخواست دسترسی...");
-            this.localStream = await navigator.mediaDevices.getUserMedia({
-                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-                video: false
-            });
-            await this.roomService.updateParticipant({ micEnabled: true, connectionState: "در حال اتصال صدا" });
-            await this.ensurePeer();
-            await this.attachLocalTrack();
-            this.dispatchState("میکروفن روشن");
-            return true;
-        } catch (error) {
-            const message = error.name === "NotAllowedError" ? MESSAGES.micDenied : MESSAGES.micUnavailable;
-            this.dispatchEvent(new CustomEvent("error", { detail: message }));
-            await this.roomService.updateParticipant({ micEnabled: false, connectionState: message }).catch(() => {});
-            return false;
-        }
+        return this.stateMachine.run(async ({ isCurrent }) => {
+            try {
+                if (!isMicrophoneRuntimeAvailable()) throw new DOMException("Microphone unavailable", "NotFoundError");
+                this.stateMachine.transition(MICROPHONE_STATES.REQUESTING_PERMISSION);
+                this.dispatchState(VOICE_LABELS.requesting);
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                    video: false
+                });
+                if (!isCurrent()) {
+                    stream.getTracks().forEach((track) => track.stop());
+                    return false;
+                }
+                this.localStream?.getTracks().forEach((track) => track.stop());
+                this.localStream = stream;
+                this.stateMachine.transition(MICROPHONE_STATES.STARTING);
+                await this.roomService.updateParticipant({ micEnabled: true, connectionState: VOICE_LABELS.connecting });
+                await this.ensurePeer();
+                await this.attachLocalTrack();
+                this.stateMachine.transition(MICROPHONE_STATES.ON);
+                this.dispatchState(VOICE_LABELS.on);
+                return true;
+            } catch (error) {
+                const denied = error.name === "NotAllowedError";
+                this.stateMachine.transition(denied ? MICROPHONE_STATES.PERMISSION_DENIED : MICROPHONE_STATES.NO_DEVICE);
+                const message = denied ? MESSAGES.micDenied : MESSAGES.micUnavailable;
+                this.dispatchEvent(new CustomEvent("error", { detail: message }));
+                await this.roomService.updateParticipant({ micEnabled: false, connectionState: message }).catch(() => {});
+                return false;
+            }
+        });
     }
 
     async disableMicrophone() {
-        this.localStream?.getTracks().forEach((track) => track.stop());
-        this.localStream = null;
-        if (this.localSender) await this.localSender.replaceTrack(null).catch(() => {});
-        await this.roomService.updateParticipant({ micEnabled: false, connectionState: "میکروفن خاموش" }).catch(() => {});
-        this.dispatchState("میکروفن خاموش");
+        return this.stateMachine.run(async () => {
+            this.stateMachine.transition(MICROPHONE_STATES.STOPPING);
+            this.localStream?.getTracks().forEach((track) => track.stop());
+            this.localStream = null;
+            await this.localSender?.replaceTrack(null).catch(() => {});
+            await this.roomService.updateParticipant({ micEnabled: false, connectionState: VOICE_LABELS.off }).catch(() => {});
+            this.stateMachine.transition(MICROPHONE_STATES.OFF);
+            this.dispatchState(VOICE_LABELS.off);
+        });
     }
 
     setMuted(muted) {
         this.localStream?.getAudioTracks().forEach((track) => {
             track.enabled = !muted;
         });
+        this.stateMachine.transition(muted ? MICROPHONE_STATES.MUTED : MICROPHONE_STATES.ON);
         this.roomService.updateParticipant({
             micEnabled: Boolean(this.localStream),
-            connectionState: muted ? "میکروفن بی‌صدا شد" : "میکروفن روشن"
+            connectionState: muted ? VOICE_LABELS.muted : VOICE_LABELS.on
         }).catch(() => {});
     }
 
     async ensurePeer() {
         if (this.peer) return;
+        const generation = ++this.generation;
         await this.cleanSignalingIfOwner();
         this.peer = new RTCPeerConnection(await this.buildRtcConfig());
         this.remoteDescriptionSet = false;
         this.pendingCandidates = [];
         this.seenCandidates.clear();
+        this.audioTransceiver = this.peer.addTransceiver("audio", { direction: "sendrecv" });
+        this.localSender = this.audioTransceiver.sender;
 
         this.peer.ontrack = (event) => {
+            if (generation !== this.generation) return;
             const [stream] = event.streams;
+            if (!stream) return;
             this.remoteAudio.srcObject = stream;
             this.applyRemoteVolume();
-            this.remoteAudio.play().catch(() => {});
-            this.dispatchState("صدای همراه متصل است");
+            this.tryPlayRemoteAudio();
+            this.dispatchState(VOICE_LABELS.connected);
         };
         this.peer.onicecandidate = (event) => this.writeCandidate(event.candidate);
         this.peer.onconnectionstatechange = () => this.handleConnectionState();
+        this.peer.onnegotiationneeded = async () => {
+            if (this.roomService.role !== "owner") return;
+            await this.createOffer().catch((error) => this.fail(error));
+        };
         this.listenSignaling();
-
-        if (this.roomService.role === "owner" && this.localStream) await this.attachLocalTrack();
+        if (this.roomService.role === "owner") await this.createOffer();
     }
 
     async attachLocalTrack() {
         if (!this.peer || !this.localStream) return;
         const [track] = this.localStream.getAudioTracks();
         if (!track) return;
-        if (this.localSender) {
-            await this.localSender.replaceTrack(track);
-        } else {
-            this.localSender = this.peer.addTrack(track, this.localStream);
+        if (!this.localSender) {
+            this.audioTransceiver = this.peer.addTransceiver("audio", { direction: "sendrecv" });
+            this.localSender = this.audioTransceiver.sender;
         }
-        if (this.roomService.role === "owner" && this.peer.signalingState === "stable") {
-            await this.createOffer();
-        }
+        await this.localSender.replaceTrack(track);
+        if (this.roomService.role === "owner" && this.peer.signalingState === "stable") await this.createOffer();
     }
 
     async buildRtcConfig() {
@@ -113,10 +159,7 @@ export class AudioCall extends EventTarget {
             if (!response.ok) return [];
             const data = await response.json();
             if (!Array.isArray(data.iceServers)) return [];
-            this.turnCache = {
-                iceServers: data.iceServers,
-                expiresAt: Number(data.expiresAt || 0)
-            };
+            this.turnCache = { iceServers: data.iceServers, expiresAt: Number(data.expiresAt || 0) };
             return this.turnCache.iceServers;
         } catch (error) {
             safeLog("turn endpoint unavailable", { error: error.message });
@@ -132,20 +175,30 @@ export class AudioCall extends EventTarget {
     }
 
     async createOffer(options = {}) {
-        if (!this.peer || this.peer.signalingState !== "stable") return;
-        const offer = await this.peer.createOffer({ offerToReceiveAudio: true, iceRestart: Boolean(options.iceRestart) });
-        await this.peer.setLocalDescription(offer);
-        const { db } = this.roomService.firebase;
-        await db.set(db.child(this.roomService.roomRef(), "signaling/offer"), {
-            type: offer.type,
-            sdp: offer.sdp,
-            uid: this.roomService.uid,
-            createdAt: this.roomService.firebase.serverTimestamp()
-        });
+        if (!this.peer || this.peer.signalingState !== "stable" || this.makingOffer) return;
+        this.makingOffer = true;
+        this.stateMachine.transition(MICROPHONE_STATES.NEGOTIATING);
+        try {
+            const offer = await this.peer.createOffer({ offerToReceiveAudio: true, iceRestart: Boolean(options.iceRestart) });
+            await this.peer.setLocalDescription(offer);
+            const { db } = this.roomService.firebase;
+            await db.set(db.child(this.roomService.roomRef(), "signaling/offer"), {
+                type: offer.type,
+                sdp: offer.sdp,
+                uid: this.roomService.uid,
+                createdAt: this.roomService.firebase.serverTimestamp()
+            });
+        } finally {
+            this.makingOffer = false;
+        }
     }
 
     async createAnswer(offer) {
-        if (!this.peer || this.peer.signalingState !== "stable") return;
+        if (!this.peer) return;
+        const offerCollision = this.makingOffer || this.peer.signalingState !== "stable";
+        const polite = this.roomService.role === "guest";
+        this.ignoreOffer = !polite && offerCollision;
+        if (this.ignoreOffer) return;
         await this.peer.setRemoteDescription(new RTCSessionDescription({ type: offer.type, sdp: offer.sdp }));
         this.remoteDescriptionSet = true;
         await this.flushCandidates();
@@ -158,6 +211,7 @@ export class AudioCall extends EventTarget {
             uid: this.roomService.uid,
             createdAt: this.roomService.firebase.serverTimestamp()
         });
+        this.stateMachine.transition(this.localStream ? MICROPHONE_STATES.ON : MICROPHONE_STATES.OFF);
     }
 
     async applyAnswer(answer) {
@@ -165,6 +219,7 @@ export class AudioCall extends EventTarget {
         await this.peer.setRemoteDescription(new RTCSessionDescription({ type: answer.type, sdp: answer.sdp }));
         this.remoteDescriptionSet = true;
         await this.flushCandidates();
+        this.stateMachine.transition(this.localStream ? MICROPHONE_STATES.ON : MICROPHONE_STATES.OFF);
     }
 
     listenSignaling() {
@@ -198,8 +253,13 @@ export class AudioCall extends EventTarget {
         const { db } = this.roomService.firebase;
         this.unsubscribers.push(db.onChildAdded(db.child(this.roomService.roomRef(), `signaling/${path}`), async (snap) => {
             const candidate = snap.val();
-            if (!candidate || candidate.uid === this.roomService.uid || this.seenCandidates.has(candidate.candidate)) return;
-            this.seenCandidates.add(candidate.candidate);
+            const key = candidate?.candidate || `${candidate?.sdpMid}:${candidate?.sdpMLineIndex}:end`;
+            if (!candidate || candidate.uid === this.roomService.uid || this.seenCandidates.has(key)) return;
+            this.seenCandidates.add(key);
+            if (!candidate.candidate) {
+                if (this.remoteDescriptionSet) await this.peer.addIceCandidate(null).catch(() => {});
+                return;
+            }
             const ice = new RTCIceCandidate(candidate);
             if (!this.remoteDescriptionSet) {
                 this.pendingCandidates.push(ice);
@@ -216,13 +276,13 @@ export class AudioCall extends EventTarget {
     }
 
     async writeCandidate(candidate) {
-        if (!candidate) return;
+        if (!this.peer) return;
         const { db } = this.roomService.firebase;
         const path = this.roomService.role === "owner" ? "hostCandidates" : "guestCandidates";
         await db.push(db.child(this.roomService.roomRef(), `signaling/${path}`), {
-            candidate: candidate.candidate,
-            sdpMid: candidate.sdpMid,
-            sdpMLineIndex: candidate.sdpMLineIndex,
+            candidate: candidate?.candidate || "",
+            sdpMid: candidate?.sdpMid || "",
+            sdpMLineIndex: candidate?.sdpMLineIndex || 0,
             uid: this.roomService.uid,
             createdAt: this.roomService.firebase.serverTimestamp()
         });
@@ -231,19 +291,23 @@ export class AudioCall extends EventTarget {
     async handleConnectionState() {
         const state = this.peer?.connectionState || "closed";
         const labels = {
-            connecting: "در حال اتصال صدا",
-            connected: "صدای همراه متصل است",
-            disconnected: "ارتباط صوتی قطع شد",
-            failed: "تلاش مجدد",
-            closed: "میکروفن خاموش"
+            connecting: VOICE_LABELS.connecting,
+            connected: VOICE_LABELS.connected,
+            disconnected: VOICE_LABELS.disconnected,
+            failed: VOICE_LABELS.retrying,
+            closed: VOICE_LABELS.off
         };
         await this.roomService.updateParticipant({ connectionState: labels[state] || state }).catch(() => {});
         this.dispatchState(labels[state] || state);
+        if (state === "connected") this.iceRestartAttempts = 0;
         if (state === "failed") await this.restartIce();
     }
 
     async restartIce() {
         try {
+            if (this.iceRestartAttempts >= 2) throw new Error("ICE restart limit reached");
+            this.iceRestartAttempts += 1;
+            this.stateMachine.transition(MICROPHONE_STATES.RECONNECTING);
             this.peer?.restartIce();
             if (this.roomService.role === "owner") await this.createOffer({ iceRestart: true });
         } catch (error) {
@@ -268,8 +332,21 @@ export class AudioCall extends EventTarget {
         this.remoteAudio.muted = Boolean(this.remoteMuted);
     }
 
+    async tryPlayRemoteAudio() {
+        try {
+            await this.remoteAudio.play();
+        } catch {
+            this.dispatchEvent(new CustomEvent("remoteAudioBlocked", { detail: VOICE_LABELS.blocked }));
+        }
+    }
+
+    unlockRemoteAudio() {
+        return this.tryPlayRemoteAudio();
+    }
+
     fail(error) {
         safeLog("webrtc failed", { error: error.message });
+        this.stateMachine.transition(MICROPHONE_STATES.FAILED);
         this.dispatchEvent(new CustomEvent("error", { detail: MESSAGES.rtcFailed }));
     }
 
@@ -278,12 +355,18 @@ export class AudioCall extends EventTarget {
     }
 
     closePeer() {
+        this.generation += 1;
+        this.stateMachine.cancel();
         this.unsubscribers.splice(0).forEach((unsubscribe) => unsubscribe());
         this.peer?.getSenders().forEach((sender) => sender.track?.stop());
         this.peer?.close();
         this.peer = null;
         this.localSender = null;
-        this.remoteAudio.srcObject = null;
+        this.audioTransceiver = null;
+        this.remoteDescriptionSet = false;
+        this.pendingCandidates = [];
+        this.seenCandidates.clear();
+        if (this.remoteAudio) this.remoteAudio.srcObject = null;
     }
 
     destroy() {

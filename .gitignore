@@ -12,6 +12,7 @@ playwright-report/
 test-results/
 coverage/
 .firebase/
+.media-gateway-output/
 *.log
 /.idea
 .DS_Store
