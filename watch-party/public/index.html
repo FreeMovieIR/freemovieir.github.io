@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#050506">
+    <title>سینمای عمومی - فیری مووی</title>
+    <meta name="description" content="اتاق‌های عمومی فیری مووی برای تماشای گروهی فیلم.">
+    <link rel="canonical" href="https://freemovieir.github.io/watch-party/public/">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="/fav/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header class="public-header">
+        <a class="brand" href="/" aria-label="فیری مووی">
+            <img src="/logo.png" alt="">
+            <span>فیری مووی</span>
+            <small>سینمای عمومی</small>
+        </a>
+        <nav class="public-nav" aria-label="ناوبری">
+            <a class="is-active" href="/watch-party/public/">سینمای عمومی</a>
+            <a href="/watch-party/">تماشای دونفره</a>
+            <a href="/">خانه</a>
+        </nav>
+    </header>
+
+    <main id="public-app" class="public-shell" aria-live="polite">
+        <section id="state-loading" class="state-card state-loading" data-state="loading">
+            <div class="loader" aria-hidden="true"></div>
+            <h1>در حال آماده‌سازی سینما...</h1>
+            <p>اتاق‌های زنده را بررسی می‌کنیم.</p>
+        </section>
+
+        <section id="state-unavailable" class="state-card" data-state="unavailable" hidden>
+            <p class="eyebrow">به‌زودی</p>
+            <h1>سینمای عمومی</h1>
+            <p>اتاق‌های عمومی هنوز برای نسخه اصلی فعال نشده‌اند.</p>
+            <a class="secondary-btn" href="/watch-party/">رفتن به تماشای دونفره</a>
+        </section>
+
+        <section id="state-directory" data-state="directory" hidden>
+            <div class="cinema-intro">
+                <div>
+                    <p class="eyebrow">لابی زنده فیری مووی</p>
+                    <h1>سینمای عمومی</h1>
+                    <p>به یک اتاق زنده بپیوند یا سینمای خودت را بساز.</p>
+                </div>
+                <div class="intro-actions">
+                    <span id="directory-live-count" class="live-count">اتاق‌ها در حال بارگذاری‌اند</span>
+                    <button id="open-create" data-testid="public-open-create" class="primary-btn" type="button">ساخت اتاق</button>
+                </div>
+            </div>
+
+            <div class="directory-toolbar" aria-label="جستجو و فیلتر اتاق‌ها">
+                <label class="search-field">
+                    <span>جستجوی اتاق</span>
+                    <input id="directory-search" data-testid="public-search" type="search" autocomplete="off" placeholder="نام فیلم یا اتاق را جستجو کن...">
+                </label>
+                <div class="toolbar-controls">
+                    <div id="directory-filter" class="segmented-control" data-testid="public-directory-filter" role="group" aria-label="فیلتر وضعیت">
+                        <button class="is-active" type="button" data-filter="all">همه</button>
+                        <button type="button" data-filter="joinable">جا دارد</button>
+                        <button type="button" data-filter="playing">در حال پخش</button>
+                        <button type="button" data-filter="waiting">در انتظار شروع</button>
+                    </div>
+                    <div class="select-row">
+                        <label>
+                            <span>زبان</span>
+                            <select id="directory-language" data-testid="public-language-filter">
+                                <option value="all">همه زبان‌ها</option>
+                                <option value="fa">فارسی</option>
+                                <option value="en">English</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>چینش</span>
+                            <select id="directory-sort" data-testid="public-directory-sort">
+                                <option value="newest">تازه‌ترین</option>
+                                <option value="active">شلوغ‌ترین</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label class="checkline">
+                        <input id="only-joinable" data-testid="public-only-joinable" type="checkbox">
+                        <span>فقط اتاق‌های دارای ظرفیت</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="directory-loading" class="skeleton-grid" aria-label="در حال بارگذاری اتاق‌ها">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+            <div id="directory-empty" class="empty-card" hidden>
+                <p class="eyebrow">لابی خالی است</p>
+                <h2>فعلاً اتاق زنده‌ای نیست.</h2>
+                <p>اولین سینما را برای بقیه باز کن.</p>
+                <button class="primary-btn" type="button" data-action="create">ساخت اولین اتاق</button>
+            </div>
+            <div id="directory-list" data-testid="public-directory-list" class="room-grid"></div>
+        </section>
+
+        <section id="state-create" data-state="create" hidden>
+            <div class="creation-shell">
+                <div class="creation-copy">
+                    <p class="eyebrow">اتاق جدید</p>
+                    <h1>سینمای خودت را باز کن</h1>
+                    <p>لینک فیلم فقط در مرورگر اعضا بارگذاری می‌شود. فیری مووی فایل ویدیو را آپلود، ذخیره یا بازپخش نمی‌کند.</p>
+                </div>
+                <form id="create-form" data-testid="public-create-form" class="create-form" novalidate>
+                    <section class="form-section">
+                        <h2>هویت اتاق</h2>
+                        <label>نام نمایشی میزبان<input id="create-display-name" data-testid="public-display-name" maxlength="32" required placeholder="مثلاً آرمین"></label>
+                        <label>نام اتاق<input id="create-room-name" data-testid="public-room-name" maxlength="40" required placeholder="مثلاً شب فیلم ترسناک"></label>
+                        <label>نام فیلم<input id="create-movie-title" data-testid="public-movie-title" maxlength="80" required placeholder="نام فیلم"></label>
+                    </section>
+                    <section class="form-section">
+                        <h2>فیلم</h2>
+                        <label>لینک مستقیم فیلم<input id="create-media-url" data-testid="public-media-url" type="url" required placeholder="https://example.com/movie.mp4"></label>
+                        <p class="helper">MP4، WebM و HLS/m3u8 در مرورگرهای سازگار پشتیبانی می‌شوند.</p>
+                    </section>
+                    <section class="form-section form-grid">
+                        <label>ظرفیت<select id="create-capacity" data-testid="public-capacity">
+                            <option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option>
+                        </select></label>
+                        <label>زبان<select id="create-language" data-testid="public-language">
+                            <option selected>فارسی</option>
+                            <option>English</option>
+                            <option>عربی</option>
+                            <option>ترکی</option>
+                            <option>Other</option>
+                        </select></label>
+                    </section>
+                    <section class="form-section social-preview">
+                        <h2>اجتماعی</h2>
+                        <div class="mini-feature">گفتگو فعال</div>
+                        <div class="mini-feature">واکنش‌ها فعال</div>
+                        <div class="mini-feature">حالت آهسته پیش‌فرض</div>
+                    </section>
+                    <p id="create-error" data-testid="public-create-error" class="field-error" aria-live="polite"></p>
+                    <div class="button-row">
+                        <button id="create-submit" data-testid="public-create-submit" class="primary-btn" type="submit">ساخت اتاق</button>
+                        <button class="secondary-btn" data-action="directory" type="button">انصراف</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="state-preview" data-state="preview" hidden>
+            <div class="join-preview-card">
+                <div class="preview-poster" aria-hidden="true">
+                    <span></span>
+                </div>
+                <div class="preview-content">
+                    <p class="eyebrow">پیش‌نمایش ورود</p>
+                    <h1 id="preview-room-name">اتاق عمومی</h1>
+                    <dl id="preview-details" class="details-list"></dl>
+                    <form id="join-form" data-testid="public-join-form">
+                        <label>نام نمایشی<input id="join-display-name" data-testid="public-join-name" maxlength="32" required placeholder="نامی که دیگران می‌بینند"></label>
+                        <p id="join-error" data-testid="public-join-error" class="field-error" aria-live="polite"></p>
+                        <div class="button-row">
+                            <button id="join-submit" data-testid="public-join-submit" class="primary-btn" type="submit">ورود به اتاق</button>
+                            <button class="secondary-btn" data-action="directory" type="button">بازگشت</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section id="state-room" data-state="room" hidden>
+            <div class="room-topbar">
+                <div class="room-title-block">
+                    <p id="room-status" class="room-status">اتاق عمومی</p>
+                    <h1 id="room-title" data-testid="public-room-title">اتاق</h1>
+                    <p id="room-subtitle" data-testid="public-room-movie">فیلم</p>
+                </div>
+                <div class="room-top-actions">
+                    <div id="room-count" data-testid="public-room-count" class="count-pill"></div>
+                    <button id="open-host-controls" data-testid="public-open-host-controls" class="secondary-btn host-only-action" type="button" hidden>مدیریت اتاق</button>
+                    <button id="leave-room" data-testid="public-leave-room" class="secondary-btn guest-only-action" type="button" hidden>ترک اتاق</button>
+                </div>
+            </div>
+            <div id="host-disconnected" class="connection-banner" hidden>اتصال میزبان موقتاً قطع شده؛ در انتظار بازگشت...</div>
+            <div class="room-layout">
+                <section class="cinema-panel">
+                    <div class="video-shell">
+                        <video id="public-video" data-testid="public-active-player" playsinline controls preload="metadata"></video>
+                        <div id="public-reaction-layer" data-testid="public-reaction-layer" class="reaction-layer" aria-live="polite"></div>
+                    </div>
+                    <div class="playback-note-row">
+                        <p id="guest-control-note" class="guest-note" hidden>کنترل پخش با میزبان است.</p>
+                        <span id="media-sync-state" class="sync-chip">همگام‌سازی میزبان</span>
+                    </div>
+                </section>
+
+                <aside class="social-rail">
+                    <div class="social-tabs" role="tablist" aria-label="پنل اجتماعی">
+                        <button id="tab-chat-button" class="social-tab is-active" data-testid="public-chat-tab" type="button" data-public-tab="chat" role="tab" aria-controls="social-chat-panel" aria-selected="true">گفتگو</button>
+                        <button id="tab-members-button" class="social-tab" data-testid="public-members-tab" type="button" data-public-tab="members" role="tab" aria-controls="social-members-panel" aria-selected="false">افراد</button>
+                        <button id="tab-room-button" class="social-tab" data-testid="public-room-tab" type="button" data-public-tab="room" role="tab" aria-controls="social-room-panel" aria-selected="false">اتاق</button>
+                    </div>
+
+                    <section id="social-chat-panel" class="social-panel" data-public-panel="chat" role="tabpanel" aria-labelledby="tab-chat-button">
+                        <div class="section-heading">
+                            <div>
+                                <h2>گفتگو</h2>
+                                <p>پیام‌ها فقط تا پایان همین اتاق باقی می‌مانند.</p>
+                            </div>
+                            <button id="public-new-messages" class="new-message-badge" type="button" hidden>پیام‌های جدید</button>
+                        </div>
+                        <div id="public-chat-list" data-testid="public-chat-list" class="public-chat-list" aria-live="polite"></div>
+                        <p id="public-chat-disabled" class="chat-disabled" hidden>میزبان گفتگو را موقتاً غیرفعال کرده است.</p>
+                        <form id="public-chat-form" data-testid="public-chat-form" class="chat-composer">
+                            <textarea id="public-chat-input" data-testid="public-chat-input" rows="1" maxlength="500" placeholder="درباره فیلم حرف بزن..." aria-label="پیام گفتگو"></textarea>
+                            <div class="composer-row">
+                                <button id="public-reaction-button" data-testid="public-reaction-button" class="icon-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="ارسال واکنش">☺</button>
+                                <span id="public-chat-meta" class="chat-meta">۰ / ۵۰۰</span>
+                                <button id="public-chat-send" data-testid="public-chat-send" class="primary-btn compact" type="submit">ارسال</button>
+                            </div>
+                            <p id="public-chat-error" data-testid="public-chat-error" class="field-error" aria-live="polite"></p>
+                        </form>
+                    </section>
+
+                    <section id="social-members-panel" class="social-panel" data-public-panel="members" role="tabpanel" aria-labelledby="tab-members-button" hidden>
+                        <div class="section-heading">
+                            <div>
+                                <h2>افراد داخل اتاق</h2>
+                                <p>تا هفت نفر می‌توانند در این سینما باشند.</p>
+                            </div>
+                        </div>
+                        <div id="member-list" data-testid="public-member-list" class="member-list"></div>
+                    </section>
+
+                    <section id="social-room-panel" class="social-panel" data-public-panel="room" role="tabpanel" aria-labelledby="tab-room-button" hidden>
+                        <div class="section-heading">
+                            <div>
+                                <h2>وضعیت اتاق</h2>
+                                <p>اطلاعات مشترک و وضعیت اجتماعی اتاق.</p>
+                            </div>
+                        </div>
+                        <div id="room-facts" class="room-facts"></div>
+                        <div id="guest-actions" class="action-stack" hidden>
+                            <button id="leave-room-panel" data-testid="public-leave-room-panel" class="secondary-btn" type="button">ترک اتاق</button>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </section>
+
+        <section id="state-ended" class="state-card" data-state="ended" hidden>
+            <p class="eyebrow">سینما بسته شد</p>
+            <h1 id="ended-title">اتاق پایان یافت</h1>
+            <p id="ended-message">میزبان اتاق را پایان داد.</p>
+            <button data-action="directory" class="primary-btn" type="button">بازگشت به اتاق‌های عمومی</button>
+        </section>
+    </main>
+
+    <div id="reaction-picker" data-testid="public-reaction-picker" class="reaction-picker" hidden role="menu" aria-label="انتخاب واکنش"></div>
+
+    <dialog id="host-control-dialog" data-testid="public-host-control-dialog" class="sheet-dialog">
+        <div class="dialog-head">
+            <div>
+                <p class="eyebrow">میزبان</p>
+                <h2>مدیریت اتاق</h2>
+            </div>
+            <button id="close-host-controls" class="icon-btn" type="button" aria-label="بستن">×</button>
+        </div>
+        <form id="host-media-form" data-testid="public-host-media-form" class="panel-section host-media-form">
+            <h3>فیلم</h3>
+            <label>
+                <span>نام فیلم</span>
+                <input id="host-movie-title" data-testid="public-host-movie-title" maxlength="80" required>
+            </label>
+            <label>
+                <span>لینک مستقیم فیلم</span>
+                <input id="host-media-url" data-testid="public-host-media-url" type="url" maxlength="1900" required>
+            </label>
+            <p class="helper">با تغییر فیلم، پخش اتاق از ابتدا و در حالت متوقف بارگذاری می‌شود.</p>
+            <p id="host-media-error" data-testid="public-host-media-error" class="field-error" aria-live="polite"></p>
+            <button id="host-media-submit" data-testid="public-host-media-submit" class="secondary-btn" type="submit">تغییر فیلم</button>
+        </form>
+        <section id="social-settings" data-testid="public-social-settings" class="panel-section social-settings">
+            <h3>گفتگو و واکنش‌ها</h3>
+            <label class="switch-row">
+                <span>گفتگو</span>
+                <input id="social-chat-enabled" data-testid="public-chat-enabled" type="checkbox">
+            </label>
+            <label>
+                <span>حالت آهسته</span>
+                <select id="social-slow-mode" data-testid="public-slow-mode">
+                    <option value="0">خاموش</option>
+                    <option value="3000">۳ ثانیه</option>
+                    <option value="5000">۵ ثانیه</option>
+                    <option value="10000">۱۰ ثانیه</option>
+                    <option value="30000">۳۰ ثانیه</option>
+                </select>
+            </label>
+            <label class="switch-row">
+                <span>واکنش‌ها</span>
+                <input id="social-reactions-enabled" data-testid="public-reactions-enabled" type="checkbox">
+            </label>
+        </section>
+        <section class="panel-section">
+            <h3>اتاق</h3>
+            <div id="host-actions" class="action-stack">
+                <button id="toggle-lock" data-testid="public-toggle-lock" class="secondary-btn" type="button">قفل اتاق</button>
+                <button id="end-room" data-testid="public-end-room" class="danger-btn" type="button">پایان اتاق</button>
+            </div>
+        </section>
+    </dialog>
+
+    <dialog id="confirm-dialog" data-testid="public-confirm-dialog" class="confirm-dialog">
+        <h2 id="confirm-title"></h2>
+        <p id="confirm-text"></p>
+        <div class="button-row">
+            <button id="confirm-cancel" class="secondary-btn" type="button">انصراف</button>
+            <button id="confirm-ok" class="danger-btn" type="button">تأیید</button>
+        </div>
+    </dialog>
+
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="./js/public-app.js"></script>
+</body>
+</html>

@@ -7,6 +7,8 @@ const root = process.cwd();
 const distRoot = resolve(root, args.dir || "dist");
 const sourceRoot = resolve(root, "watch-party/js");
 const artifactRoot = resolve(distRoot, "watch-party/js");
+const publicSourceRoot = resolve(root, "watch-party/public/js");
+const publicArtifactRoot = resolve(distRoot, "watch-party/public/js");
 
 const mustMatchSource = [
     "firebase-client.js",
@@ -60,6 +62,25 @@ for (const file of files.filter((item) => item.endsWith(".js"))) {
     }
 }
 
+const publicFiles = await listFiles(publicArtifactRoot);
+for (const file of publicFiles.filter((item) => item.endsWith(".js"))) {
+    const source = await readFile(join(publicSourceRoot, file), "utf8");
+    const artifact = await readFile(join(publicArtifactRoot, file), "utf8");
+    if (source !== artifact) {
+        throw new Error(`Production JS artifact was semantically rewritten: watch-party/public/js/${file}`);
+    }
+    if (/getUserMedia|RTCPeerConnection|Cloudflare|RealtimeKit|turn:|turns:|signaling/i.test(artifact) && /voice\//.test(file)) {
+        throw new Error(`Public voice scaffold contains forbidden runtime voice code: watch-party/public/js/${file}`);
+    }
+    const result = spawnSync(process.execPath, ["--check", join(publicArtifactRoot, file)], {
+        cwd: root,
+        encoding: "utf8"
+    });
+    if (result.status !== 0) {
+        throw new Error(`node --check failed for watch-party/public/js/${file}\n${result.stderr || result.stdout}`);
+    }
+}
+
 for (const [relPath, token] of expectedIdentifiers) {
     const text = await readFile(join(artifactRoot, relPath), "utf8");
     if (!text.includes(token)) {
@@ -77,7 +98,7 @@ for (const file of files.filter((item) => item.endsWith(".js"))) {
     }
 }
 
-console.log(`[pages:test] Watch Party JS artifact semantics ok: ${files.filter((item) => item.endsWith(".js")).length} modules checked.`);
+console.log(`[pages:test] Watch Party JS artifact semantics ok: ${files.filter((item) => item.endsWith(".js")).length} private modules and ${publicFiles.filter((item) => item.endsWith(".js")).length} public modules checked.`);
 
 async function listFiles(dir, base = dir) {
     const entries = await readdir(dir, { withFileTypes: true });

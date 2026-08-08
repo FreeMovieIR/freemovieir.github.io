@@ -16,6 +16,9 @@ function command(name) {
 if (!existsSync("dist/watch-party/index.html")) {
     throw new Error("dist/ is missing. Run npm run pages:build first.");
 }
+if (!existsSync("dist/watch-party/public/index.html")) {
+    throw new Error("dist/watch-party/public/ is missing. Run npm run pages:build first.");
+}
 
 if (!(await canBindPort(PORT))) {
     throw new Error(`Port ${PORT} is already in use. Stop the existing preview server and retry.`);
@@ -82,6 +85,10 @@ try {
 
     assertRequested(requests, "/watch-party/runtime-config.js", "runtime-config.js");
     assertRequested(requests, "/watch-party/js/app.js", "app.js");
+
+    await page.goto(`${BASE_URL}/watch-party/public/`, { waitUntil: "domcontentloaded" });
+    await page.locator("#state-unavailable:not([hidden])").waitFor({ timeout: 5000 });
+    assertRequested(requests, "/watch-party/public/js/public-app.js", "watch-party/public/js/public-app.js");
 
     const requiredModules = [
         "app.js",

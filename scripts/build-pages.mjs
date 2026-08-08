@@ -19,6 +19,7 @@ const manifest = {
 };
 
 const excludedNames = new Set([
+    ".agents",
     ".git",
     ".github",
     ".idea",
@@ -29,6 +30,7 @@ const excludedNames = new Set([
     "tests",
     "scripts",
     "firebase",
+    "functions",
     "services",
     "test-assets",
     "artifacts",
@@ -48,6 +50,7 @@ const excludedFiles = new Set([
     "package.json",
     "package-lock.json",
     "playwright.config.js",
+    "skills-lock.json",
     "database-debug.log",
     "firebase-debug.log",
     "IMPROVEMENT_TASKS.md"
@@ -139,6 +142,21 @@ async function transformWatchPartyArtifact() {
         .replace(/<code id="service-command-hint"[\s\S]*?<\/code>/, '<code id="service-command-hint" class="command-hint" hidden></code>');
     await writeFile(indexPath, html, "utf8");
     await transformWatchPartyApp(wpDir);
+    await transformPublicRoomsArtifact(wpDir);
+}
+
+async function transformPublicRoomsArtifact(wpDir) {
+    const publicIndexPath = join(wpDir, "public", "index.html");
+    let html = await readFile(publicIndexPath, "utf8");
+    html = html.replace(
+        /(<link[^>]+href="\.\/style\.css)(")/,
+        `$1?v=${buildId}$2`
+    );
+    html = html.replace(
+        /(<script[^>]+src="\.\/js\/public-app\.js)(")/,
+        `<script>window.wpBuildId=${JSON.stringify(buildId)};</script>\n    $1?v=${buildId}$2`
+    );
+    await writeFile(publicIndexPath, html, "utf8");
 }
 
 async function transformWatchPartyApp(wpDir) {
@@ -166,7 +184,9 @@ async function assertRequiredFiles() {
         "fav/favicon.ico",
         "player/index.html",
         "watch-party/index.html",
+        "watch-party/public/index.html",
         "watch-party/js/app.js",
+        "watch-party/public/js/public-app.js",
         "watch-party/runtime-config.js",
         "movie/index.html",
         "series/index.html"

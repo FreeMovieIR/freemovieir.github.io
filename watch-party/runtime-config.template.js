@@ -31,6 +31,19 @@ export const watchPartyConfig = {
         jobTimeoutMs: 120000,
         preferRemux: true
     },
+    publicRooms: {
+        enabled: false,
+        creationEnabled: false,
+        maintenance: false,
+        forceDisableActiveRooms: false,
+        maxCapacity: 7,
+        minCapacity: 2,
+        maxDirectoryRooms: 50,
+        functionTimeoutMs: 10000,
+        roomRetentionMs: 12 * 60 * 60 * 1000,
+        staleGuestGraceMs: 2 * 60 * 1000,
+        staleHostGraceMs: 2 * 60 * 1000
+    },
     roomLifetimeMs: 6 * 60 * 60 * 1000,
     serviceCheckTimeoutMs: 4000,
     createRoomTimeoutMs: 10000,

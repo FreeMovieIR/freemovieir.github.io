@@ -2,6 +2,7 @@
   "type": "module",
   "private": true,
   "name": "freemovieir-watch-party-functions",
+  "main": "src/index.js",
   "scripts": {
     "test": "node --test test/*.test.js"
   },

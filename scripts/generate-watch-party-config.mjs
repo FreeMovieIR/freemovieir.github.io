@@ -107,6 +107,19 @@ const config = {
         jobTimeoutMs: 120000,
         preferRemux: true
     },
+    publicRooms: {
+        enabled: !isProduction,
+        creationEnabled: !isProduction,
+        maintenance: false,
+        forceDisableActiveRooms: false,
+        maxCapacity: 7,
+        minCapacity: 2,
+        maxDirectoryRooms: 50,
+        functionTimeoutMs: 10000,
+        roomRetentionMs: 12 * 60 * 60 * 1000,
+        staleGuestGraceMs: 2 * 60 * 1000,
+        staleHostGraceMs: 2 * 60 * 1000
+    },
     roomLifetimeMs: 6 * 60 * 60 * 1000,
     serviceCheckTimeoutMs: 4000,
     createRoomTimeoutMs: 10000,
@@ -135,6 +148,7 @@ if (!isProduction) {
     config.emulators = {
         auth: { url: "http://127.0.0.1:9099" },
         database: { host: "127.0.0.1", port: 9000 },
+        functions: { host: "127.0.0.1", port: 5001, region: "us-central1" },
         ui: { url: "http://127.0.0.1:4000" }
     };
 }
@@ -213,10 +227,13 @@ function normalizeOptionalEndpoint(raw, name, production) {
 }
 
 function validateProductionConfigText(text) {
-    if (/127\.0\.0\.1|localhost|demo-freemovieir|FIREBASE_APPCHECK_DEBUG_TOKEN|BEGIN PRIVATE KEY|service_account|private_key|__WATCH_PARTY_/i.test(text)) {
-        throw new Error("Generated production config contains local, test, template, or private-credential text.");
-    }
-    if (!/environment"\s*:\s*"production"/.test(text) || !/useEmulators"\s*:\s*false/.test(text)) {
+if (
+    /127\.0\.0\.1|localhost|demo-freemovieir|FIREBASE_APPCHECK_DEBUG_TOKEN|BEGIN PRIVATE KEY|service_account|private_key|__WATCH_PARTY_[A-Z0-9_]+__|\$\{WATCH_PARTY_[A-Z0-9_]+\}|YOUR_FIREBASE_|YOUR_PROJECT/i.test(text)
+) {
+    throw new Error(
+        "Generated production config contains local, test, template, or private-credential text."
+    );
+}    if (!/environment"\s*:\s*"production"/.test(text) || !/useEmulators"\s*:\s*false/.test(text)) {
         throw new Error("Generated production config does not have production environment and disabled emulators.");
     }
 }

@@ -35,7 +35,7 @@ export default defineConfig({
     projects: [
         {
             name: "chromium-desktop",
-            testMatch: /watch-party-(desktop|media-regressions|voice-v2|chat-composer)\.spec\.js/,
+            testMatch: /watch-party-(desktop|media-regressions|voice-v2|chat-composer|public-rooms)\.spec\.js/,
             use: {
                 browserName: "chromium",
                 viewport: { width: 1365, height: 900 }

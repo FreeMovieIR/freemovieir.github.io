@@ -71,6 +71,7 @@ The local endpoints are:
 ```text
 Auth emulator: http://127.0.0.1:9099
 Realtime Database emulator: http://127.0.0.1:9000
+Functions emulator: http://127.0.0.1:5001
 Static frontend: http://127.0.0.1:8080
 ```
 
@@ -92,6 +93,12 @@ Multi-user Playwright E2E tests:
 
 ```powershell
 npm run watch-party:test:e2e
+```
+
+Focused Public Cinema Rooms V2 social E2E:
+
+```powershell
+npm run watch-party:test:e2e -- --project=chromium-desktop tests/watch-party/e2e/watch-party-public-rooms.spec.js
 ```
 
 Production artifact build and scan:
@@ -151,6 +158,37 @@ The active-room redesign review set is copied under:
 
 ```text
 artifacts/watch-party/redesign-v3/index.md
+```
+
+The Public Cinema Rooms V2 social review set is generated under:
+
+```text
+artifacts/watch-party/public-v2/index.md
+```
+
+It covers discovery, search/filter states, join preview, grouped chat, slow-mode and disabled-chat states, reaction picker/overlay, moderation, active room, and responsive public layouts.
+
+The Public Cinema Rooms V3 hardening review set is generated under:
+
+```text
+artifacts/watch-party/public-v3/index.md
+```
+
+It covers production feature-flag and maintenance states that must not start Public Firebase listeners or callable requests when disabled.
+
+Public Rooms V3 local load and invariant harness:
+
+```powershell
+npm run watch-party:test:public-load
+```
+
+The harness exercises sequential room cleanup, concurrent capacity joins, chat bursts, reaction rate limits, bounded discovery snapshots, room end cascades, and kick cascades. It uses local core handlers only and never contacts production.
+
+Production rollout and rollback notes:
+
+```text
+watch-party/public/PRODUCTION_DEPLOYMENT.md
+watch-party/public/ROLLBACK.md
 ```
 
 Generated Playwright output is local-only:
@@ -309,6 +347,32 @@ Use separate browser profiles so Firebase Anonymous Auth creates separate users:
 - Third participant: another private/incognito window or a different browser profile.
 
 Use headphones for WebRTC microphone tests to avoid feedback.
+
+## Public Cinema Rooms V2 Manual Test
+
+Open:
+
+```text
+http://127.0.0.1:8080/watch-party/public/
+```
+
+Checklist:
+
+- Create a public room as host with a local media URL such as `http://127.0.0.1:8080/test-assets/sample.mp4`.
+- Join from two separate private browser contexts.
+- Confirm the directory card shows safe metadata only: no media URL, UID, chat text, or reaction details.
+- Send public chat from a guest and host; confirm names are resolved by the server and messages render as plain text.
+- Send a rapid second guest message and confirm the Persian slow-mode message appears.
+- Disable chat as host and confirm guests cannot type or send.
+- Re-enable chat and confirm sending works again.
+- Open the reaction picker, send `🍿`, and confirm every active member sees the video overlay with the sender name.
+- Disable reactions as host and confirm guests cannot open/send reactions.
+- Delete a guest message as host and confirm it disappears for all active members.
+- Lock the room and confirm a late guest cannot join.
+- Fill the room to capacity and confirm additional guests are blocked.
+- Kick a guest and confirm the kicked user reaches the ended state and cannot rejoin.
+- End the room and confirm the room, chat, and reactions disappear from Emulator UI.
+- Confirm no microphone controls appear and no browser microphone permission prompt is requested.
 
 ## Manual Stuck-Restore Test
 

@@ -16,16 +16,6 @@ const apiUrls = {
 // شیء کش برای ذخیره تصاویر
 const imageCache = {};
 
-function startLoadingBar() {
-    const loadingBar = document.getElementById('loading-bar');
-    if (loadingBar) {
-        // شروع از 5% تا 60% (شبیه‌سازی پیشرفت)
-        loadingBar.style.width = '5%';
-        // افزایش تدریجی تا 60% تا وقتی داده میاد
-        setTimeout(() => loadingBar.style.width = '60%', 100);
-    }
-}
-
 // تابع برای دریافت یا ذخیره تصویر از/در کش
 function getCachedImage(id, fetchFunction) {
     if (imageCache[id] && imageCache[id] !== defaultPoster) {

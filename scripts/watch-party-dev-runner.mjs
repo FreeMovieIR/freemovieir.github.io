@@ -11,13 +11,14 @@ const children = [];
 const firebase = start("firebase", [
     "emulators:start",
     "--only",
-    "auth,database",
+    "auth,database,functions",
     "--project",
     "demo-freemovieir"
 ]);
 
 await waitForPort("127.0.0.1", 9099, 60_000);
 await waitForPort("127.0.0.1", 9000, 60_000);
+await waitForPort("127.0.0.1", 5001, 60_000);
 
 const server = start("http-server", [".", "-p", "8080", "-a", "127.0.0.1", "-c-1"]);
 await waitForPort("127.0.0.1", 8080, 30_000);
@@ -25,6 +26,7 @@ await waitForPort("127.0.0.1", 8080, 30_000);
 console.log("");
 console.log("Watch Party local development is ready:");
 console.log("  Watch Party: http://127.0.0.1:8080/watch-party/");
+console.log("  Public Rooms: http://127.0.0.1:8080/watch-party/public/");
 console.log("  Emulator UI: http://127.0.0.1:4000");
 console.log("Press Ctrl+C to stop the local services.");
 

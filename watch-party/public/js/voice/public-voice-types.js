@@ -1,0 +1,12 @@
+export const PUBLIC_VOICE_STATES = Object.freeze({
+    DISABLED: "DISABLED",
+    CONNECTING: "CONNECTING",
+    CONNECTED: "CONNECTED",
+    FAILED: "FAILED"
+});
+
+export const PUBLIC_VOICE_POLICIES = Object.freeze({
+    DISABLED: "DISABLED",
+    OPEN: "OPEN",
+    REQUEST_TO_SPEAK: "REQUEST_TO_SPEAK"
+});

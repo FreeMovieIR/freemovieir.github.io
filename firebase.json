@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
+  },
   "database": {
     "rules": "firebase/database.rules.json"
   },
@@ -10,6 +14,10 @@
     "database": {
       "host": "127.0.0.1",
       "port": 9000
+    },
+    "functions": {
+      "host": "127.0.0.1",
+      "port": 5001
     },
     "ui": {
       "enabled": true,

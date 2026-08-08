@@ -2,6 +2,18 @@
 
 Two-person synchronized playback for FreeMovieIR. The feature stays compatible with GitHub Pages: it is a static RTL Persian frontend that uses Firebase Anonymous Auth, Firebase Realtime Database, native HTML5 video, HLS.js, and WebRTC microphone audio.
 
+## Public Cinema Rooms
+
+Public Rooms V2 lives at `/watch-party/public/` and is a separate system from the private two-person Watch Party. It uses separate Realtime Database roots, callable Firebase Functions for lifecycle and social operations, and a production-off feature flag:
+
+```js
+publicRooms: {
+  enabled: false
+}
+```
+
+Local emulator config enables it for testing. V2 adds public group chat, controlled emoji reactions, host message deletion, server-enforced slow mode, host social settings, and a redesigned discovery lobby. Public voice remains disabled/no-op. See `watch-party/public/README.md` and `watch-party/public/VOICE_FUTURE.md`.
+
 ## Configuration
 
 Production does not use `firebase-config.js`. GitHub Actions generates `watch-party/runtime-config.js` inside the Pages artifact from Repository Variables.

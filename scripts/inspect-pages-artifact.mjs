@@ -13,6 +13,7 @@ const forbiddenPathParts = new Set([
     "tests",
     "scripts",
     "firebase",
+    "functions",
     "dev",
     "services",
     "test-assets",
@@ -77,6 +78,8 @@ await assertReadable("index.html");
 await assertReadable("player/index.html");
 await assertReadable("watch-party/index.html");
 await assertReadable("watch-party/js/app.js");
+await assertReadable("watch-party/public/index.html");
+await assertReadable("watch-party/public/js/public-app.js");
 await assertReadable("watch-party/runtime-config.js");
 await assertReadable("sitemap.xml");
 await assertReadable("movie/index.html");
@@ -99,10 +102,13 @@ if (JSON.stringify(config).match(/127\.0\.0\.1|localhost|demo-freemovieir|servic
 }
 
 const wpHtml = await readFile(join(root, "watch-party/index.html"), "utf8");
+const publicHtml = await readFile(join(root, "watch-party/public/index.html"), "utf8");
 for (const asset of ["watch-party/style.css", "watch-party/js/app.js"]) {
     await assertReadable(asset);
 }
 if (/firebase-config\.js/.test(wpHtml)) throw new Error("watch-party/index.html references firebase-config.js.");
+if (/firebase-config\.js/.test(publicHtml)) throw new Error("watch-party/public/index.html references firebase-config.js.");
+if (config.publicRooms?.enabled !== false) throw new Error("publicRooms.enabled must be false in the production artifact.");
 
 const largestFiles = [...files].sort((a, b) => b.size - a.size).slice(0, 10);
 console.log(`[pages:test] artifact ok: ${files.length} files, ${totalBytes} bytes.`);

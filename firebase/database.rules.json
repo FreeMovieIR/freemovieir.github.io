@@ -199,6 +199,129 @@
 
         "$other": { ".validate": false }
       }
+    },
+    "publicRoomDirectory": {
+      ".read": "auth != null",
+      ".write": false,
+      ".indexOn": ["createdAt"],
+      "$roomId": {
+        ".validate": "$roomId.matches(/^[A-HJ-NP-Z2-9]{10,12}$/) && newData.hasChildren(['schemaVersion','roomName','movieTitle','hostDisplayName','memberCount','capacity','createdAt','status','language','joinable','deleteAt'])",
+        "schemaVersion": { ".validate": "newData.val() === 1" },
+        "roomName": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 40" },
+        "movieTitle": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80" },
+        "hostDisplayName": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 32" },
+        "memberCount": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 7" },
+        "capacity": { ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 7" },
+        "createdAt": { ".validate": "newData.isNumber() || newData.val() === now" },
+        "status": { ".validate": "newData.val() === 'open' || newData.val() === 'locked' || newData.val() === 'ending'" },
+        "language": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 24" },
+        "joinable": { ".validate": "newData.isBoolean()" },
+        "chatEnabled": { ".validate": "!newData.exists() || newData.isBoolean()" },
+        "reactionsEnabled": { ".validate": "!newData.exists() || newData.isBoolean()" },
+        "playbackPaused": {
+          ".write": "auth != null && root.child('publicRooms').child($roomId).child('hostUid').val() === auth.uid",
+          ".validate": "!newData.exists() || newData.isBoolean()"
+        },
+        "deleteAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "publicRooms": {
+      ".indexOn": ["deleteAt"],
+      "$roomId": {
+        ".read": "auth != null && data.child('members').child(auth.uid).exists()",
+        ".write": false,
+        ".validate": "$roomId.matches(/^[A-HJ-NP-Z2-9]{10,12}$/)",
+        "media": {
+          ".write": "auth != null && data.parent().child('hostUid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['url','type','updatedAt','updatedBy'])",
+          "url": { ".validate": "newData.isString() && newData.val().matches(/^(https:\\/\\/|http:\\/\\/(127\\.0\\.0\\.1|localhost)(:[0-9]+)?\\/).{1,1900}$/)" },
+          "type": { ".validate": "newData.val() === 'direct'" },
+          "updatedAt": { ".validate": "newData.isNumber() || newData.val() === now" },
+          "updatedBy": { ".validate": "newData.val() === auth.uid" },
+          "$other": { ".validate": false }
+        },
+        "playback": {
+          ".write": "auth != null && data.parent().child('hostUid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['paused','currentTime','playbackRate','revision','action','updatedAt','updatedBy']) && (!data.exists() || newData.child('revision').val() >= data.child('revision').val())",
+          "paused": { ".validate": "newData.isBoolean()" },
+          "currentTime": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 86400" },
+          "playbackRate": { ".validate": "newData.isNumber() && newData.val() >= 0.25 && newData.val() <= 4" },
+          "revision": { ".validate": "newData.isNumber() && newData.val() >= 1" },
+          "action": { ".validate": "newData.isString() && newData.val().length <= 32" },
+          "updatedAt": { ".validate": "newData.isNumber() || newData.val() === now" },
+          "updatedBy": { ".validate": "newData.val() === auth.uid" },
+          "$other": { ".validate": false }
+        },
+        "settings": {
+          ".write": "auth != null && data.parent().child('hostUid').val() === auth.uid",
+          "chatEnabled": { ".validate": "newData.isBoolean()" },
+          "reactionsEnabled": { ".validate": "newData.isBoolean()" },
+          "slowModeMs": { ".validate": "newData.val() === 0 || newData.val() === 3000 || newData.val() === 5000 || newData.val() === 10000 || newData.val() === 30000" },
+          "$other": { ".validate": false }
+        },
+        "members": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid && data.parent().parent().child('members').child(auth.uid).exists()",
+            ".validate": "newData.hasChildren(['displayName','role','online','joinedAt','lastSeen']) && newData.child('displayName').val() === data.child('displayName').val() && newData.child('role').val() === data.child('role').val() && newData.child('joinedAt').val() === data.child('joinedAt').val()",
+            "displayName": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 32" },
+            "role": { ".validate": "newData.val() === 'host' || newData.val() === 'guest'" },
+            "online": { ".validate": "newData.isBoolean()" },
+            "joinedAt": { ".validate": "newData.isNumber() || newData.val() === now" },
+            "lastSeen": { ".validate": "newData.isNumber() || newData.val() === now" },
+            "lastMessageAt": { ".validate": "!newData.exists() || newData.isNumber()" },
+            "lastReactionAt": { ".validate": "!newData.exists() || newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "chat": {
+          "$messageId": {
+            ".write": false,
+            ".validate": "newData.hasChildren(['uid','displayName','text','createdAt'])",
+            "uid": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 32" },
+            "text": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 500" },
+            "createdAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "reactions": {
+          "$reactionId": {
+            ".write": false,
+            ".validate": "newData.hasChildren(['uid','emoji','createdAt'])",
+            "uid": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128" },
+            "emoji": { ".validate": "newData.val() === '❤️' || newData.val() === '😂' || newData.val() === '😱' || newData.val() === '😢' || newData.val() === '🍿' || newData.val() === '👏' || newData.val() === '🔥'" },
+            "createdAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".write": false }
+      }
+    },
+    "publicRoomHostIndex": {
+      ".read": false,
+      ".write": false,
+      ".indexOn": ["deleteAt"]
+    },
+    "publicRoomRateLimits": {
+      ".read": false,
+      ".write": false
+    },
+    "publicRoomEphemeral": {
+      ".read": false,
+      ".write": false
+    },
+    "publicRoomMemberNotices": {
+      "$roomId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false,
+          ".validate": "$roomId.matches(/^[A-HJ-NP-Z2-9]{10,12}$/) && newData.hasChildren(['type','createdAt'])",
+          "type": { ".validate": "newData.val() === 'kicked'" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
     }
   }
 }

@@ -105,7 +105,7 @@ try {
         }
     });
 
-    for (const route of ["/", "/player/", "/watch-party/", "/movie/", "/series/", "/airing-today-tv-show/"]) {
+    for (const route of ["/", "/player/", "/watch-party/", "/watch-party/public/", "/movie/", "/series/", "/airing-today-tv-show/"]) {
         await page.goto(`${BASE_URL}${route}`, { waitUntil: "domcontentloaded" });
         await page.locator("body").waitFor({ state: "visible" });
         await delay(350);
@@ -127,6 +127,9 @@ try {
     if (requests.some((url) => /:(9000|9099)\b/.test(url))) {
         throw new Error("Production artifact attempted to contact Firebase emulator ports.");
     }
+
+    await page.goto(`${BASE_URL}/watch-party/public/`, { waitUntil: "domcontentloaded" });
+    await page.locator("#state-unavailable:not([hidden])").waitFor({ timeout: 5000 });
 
     await page.goto(`${BASE_URL}/watch-party/`, { waitUntil: "domcontentloaded" });
     const productionHookState = await page.evaluate(() => ({

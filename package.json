@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "watch-party:serve": "http-server . -p 8080 -a 127.0.0.1 -c-1",
-    "watch-party:emulators": "firebase emulators:start --only auth,database --project demo-freemovieir",
+    "watch-party:emulators": "firebase emulators:start --only auth,database,functions --project demo-freemovieir",
     "watch-party:dev": "node scripts/watch-party-dev-runner.mjs",
     "watch-party:test": "node --test tests/watch-party/*.test.js",
     "watch-party:test:rules": "node scripts/watch-party-rules-test.mjs",
@@ -10,6 +10,7 @@
     "watch-party:test:e2e:headed": "node scripts/watch-party-e2e-runner.mjs --headed",
     "watch-party:test:e2e:ui": "node scripts/watch-party-e2e-runner.mjs --ui",
     "watch-party:test:e2e:report": "playwright show-report",
+    "watch-party:test:public-load": "node scripts/watch-party-public-load-test.mjs",
     "watch-party:build": "npm run watch-party:build:production",
     "watch-party:test:production": "node scripts/watch-party-production-check.mjs",
     "watch-party:build:local": "node scripts/generate-watch-party-config.mjs --mode=local --output=watch-party/runtime-config.js",

@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
@@ -100,9 +100,18 @@ process.once("SIGINT", async () => {
 
 let exitCode = 1;
 try {
+    console.log("[watch-party:e2e] Generating local test runtime config...");
+    const buildConfig = spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "watch-party:build:test"], {
+        cwd: root,
+        env: childEnv,
+        stdio: "inherit",
+        shell: process.platform === "win32"
+    });
+    if (buildConfig.status !== 0) throw new Error("Failed to generate local test runtime config");
+
     console.log("[watch-party:e2e] Starting Firebase emulators...");
-    spawnLocal("firebase.cmd", ["emulators:start", "--only", "auth,database", "--project", "demo-freemovieir"]);
-    await Promise.all([waitForPort(9099), waitForPort(9000)]);
+    spawnLocal("firebase.cmd", ["emulators:start", "--only", "auth,database,functions", "--project", "demo-freemovieir"]);
+    await Promise.all([waitForPort(9099), waitForPort(9000), waitForPort(5001)]);
     await Promise.all([
         waitForHttp("http://127.0.0.1:9099/emulator/v1/projects/demo-freemovieir/config"),
         waitForHttp("http://127.0.0.1:9000/.json?ns=demo-freemovieir")
