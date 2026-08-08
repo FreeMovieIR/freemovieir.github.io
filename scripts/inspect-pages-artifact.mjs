@@ -100,6 +100,7 @@ for (const key of ["apiKey", "authDomain", "databaseURL", "projectId", "appId"])
 if (JSON.stringify(config).match(/127\.0\.0\.1|localhost|demo-freemovieir|service_account|private_key|firebase-adminsdk|__WATCH_PARTY_|FIREBASE_APPCHECK_DEBUG_TOKEN/i)) {
     throw new Error("runtime config contains forbidden local/test/private text.");
 }
+validatePublicRoomRolloutConfig(config.publicRooms);
 
 const wpHtml = await readFile(join(root, "watch-party/index.html"), "utf8");
 const publicHtml = await readFile(join(root, "watch-party/public/index.html"), "utf8");
@@ -108,7 +109,6 @@ for (const asset of ["watch-party/style.css", "watch-party/js/app.js"]) {
 }
 if (/firebase-config\.js/.test(wpHtml)) throw new Error("watch-party/index.html references firebase-config.js.");
 if (/firebase-config\.js/.test(publicHtml)) throw new Error("watch-party/public/index.html references firebase-config.js.");
-if (config.publicRooms?.enabled !== false) throw new Error("publicRooms.enabled must be false in the production artifact.");
 
 const largestFiles = [...files].sort((a, b) => b.size - a.size).slice(0, 10);
 console.log(`[pages:test] artifact ok: ${files.length} files, ${totalBytes} bytes.`);
@@ -147,6 +147,26 @@ function parseArgs(argv) {
         if (match) parsed[match[1]] = match[2];
     }
     return parsed;
+}
+
+function validatePublicRoomRolloutConfig(publicRooms) {
+    if (!publicRooms || typeof publicRooms !== "object" || Array.isArray(publicRooms)) {
+        throw new Error("runtime config publicRooms must be an object.");
+    }
+    for (const key of ["enabled", "creationEnabled", "maintenance", "forceDisableActiveRooms"]) {
+        if (typeof publicRooms[key] !== "boolean") {
+            throw new Error(`runtime config publicRooms.${key} must be boolean.`);
+        }
+    }
+    if (publicRooms.forceDisableActiveRooms !== false) {
+        throw new Error("runtime config publicRooms.forceDisableActiveRooms must remain false.");
+    }
+    if (publicRooms.creationEnabled === true && publicRooms.enabled !== true) {
+        throw new Error("runtime config publicRooms.creationEnabled cannot be true while publicRooms.enabled is false.");
+    }
+    if (typeof publicRooms.functionTimeoutMs !== "number" || publicRooms.functionTimeoutMs < 1000 || publicRooms.functionTimeoutMs > 60000) {
+        throw new Error("runtime config publicRooms.functionTimeoutMs must be a sane numeric value.");
+    }
 }
 
 function normalizePath(path) {

@@ -10,6 +10,8 @@ import { test } from "node:test";
 const execFileAsync = promisify(execFile);
 const root = resolve(import.meta.dirname, "../..");
 const generator = join(root, "scripts/generate-watch-party-config.mjs");
+const pagesBuilder = join(root, "scripts/build-pages.mjs");
+const artifactInspector = join(root, "scripts/inspect-pages-artifact.mjs");
 const productionEnv = Object.freeze({
     WATCH_PARTY_FIREBASE_API_KEY: "AIzaSyA0000000000000000000000000000000000",
     WATCH_PARTY_FIREBASE_AUTH_DOMAIN: "freemovieir-rollout-test.firebaseapp.com",
@@ -84,6 +86,60 @@ test("local and test configs keep public rooms enabled for emulator workflows", 
     assert.equal(testConfig.publicRooms.maintenance, false);
 });
 
+test("production Pages artifact inspector accepts every controlled public-room rollout state", async () => {
+    const cases = [
+        {
+            name: "default-off",
+            flags: {},
+            expected: { enabled: false, creationEnabled: false, maintenance: false }
+        },
+        {
+            name: "discovery-only",
+            flags: {
+                WATCH_PARTY_PUBLIC_ROOMS_ENABLED: "true",
+                WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED: "false",
+                WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE: "false"
+            },
+            expected: { enabled: true, creationEnabled: false, maintenance: false }
+        },
+        {
+            name: "full-rollout",
+            flags: {
+                WATCH_PARTY_PUBLIC_ROOMS_ENABLED: "true",
+                WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED: "true",
+                WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE: "false"
+            },
+            expected: { enabled: true, creationEnabled: true, maintenance: false }
+        },
+        {
+            name: "maintenance",
+            flags: {
+                WATCH_PARTY_PUBLIC_ROOMS_ENABLED: "true",
+                WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED: "false",
+                WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE: "true"
+            },
+            expected: { enabled: true, creationEnabled: false, maintenance: true }
+        },
+        {
+            name: "normalized-invalid",
+            flags: {
+                WATCH_PARTY_PUBLIC_ROOMS_ENABLED: "false",
+                WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED: "true",
+                WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE: "false"
+            },
+            expected: { enabled: false, creationEnabled: false, maintenance: false }
+        }
+    ];
+
+    for (const item of cases) {
+        const config = await buildAndInspectProductionArtifact(item.name, item.flags);
+        assert.equal(config.publicRooms.enabled, item.expected.enabled, item.name);
+        assert.equal(config.publicRooms.creationEnabled, item.expected.creationEnabled, item.name);
+        assert.equal(config.publicRooms.maintenance, item.expected.maintenance, item.name);
+        assert.equal(config.publicRooms.forceDisableActiveRooms, false, item.name);
+    }
+});
+
 async function generateProductionConfig(flags) {
     return generateConfig({ mode: "production", env: { ...productionEnv, ...flags } });
 }
@@ -98,6 +154,28 @@ async function generateConfig({ mode, env }) {
             windowsHide: true
         });
         const module = await import(`${pathToFileURL(output).href}?t=${Date.now()}-${Math.random()}`);
+        return module.watchPartyConfig;
+    } finally {
+        await rm(dir, { recursive: true, force: true });
+    }
+}
+
+async function buildAndInspectProductionArtifact(name, flags) {
+    const dir = await mkdtemp(join(tmpdir(), `watch-party-pages-${name}-`));
+    const output = join(dir, "dist");
+    try {
+        await execFileAsync(process.execPath, [pagesBuilder, "--mode=production", `--output=${output}`, `--buildId=rollout-${name}`], {
+            cwd: root,
+            env: sanitizedEnv({ ...productionEnv, ...flags }),
+            windowsHide: true
+        });
+        await execFileAsync(process.execPath, [artifactInspector, `--dir=${output}`], {
+            cwd: root,
+            env: sanitizedEnv({ ...productionEnv, ...flags }),
+            windowsHide: true
+        });
+        const runtimeConfigPath = join(output, "watch-party/runtime-config.js");
+        const module = await import(`${pathToFileURL(runtimeConfigPath).href}?t=${Date.now()}-${Math.random()}`);
         return module.watchPartyConfig;
     } finally {
         await rm(dir, { recursive: true, force: true });
