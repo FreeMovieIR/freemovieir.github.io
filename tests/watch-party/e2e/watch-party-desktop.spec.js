@@ -206,7 +206,8 @@ test.describe("Watch Party desktop E2E", () => {
             await expect(owner.page.locator("#chat-messages")).toContainText("Hello owner");
             await guest.page.getByTestId("chat-input").fill("");
             const beforeEmpty = await guest.page.locator(".chat-message").count();
-            await guest.page.getByTestId("chat-send").click();
+            await expect(guest.page.getByTestId("chat-send")).toBeDisabled();
+            await guest.page.locator("#chat-form").evaluate((form) => form.requestSubmit());
             await expect.poll(() => guest.page.locator(".chat-message").count()).toBe(beforeEmpty);
             await guest.page.getByTestId("chat-input").evaluate((input) => { input.value = "A".repeat(501); });
             await guest.page.locator("#chat-form").evaluate((form) => form.requestSubmit());

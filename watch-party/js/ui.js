@@ -30,6 +30,7 @@ export class WatchPartyUI extends EventTarget {
         });
         this.bindStaticEvents();
         this.setState(APP_STATES.WELCOME);
+        this.updateChatComposer();
     }
 
     collectElements() {
@@ -146,6 +147,7 @@ export class WatchPartyUI extends EventTarget {
             chatNewMessages: qs("#chat-new-messages"),
             chatForm: qs("#chat-form"),
             chatInput: qs("#chat-input"),
+            chatSend: qs("[data-testid='chat-send']"),
             chatCount: qs("#chat-count"),
             chatUnread: qs("#chat-unread"),
             subtitleSourceState: qs("#subtitle-source-state"),
@@ -230,10 +232,14 @@ export class WatchPartyUI extends EventTarget {
         this.els.voiceReconnectButton?.addEventListener("click", () => this.dispatchEvent(new CustomEvent("voiceReconnect")));
         this.els.chatForm.addEventListener("submit", (event) => {
             event.preventDefault();
+            if (!this.els.chatInput.value.trim()) {
+                this.updateChatComposer();
+                return;
+            }
             this.dispatchEvent(new CustomEvent("chat", { detail: this.els.chatInput.value }));
         });
         this.els.chatInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" && !event.shiftKey && !isMobileViewport()) {
+            if (event.key === "Enter" && !event.shiftKey && !event.isComposing && !isMobileViewport()) {
                 event.preventDefault();
                 this.els.chatForm.requestSubmit();
             }
@@ -677,10 +683,18 @@ export class WatchPartyUI extends EventTarget {
     updateChatComposer() {
         const input = this.els.chatInput;
         if (!input) return;
+        const minHeight = isMobileViewport() ? 54 : 56;
+        const maxHeight = isMobileViewport() ? 136 : 146;
         input.style.height = "auto";
-        input.style.height = `${Math.min(140, Math.max(44, input.scrollHeight))}px`;
+        const nextHeight = Math.min(maxHeight, Math.max(minHeight, input.scrollHeight));
+        input.style.height = `${nextHeight}px`;
+        input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
         const length = input.value.length;
-        this.els.chatCount.textContent = length >= 430 ? `${length}/500` : "";
+        if (this.els.chatSend) this.els.chatSend.disabled = input.value.trim().length === 0;
+        if (!this.els.chatCount) return;
+        this.els.chatCount.textContent = `${length} / 500`;
+        this.els.chatCount.classList.toggle("is-warning", length >= 400 && length < 500);
+        this.els.chatCount.classList.toggle("is-limit", length >= 500);
     }
 
     toast(message, type = "info") {

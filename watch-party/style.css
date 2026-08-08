@@ -967,16 +967,6 @@ video::cue {
     cursor: pointer;
 }
 
-.chat-form {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.chat-form input {
-    flex: 1;
-}
-
 .field-stack {
     display: grid;
     gap: 10px;
@@ -1235,33 +1225,169 @@ body[data-wp-state="active-room"] .side-tab.active {
 }
 
 .chat-form {
+    --chat-composer-bg: rgba(17, 24, 39, .94);
+    --chat-composer-bg-active: rgba(20, 29, 45, .98);
+    --chat-composer-border: rgba(148, 163, 184, .18);
+    --chat-composer-border-active: rgba(216, 189, 122, .62);
+    --chat-composer-glow: rgba(185, 144, 69, .16);
     position: sticky;
     bottom: 0;
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    align-items: end;
+    gap: 8px;
+    min-width: 0;
     padding-top: 12px;
     background: linear-gradient(180deg, transparent, rgba(12, 13, 15, .96) 24%);
 }
 
 .chat-form .reaction-buttons {
-    grid-column: 1 / -1;
     gap: 8px;
+    padding: 8px;
+    border: 1px solid rgba(148, 163, 184, .12);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, .38);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
 }
 
-.chat-form textarea {
-    min-height: 46px;
-    max-height: 140px;
+.chat-form .reaction-buttons button {
+    border-color: rgba(148, 163, 184, .18);
+    background: rgba(31, 41, 55, .74);
+    color: var(--wp-text);
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.chat-form .reaction-buttons button:hover {
+    border-color: rgba(216, 189, 122, .42);
+    background: rgba(55, 65, 81, .72);
+    transform: translateY(-1px);
+}
+
+.chat-composer {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid var(--chat-composer-border);
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .035), transparent 42%),
+        var(--chat-composer-bg);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .045),
+        0 14px 34px rgba(0, 0, 0, .18);
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.chat-composer:focus-within {
+    border-color: var(--chat-composer-border-active);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .045), transparent 46%),
+        var(--chat-composer-bg-active);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .05),
+        0 0 0 3px var(--chat-composer-glow),
+        0 18px 38px rgba(0, 0, 0, .24);
+}
+
+.chat-composer textarea {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    max-height: 146px;
+    padding: 3px 2px 0;
+    overflow-y: hidden;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #fff7ed;
+    font: inherit;
+    font-size: .96rem;
+    line-height: 1.7;
+    outline: none;
     resize: none;
+    text-align: right;
+    caret-color: var(--wp-accent-2);
+}
+
+.chat-composer textarea::placeholder {
+    color: rgba(226, 214, 196, .48);
+}
+
+.chat-composer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
 }
 
 .chat-count {
-    grid-column: 1 / -1;
-    min-height: 16px;
-    color: var(--wp-muted);
-    font-size: .75rem;
+    min-height: 20px;
+    color: rgba(226, 214, 196, .38);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    white-space: nowrap;
     text-align: left;
+    transition: color .18s ease;
+}
+
+.chat-count.is-warning {
+    color: #d8bd7a;
+}
+
+.chat-count.is-limit {
+    color: #f8d57e;
+}
+
+.chat-send-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    min-width: 96px;
+    padding: 0 14px;
+    border: 1px solid rgba(216, 189, 122, .32);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #e0c583, #b99045);
+    color: #101820;
+    cursor: pointer;
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 950;
+    line-height: 1;
+    transition: transform .16s ease, border-color .16s ease, filter .16s ease, opacity .16s ease;
+}
+
+.chat-send-button svg {
+    width: 18px;
+    height: 18px;
+    transform: scaleX(-1);
+}
+
+.chat-send-button:hover:not(:disabled) {
+    border-color: rgba(248, 213, 126, .72);
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+}
+
+.chat-send-button:active:not(:disabled) {
+    transform: translateY(0) scale(.98);
+}
+
+.chat-send-button:focus-visible {
+    outline: 2px solid rgba(248, 213, 126, .72);
+    outline-offset: 2px;
+}
+
+.chat-send-button:disabled {
+    border-color: rgba(148, 163, 184, .16);
+    background: rgba(55, 65, 81, .62);
+    color: rgba(226, 214, 196, .42);
+    cursor: not-allowed;
+    opacity: 1;
+    transform: none;
 }
 
 .reaction-float {
@@ -1368,7 +1494,40 @@ body[data-wp-state="active-room"] .side-tab.active {
 
     .chat-form {
         grid-template-columns: 1fr;
-        padding-bottom: env(safe-area-inset-bottom);
+        padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
+    }
+
+    .chat-form .reaction-buttons {
+        gap: 7px;
+        padding: 7px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: thin;
+    }
+
+    .chat-form .reaction-buttons button {
+        flex: 0 0 44px;
+    }
+
+    .chat-composer {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .chat-composer textarea {
+        min-height: 54px;
+        max-height: 136px;
+        font-size: 16px;
+    }
+
+    .chat-composer-footer {
+        gap: 8px;
+    }
+
+    .chat-send-button {
+        min-height: 44px;
+        min-width: 88px;
+        padding-inline: 12px;
     }
 
     .chat-messages {

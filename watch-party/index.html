@@ -410,7 +410,7 @@
                     </div>
                     <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
                     <button id="chat-new-messages" class="new-message-pill" type="button" hidden>پیام‌های جدید</button>
-                    <form id="chat-form" class="chat-form">
+                    <form id="chat-form" class="chat-form" aria-label="ارسال پیام">
                         <div class="reaction-buttons" aria-label="واکنش سریع">
                             <button type="button" data-reaction="❤️" aria-label="ارسال واکنش قلب">❤️</button>
                             <button type="button" data-reaction="😂" aria-label="ارسال واکنش خنده">😂</button>
@@ -418,9 +418,18 @@
                             <button type="button" data-reaction="😢" aria-label="ارسال واکنش ناراحت">😢</button>
                             <button type="button" data-reaction="🍿" aria-label="ارسال واکنش پاپ‌کورن">🍿</button>
                         </div>
-                        <textarea id="chat-input" data-testid="chat-input" maxlength="500" rows="1" placeholder="پیام کوتاه..." autocomplete="off" aria-label="متن پیام"></textarea>
-                        <span id="chat-count" class="chat-count" aria-live="polite"></span>
-                        <button class="primary-btn" data-testid="chat-send" type="submit">ارسال</button>
+                        <div class="chat-composer" data-testid="chat-composer">
+                            <textarea id="chat-input" data-testid="chat-input" maxlength="500" rows="1" placeholder="برای همراهت پیام بنویس..." autocomplete="off" aria-label="متن پیام" dir="auto"></textarea>
+                            <div class="chat-composer-footer">
+                                <span id="chat-count" class="chat-count" aria-live="polite">0 / 500</span>
+                                <button class="chat-send-button" data-testid="chat-send" type="submit" aria-label="ارسال پیام" disabled>
+                                    <span>ارسال</span>
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                                        <path d="M5 12h12m0 0-5-5m5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </section>
                 <section id="tab-subtitle" class="panel side-tab-panel" hidden>
