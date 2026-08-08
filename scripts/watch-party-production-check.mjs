@@ -24,6 +24,20 @@ if (config.environment === "production") {
     for (const key of ["apiKey", "authDomain", "databaseURL", "projectId", "appId"]) {
         if (!config.firebase?.[key]) throw new Error(`Production runtime config missing firebase.${key}.`);
     }
+    const publicRooms = config.publicRooms;
+    if (!publicRooms || typeof publicRooms !== "object") throw new Error("Production runtime config missing publicRooms.");
+    for (const key of ["enabled", "creationEnabled", "maintenance", "forceDisableActiveRooms"]) {
+        if (typeof publicRooms[key] !== "boolean") throw new Error(`Production publicRooms.${key} must be boolean.`);
+    }
+    if (publicRooms.forceDisableActiveRooms !== false) {
+        throw new Error("Production publicRooms.forceDisableActiveRooms must remain false.");
+    }
+    if (publicRooms.creationEnabled === true && publicRooms.enabled !== true) {
+        throw new Error("Production publicRooms.creationEnabled cannot be true while publicRooms.enabled is false.");
+    }
+    if (typeof publicRooms.functionTimeoutMs !== "number" || publicRooms.functionTimeoutMs < 1000) {
+        throw new Error("Production publicRooms.functionTimeoutMs must be a sane number.");
+    }
 }
 
 if (!config.rtc || !("turnCredentialsEndpoint" in config.rtc)) {

@@ -72,6 +72,7 @@ for (const [key, value] of Object.entries(firebase)) assertNoPrivateCredential(`
 
 const appCheckSiteKey = getValue("WATCH_PARTY_APP_CHECK_SITE_KEY");
 const isProduction = environment === "production";
+const publicRoomFlags = resolvePublicRoomFlags({ isProduction });
 const turnCredentialsEndpoint = normalizeOptionalEndpoint(
     getValue("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT"),
     "WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT",
@@ -108,9 +109,9 @@ const config = {
         preferRemux: true
     },
     publicRooms: {
-        enabled: !isProduction,
-        creationEnabled: !isProduction,
-        maintenance: false,
+        enabled: publicRoomFlags.enabled,
+        creationEnabled: publicRoomFlags.creationEnabled,
+        maintenance: publicRoomFlags.maintenance,
         forceDisableActiveRooms: false,
         maxCapacity: 7,
         minCapacity: 2,
@@ -192,6 +193,37 @@ function parseIceServers(raw) {
         assertNoPrivateCredential("WATCH_PARTY_RTC_ICE_SERVERS", JSON.stringify(server));
     }
     return parsed;
+}
+
+function resolvePublicRoomFlags({ isProduction }) {
+    if (!isProduction) {
+        return {
+            enabled: true,
+            creationEnabled: true,
+            maintenance: false
+        };
+    }
+    const enabled = parseProductionBoolean("WATCH_PARTY_PUBLIC_ROOMS_ENABLED", process.env.WATCH_PARTY_PUBLIC_ROOMS_ENABLED);
+    const requestedCreationEnabled = parseProductionBoolean(
+        "WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED",
+        process.env.WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED
+    );
+    const maintenance = parseProductionBoolean(
+        "WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE",
+        process.env.WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE
+    );
+    return {
+        enabled,
+        creationEnabled: enabled && requestedCreationEnabled,
+        maintenance
+    };
+}
+
+function parseProductionBoolean(name, raw) {
+    const value = String(raw ?? "").trim().toLowerCase();
+    if (value === "" || value === "false" || value === "0") return false;
+    if (value === "true" || value === "1") return true;
+    throw new Error(`${name} must be one of: true, 1, false, 0, or empty.`);
 }
 
 function normalizeOptionalHttpsUrl(raw, name) {
