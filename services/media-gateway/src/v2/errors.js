@@ -53,7 +53,27 @@ export function userSafeMessage(safeCode) {
 
 export function safeLog(event, details = {}) {
     const allowed = {};
-    for (const key of ["operation", "jobId", "status", "stage", "safeError", "policy", "reused", "durationBucket"]) {
+    for (const key of [
+        "operation",
+        "jobId",
+        "status",
+        "stage",
+        "safeError",
+        "policy",
+        "reused",
+        "durationBucket",
+        "errorName",
+        "errorCode",
+        "httpStatus",
+        "callbackCount",
+        "committed",
+        "existing",
+        "rtdbCategory",
+        "processName",
+        "exitCode",
+        "timedOut",
+        "processCategory"
+    ]) {
         if (details[key] !== undefined) allowed[key] = details[key];
     }
     console.info(`[media-gateway] ${event}`, allowed);

@@ -60,11 +60,21 @@ function extractToken(request) {
     return match ? match[1].trim() : "";
 }
 
-async function getAdminAuth() {
-    const [{ getApps, initializeApp }, { getAuth }] = await Promise.all([
+export async function getAdminAuth(modules = null) {
+    const adminModules = modules || await Promise.all([
         import("firebase-admin/app"),
         import("firebase-admin/auth")
     ]);
-    if (!getApps().length) initializeApp();
-    return getAuth();
+    const [appModule, { getAuth }] = adminModules;
+    const app = ensureDefaultAdminApp(appModule);
+    return getAuth(app);
+}
+
+export function ensureDefaultAdminApp({ getApp, initializeApp }) {
+    try {
+        return getApp();
+    } catch (error) {
+        if (error?.code && error.code !== "app/no-app") throw error;
+        return initializeApp();
+    }
 }

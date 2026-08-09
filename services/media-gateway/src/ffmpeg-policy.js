@@ -51,7 +51,6 @@ export function chooseConversionPolicy(probe = {}, target = {}) {
 export function buildFfprobeArgs(sourceUrl) {
     return [
         "-v", "error",
-        "-nostdin",
         "-protocol_whitelist", "file,http,https,tcp,tls,crypto",
         "-show_format",
         "-show_streams",
@@ -61,9 +60,6 @@ export function buildFfprobeArgs(sourceUrl) {
 }
 
 export function buildFfmpegArgs({ sourceUrl, outputManifest, policy }) {
-    const initSegment = String(outputManifest || "stream.m3u8")
-        .replace(/\\/g, "/")
-        .replace(/[^/]+$/, "init.mp4");
     const args = [
         "-hide_banner",
         "-nostdin",
@@ -96,8 +92,8 @@ export function buildFfmpegArgs({ sourceUrl, outputManifest, policy }) {
         "-hls_time", "4",
         "-hls_playlist_type", "vod",
         "-hls_segment_type", "fmp4",
-        "-hls_fmp4_init_filename", initSegment,
-        "-hls_flags", "independent_segments",
+        "-hls_fmp4_init_filename", "init.mp4",
+        "-hls_flags", "independent_segments+temp_file",
         outputManifest
     );
     return args;

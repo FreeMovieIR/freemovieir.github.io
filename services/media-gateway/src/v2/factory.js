@@ -8,7 +8,7 @@ import { MemoryObjectStore } from "./stores/memory-object-store.js";
 import { RtdbJobStore } from "./stores/rtdb-job-store.js";
 import { CloudStorageObjectStore } from "./stores/cloud-storage-object-store.js";
 
-export async function createGatewayDependencies(env = process.env) {
+export async function createGatewayDependencies(env = process.env, options = {}) {
     const config = loadGatewayConfig(env);
     if (config.localMode) {
         return {
@@ -19,7 +19,9 @@ export async function createGatewayDependencies(env = process.env) {
             tokenVerifier: new StaticTokenVerifier()
         };
     }
-    validateProductionGatewayConfig(config);
+    validateProductionGatewayConfig(config, {
+        requireAllowedOrigins: options.requireAllowedOrigins !== false
+    });
     const database = await createAdminDatabase(config);
     const storage = await createStorageClient();
     return {
@@ -40,22 +42,42 @@ export async function createGatewayDependencies(env = process.env) {
 }
 
 export async function createDefaultGatewayServer(env = process.env) {
-    const dependencies = await createGatewayDependencies(env);
+    const dependencies = await createGatewayDependencies(env, { requireAllowedOrigins: true });
     return createMediaGatewayApi(dependencies);
 }
 
 async function createAdminDatabase(config) {
-    const [{ getApps, initializeApp }, { getDatabase }] = await Promise.all([
+    return createGatewayAdminDatabase(config);
+}
+
+export async function createGatewayAdminDatabase(config, modules = null) {
+    const adminModules = modules || await Promise.all([
         import("firebase-admin/app"),
         import("firebase-admin/database")
     ]);
-    if (!getApps().length) {
-        initializeApp({
-            projectId: config.projectId,
-            databaseURL: config.databaseUrl
-        });
-    }
-    return getDatabase();
+    const [{ getApps, initializeApp }, { getDatabase }] = adminModules;
+    const appName = getGatewayDatabaseAppName(config);
+    const existingApp = getApps().find((app) => app.name === appName);
+    const app = existingApp || initializeApp(buildGatewayDatabaseAppOptions(config), appName);
+    return getDatabase(app);
+}
+
+export function getGatewayDatabaseAppName(config) {
+    if (!config?.dbAuthUid) throw new Error("MEDIA_GATEWAY_DB_AUTH_UID is required for the Gateway database app.");
+    return `media-gateway-db-${config.dbAuthUid}`;
+}
+
+export function buildGatewayDatabaseAppOptions(config) {
+    if (!config?.projectId) throw new Error("MEDIA_GATEWAY_PROJECT_ID is required for the Gateway database app.");
+    if (!config?.databaseUrl) throw new Error("MEDIA_GATEWAY_DATABASE_URL is required for the Gateway database app.");
+    if (!config?.dbAuthUid) throw new Error("MEDIA_GATEWAY_DB_AUTH_UID is required for the Gateway database app.");
+    return {
+        projectId: config.projectId,
+        databaseURL: config.databaseUrl,
+        databaseAuthVariableOverride: {
+            uid: config.dbAuthUid
+        }
+    };
 }
 
 async function createStorageClient() {

@@ -2,6 +2,14 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "mediaGatewayJobs": {
+      ".read": "auth != null && (auth.uid === 'media-gateway-api' || auth.uid === 'media-gateway-worker')",
+      ".write": "auth != null && (auth.uid === 'media-gateway-api' || auth.uid === 'media-gateway-worker')",
+      ".indexOn": ["expiresAt", "requestedBy"],
+      "$jobKey": {
+        ".validate": "$jobKey.matches(/^[a-f0-9]{64}$/)"
+      }
+    },
     "rooms": {
       ".indexOn": ["deleteAt"],
       "$roomCode": {
@@ -11,27 +19,27 @@
 
         "schemaVersion": { ".validate": "newData.val() === 1" },
         "ownerUid": {
-          ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+          ".read": "auth != null && auth.uid !== 'media-gateway-api' && auth.uid !== 'media-gateway-worker' && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
           ".write": "!data.exists() && newData.val() === auth.uid",
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length < 128"
         },
         "guestUid": {
-          ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+          ".read": "auth != null && auth.uid !== 'media-gateway-api' && auth.uid !== 'media-gateway-worker' && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
           ".write": "auth != null && data.parent().child('ownerUid').val() !== auth.uid && data.parent().child('status').val() === 'open' && data.parent().child('expiresAt').val() > now && (!data.exists() || data.val() === null || data.val() === auth.uid || newData.val() === null)",
           ".validate": "newData.val() === null || (newData.isString() && newData.val().length > 0 && newData.val().length < 128)"
         },
         "status": {
-          ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+          ".read": "auth != null && auth.uid !== 'media-gateway-api' && auth.uid !== 'media-gateway-worker' && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
           ".write": "auth != null && (!data.exists() || data.parent().child('ownerUid').val() === auth.uid || newData.val() === 'expired')",
           ".validate": "newData.val() === 'open' || newData.val() === 'expired' || newData.val() === 'ended'"
         },
         "createdAt": { ".validate": "newData.isNumber() || newData.val() === now" },
         "expiresAt": {
-          ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+          ".read": "auth != null && auth.uid !== 'media-gateway-api' && auth.uid !== 'media-gateway-worker' && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
           ".validate": "newData.isNumber() && newData.val() <= now + 21600000 + 60000"
         },
         "deleteAt": {
-          ".read": "auth != null && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+          ".read": "auth != null && auth.uid !== 'media-gateway-api' && auth.uid !== 'media-gateway-worker' && $roomCode.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
           ".validate": "newData.isNumber() && newData.val() <= newData.parent().child('createdAt').val() + 43200000 + 60000"
         },
         "endedAt": {
@@ -201,7 +209,7 @@
       }
     },
     "publicRoomDirectory": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.uid !== 'media-gateway-api' && auth.uid !== 'media-gateway-worker'",
       ".write": false,
       ".indexOn": ["createdAt"],
       "$roomId": {

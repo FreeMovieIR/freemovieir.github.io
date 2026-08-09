@@ -16,11 +16,11 @@ const args = [
     "database",
     "--project",
     "demo-freemovieir",
-    "node --test tests/watch-party/rules/database-rules.test.js && node --test tests/watch-party/rules/public-room-rules.test.js"
+    "node --test tests/watch-party/rules/database-rules.test.js && node --test tests/watch-party/rules/public-room-rules.test.js && node --test services/media-gateway/tests/rtdb-transaction-emulator.js"
 ];
 
 const command = process.platform === "win32"
-    ? `${firebaseBin} emulators:exec --only database --project demo-freemovieir "node --test tests/watch-party/rules/database-rules.test.js && node --test tests/watch-party/rules/public-room-rules.test.js"`
+    ? `${firebaseBin} emulators:exec --only database --project demo-freemovieir "node --test tests/watch-party/rules/database-rules.test.js && node --test tests/watch-party/rules/public-room-rules.test.js && node --test services/media-gateway/tests/rtdb-transaction-emulator.js"`
     : firebaseBin;
 
 function listDatabaseEmulatorPids() {

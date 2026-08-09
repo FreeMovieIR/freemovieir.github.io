@@ -16,29 +16,36 @@ export function createMediaGatewayApi({
         throw new Error("Media Gateway API requires jobStore, objectStore, executor, and tokenVerifier.");
     }
     return http.createServer(async (request, response) => {
+        const cors = resolveCors(request, config);
         try {
+            if (request.method === "OPTIONS") {
+                return writePreflight(response, cors);
+            }
+            if (!cors.allowed) {
+                return json(response, 403, publicError(gatewayError(403, SAFE_ERROR.AUTH_INVALID, "Origin is not allowed.")), cors);
+            }
             const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
             if (request.method === "POST" && url.pathname === "/v2/probe") {
-                return json(response, 200, await probeSource(request, { tokenVerifier, config }));
+                return json(response, 200, await probeSource(request, { tokenVerifier, config }), cors);
             }
             if (request.method === "POST" && url.pathname === "/v2/jobs") {
-                return json(response, 202, await createJob(request, { jobStore, executor, tokenVerifier, config, now }));
+                return json(response, 202, await createJob(request, { jobStore, executor, tokenVerifier, config, now }), cors);
             }
             const jobMatch = url.pathname.match(/^\/v2\/jobs\/([a-f0-9]{64})$/);
             if (jobMatch && request.method === "GET") {
-                return json(response, 200, await getJob(request, jobMatch[1], { jobStore, tokenVerifier, now }));
+                return json(response, 200, await getJob(request, jobMatch[1], { jobStore, tokenVerifier, now }), cors);
             }
             if (jobMatch && request.method === "DELETE") {
-                return json(response, 200, await releaseJobInterest(request, jobMatch[1], { jobStore, tokenVerifier }));
+                return json(response, 200, await releaseJobInterest(request, jobMatch[1], { jobStore, tokenVerifier }), cors);
             }
             const playbackMatch = url.pathname.match(/^\/v2\/jobs\/([a-f0-9]{64})\/playback$/);
             if (playbackMatch && (request.method === "GET" || request.method === "POST")) {
-                return json(response, 200, await getPlayback(request, playbackMatch[1], { jobStore, objectStore, tokenVerifier, config, now }));
+                return json(response, 200, await getPlayback(request, playbackMatch[1], { jobStore, objectStore, tokenVerifier, config, now }), cors);
             }
-            return json(response, 404, publicError(gatewayError(404, SAFE_ERROR.JOB_NOT_FOUND, "Not found.")));
+            return json(response, 404, publicError(gatewayError(404, SAFE_ERROR.JOB_NOT_FOUND, "Not found.")), cors);
         } catch (error) {
             const normalized = normalizeGatewayError(error);
-            return json(response, normalized.status, publicError(normalized));
+            return json(response, normalized.status, publicError(normalized), cors);
         }
     });
 }
@@ -56,31 +63,46 @@ async function probeSource(request, { tokenVerifier, config }) {
 
 async function createJob(request, context) {
     const { jobStore, executor, tokenVerifier, config, now } = context;
-    const auth = await tokenVerifier.verifyRequest(request);
-    const body = await readJson(request, config.limits.requestBodyLimit);
-    if (!body.mediaUrl) throw gatewayError(400, SAFE_ERROR.BAD_REQUEST, "mediaUrl is required.");
-    const publicUrl = await normalizeSource(body.mediaUrl);
-    await assertWithinRateLimits(jobStore, auth.uid, config, now);
-    const deviceProfile = normalizeDeviceProfile(body.deviceProfile || body.profile || {});
-    const jobKey = makeJobKey(publicUrl.href, deviceProfile);
-    const expiresAt = now() + config.limits.jobTtlMs;
-    const result = await jobStore.createIfAbsent(jobKey, {
-        sourceUrl: publicUrl.href,
-        sourceHash: hashSourceUrl(publicUrl.href),
-        profileHash: makeProfileHash(deviceProfile),
-        deviceProfile,
-        requestedBy: auth.uid,
-        outputPrefix: `jobs/${jobKey}/`,
-        expiresAt
-    });
-    if (!result.created) await jobStore.addRequester(jobKey, auth.uid);
-    if (result.created) {
-        const started = await executor.start(jobKey);
-        if (started?.executionName) await jobStore.update(jobKey, { executionName: started.executionName });
+    let stage = "auth";
+    try {
+        const auth = await tokenVerifier.verifyRequest(request);
+        stage = "json-parse";
+        const body = await readJson(request, config.limits.requestBodyLimit);
+        if (!body.mediaUrl) throw gatewayError(400, SAFE_ERROR.BAD_REQUEST, "mediaUrl is required.");
+        stage = "normalize-source";
+        const publicUrl = await normalizeSource(body.mediaUrl);
+        stage = "rate-limit-check";
+        safeLog("job-create-stage", { stage });
+        await assertWithinRateLimits(jobStore, auth.uid, config, now);
+        const deviceProfile = normalizeDeviceProfile(body.deviceProfile || body.profile || {});
+        const jobKey = makeJobKey(publicUrl.href, deviceProfile);
+        const expiresAt = now() + config.limits.jobTtlMs;
+        stage = "job-create";
+        safeLog("job-create-stage", { stage });
+        const result = await jobStore.createIfAbsent(jobKey, {
+            sourceUrl: publicUrl.href,
+            sourceHash: hashSourceUrl(publicUrl.href),
+            profileHash: makeProfileHash(deviceProfile),
+            deviceProfile,
+            requestedBy: auth.uid,
+            outputPrefix: `jobs/${jobKey}/`,
+            expiresAt
+        });
+        if (!result.created) await jobStore.addRequester(jobKey, auth.uid);
+        if (result.created) {
+            stage = "worker-start";
+            safeLog("job-create-stage", { stage });
+            const started = await executor.start(jobKey);
+            if (started?.executionName) await jobStore.update(jobKey, { executionName: started.executionName });
+        }
+        stage = "job-read";
+        const job = await jobStore.get(jobKey) || result.job;
+        safeLog("job-create", { jobId: jobKey, status: job.status, stage: job.stage, reused: !result.created });
+        return publicJob(job, { reused: !result.created });
+    } catch (error) {
+        safeLog("job-create-error", safeCreateJobError(stage, error));
+        throw error;
     }
-    const job = await jobStore.get(jobKey) || result.job;
-    safeLog("job-create", { jobId: jobKey, status: job.status, stage: job.stage, reused: !result.created });
-    return publicJob(job, { reused: !result.created });
 }
 
 async function getJob(request, jobKey, { jobStore, tokenVerifier, now }) {
@@ -165,10 +187,61 @@ function publicJob(job, extra = {}) {
     };
 }
 
-function json(response, status, body) {
+function json(response, status, body, cors = null) {
     response.writeHead(status, {
         "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store"
+        "cache-control": "no-store",
+        ...corsHeaders(cors)
     });
     response.end(JSON.stringify(body));
+}
+
+function writePreflight(response, cors) {
+    if (!cors.allowed) {
+        response.writeHead(403, {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store"
+        });
+        response.end(JSON.stringify(publicError(gatewayError(403, SAFE_ERROR.AUTH_INVALID, "Origin is not allowed."))));
+        return;
+    }
+    response.writeHead(204, {
+        ...corsHeaders(cors),
+        "access-control-allow-methods": "GET,POST,DELETE,OPTIONS",
+        "access-control-allow-headers": "Authorization,Content-Type",
+        "access-control-max-age": "600",
+        "cache-control": "no-store"
+    });
+    response.end();
+}
+
+function resolveCors(request, config) {
+    const origin = String(request.headers?.origin || "").trim();
+    if (!origin) return { allowed: true, origin: "" };
+    const allowedOrigins = Array.isArray(config?.allowedOrigins) ? config.allowedOrigins : [];
+    return {
+        allowed: allowedOrigins.includes(origin),
+        origin
+    };
+}
+
+function corsHeaders(cors) {
+    if (!cors?.origin || !cors.allowed) return {};
+    return {
+        "access-control-allow-origin": cors.origin,
+        "vary": "Origin"
+    };
+}
+
+function safeCreateJobError(stage, error) {
+    return {
+        stage,
+        safeError: error?.safeCode || SAFE_ERROR.INTERNAL,
+        errorName: typeof error?.name === "string" ? error.name : "Error",
+        errorCode: typeof error?.code === "string" ? error.code : undefined,
+        rtdbCategory: typeof error?.rtdbCategory === "string" ? error.rtdbCategory : undefined,
+        httpStatus: Number.isFinite(Number(error?.status || error?.statusCode || error?.httpStatus))
+            ? Number(error.status || error.statusCode || error.httpStatus)
+            : undefined
+    };
 }

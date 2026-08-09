@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, test } from "node:test";
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { get, push, ref, remove, set, update } from "firebase/database";
+import { equalTo, get, orderByChild, push, query, ref, remove, set, update } from "firebase/database";
 
 const PROJECT_ID = "demo-freemovieir";
 const ROOM = "ABCDEFGH";
+const PUBLIC_ROOM = "ABCDEFGHJKL";
+const MEDIA_GATEWAY_JOB = "a".repeat(64);
 const GENERATION = "owner-voice-generation";
 const VOICE_V2_SESSION = "v2-owner-session";
 const now = Date.now();
@@ -78,6 +80,118 @@ async function seedRoom(code = ROOM) {
     });
 }
 
+async function seedPublicDirectory() {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.database();
+        await set(ref(adminDb, `publicRooms/${PUBLIC_ROOM}`), {
+            schemaVersion: 1,
+            hostUid: "host",
+            roomName: "Cinema",
+            movieTitle: "Movie",
+            language: "fa",
+            capacity: 7,
+            createdAt: now,
+            expiresAt: now + 12 * 60 * 60 * 1000,
+            deleteAt: now + 12 * 60 * 60 * 1000,
+            status: "open",
+            settings: {
+                chatEnabled: false,
+                reactionsEnabled: false,
+                slowModeMs: 0
+            },
+            media: {
+                url: "https://example.com/movie.mp4",
+                type: "direct",
+                updatedAt: now,
+                updatedBy: "host"
+            },
+            playback: {
+                paused: true,
+                currentTime: 0,
+                playbackRate: 1,
+                revision: 1,
+                action: "create",
+                updatedAt: now,
+                updatedBy: "host"
+            },
+            members: {
+                host: {
+                    displayName: "Host",
+                    role: "host",
+                    online: true,
+                    joinedAt: now,
+                    lastSeen: now
+                }
+            }
+        });
+        await set(ref(adminDb, `publicRoomDirectory/${PUBLIC_ROOM}`), {
+            schemaVersion: 1,
+            roomName: "Cinema",
+            movieTitle: "Movie",
+            hostDisplayName: "Host",
+            memberCount: 1,
+            capacity: 7,
+            createdAt: now,
+            status: "open",
+            language: "fa",
+            joinable: true,
+            chatEnabled: false,
+            reactionsEnabled: false,
+            playbackPaused: true,
+            deleteAt: now + 12 * 60 * 60 * 1000
+        });
+    });
+}
+
+async function seedMediaGatewayJobs() {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+        const adminDb = context.database();
+        await set(ref(adminDb, `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`), mediaGatewayJob({
+            requestedBy: "viewer",
+            requesters: {
+                viewer: { uid: "viewer", createdAt: now, lastSeenAt: now },
+                partner: { uid: "partner", createdAt: now, lastSeenAt: now }
+            }
+        }));
+        await set(ref(adminDb, `mediaGatewayJobs/${"b".repeat(64)}`), mediaGatewayJob({
+            requestedBy: "other",
+            requesters: {
+                other: { uid: "other", createdAt: now, lastSeenAt: now }
+            },
+            expiresAt: now + 2 * 60 * 60 * 1000
+        }));
+    });
+}
+
+function mediaGatewayJob(overrides = {}) {
+    return {
+        schemaVersion: 2,
+        jobKey: MEDIA_GATEWAY_JOB,
+        jobId: MEDIA_GATEWAY_JOB,
+        sourceHash: "source-hash",
+        profileHash: "profile-hash",
+        status: "queued",
+        stage: "queued",
+        createdAt: now,
+        updatedAt: now,
+        expiresAt: now + 60 * 60 * 1000,
+        requestedBy: "viewer",
+        requesters: {
+            viewer: { uid: "viewer", createdAt: now, lastSeenAt: now }
+        },
+        executionName: "",
+        outputPrefix: `jobs/${MEDIA_GATEWAY_JOB}/`,
+        source: { encryptedOrPrivateUrl: "https://example.com/movie.mkv" },
+        deviceProfile: { browserFamily: "safari" },
+        probe: null,
+        conversion: { policy: null, progress: null },
+        playback: { available: false, manifestObject: "" },
+        lease: null,
+        error: null,
+        ...overrides
+    };
+}
+
 before(async () => {
     testEnv = await initializeTestEnvironment({
         projectId: PROJECT_ID,
@@ -101,6 +215,84 @@ test("unauthenticated users cannot read or write room data", async () => {
     await seedRoom();
     await assertFails(get(ref(db(), `rooms/${ROOM}`)));
     await assertFails(set(ref(db(), `rooms/${ROOM}`), roomData("anon")));
+});
+
+test("only Media Gateway service override UIDs can access mediaGatewayJobs", async () => {
+    const job = {
+        status: "queued",
+        stage: "queued",
+        expiresAt: now + 60 * 60 * 1000,
+        requestedBy: "viewer"
+    };
+    await assertFails(get(ref(db(), "mediaGatewayJobs")));
+    await assertFails(set(ref(db(), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`), job));
+    await assertFails(get(ref(db("viewer"), "mediaGatewayJobs")));
+    await assertFails(set(ref(db("viewer"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`), job));
+    await assertSucceeds(set(ref(db("media-gateway-api"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`), job));
+    await assertSucceeds(get(ref(db("media-gateway-api"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`)));
+    await assertSucceeds(update(ref(db("media-gateway-worker"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`), {
+        status: "processing",
+        updatedAt: now
+    }));
+    await assertSucceeds(get(ref(db("media-gateway-worker"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`)));
+    await assertFails(set(ref(db("media-gateway-api"), "mediaGatewayJobs/not-a-valid-key"), job));
+});
+
+test("Media Gateway service UIDs can direct-read jobs while normal users cannot", async () => {
+    await seedMediaGatewayJobs();
+    await assertSucceeds(get(ref(db("media-gateway-api"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`)));
+    await assertSucceeds(get(ref(db("media-gateway-worker"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`)));
+    await assertFails(get(ref(db("viewer"), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`)));
+    await assertFails(get(ref(db(), `mediaGatewayJobs/${MEDIA_GATEWAY_JOB}`)));
+});
+
+test("Media Gateway API UID can perform supported production rate-limit collection queries", async () => {
+    await seedMediaGatewayJobs();
+    const apiDb = db("media-gateway-api");
+    await assert.rejects(() => get(query(
+        ref(apiDb, "mediaGatewayJobs"),
+        orderByChild("requesters/viewer/uid"),
+        equalTo("viewer")
+    )), /Index not defined/);
+    await assertSucceeds(get(query(
+        ref(apiDb, "mediaGatewayJobs"),
+        orderByChild("requestedBy"),
+        equalTo("viewer")
+    )));
+    await assertSucceeds(get(ref(apiDb, "mediaGatewayJobs")));
+});
+
+test("Media Gateway worker UID can read collection data required for worker cleanup only", async () => {
+    await seedMediaGatewayJobs();
+    const workerDb = db("media-gateway-worker");
+    await assertSucceeds(get(ref(workerDb, "mediaGatewayJobs")));
+    await assertSucceeds(get(query(
+        ref(workerDb, "mediaGatewayJobs"),
+        orderByChild("expiresAt"),
+        equalTo(now + 60 * 60 * 1000)
+    )));
+    await assertFails(get(ref(db("viewer"), "mediaGatewayJobs")));
+});
+
+test("Media Gateway service UIDs cannot access private or public Watch Party namespaces", async () => {
+    await seedRoom();
+    await seedPublicDirectory();
+    for (const uid of ["media-gateway-api", "media-gateway-worker"]) {
+        await assertFails(get(ref(db(uid), `rooms/${ROOM}`)));
+        await assertFails(get(ref(db(uid), `rooms/${ROOM}/ownerUid`)));
+        await assertFails(get(ref(db(uid), `rooms/${ROOM}/status`)));
+        await assertFails(update(ref(db(uid), `rooms/${ROOM}/playback`), {
+            paused: false,
+            currentTime: 1,
+            playbackRate: 1,
+            revision: 2,
+            action: "play",
+            updatedAt: now,
+            updatedBy: uid
+        }));
+        await assertFails(get(ref(db(uid), `publicRooms/${PUBLIC_ROOM}`)));
+        await assertFails(get(ref(db(uid), `publicRoomDirectory/${PUBLIC_ROOM}`)));
+    }
 });
 
 test("authenticated owner can create a valid room and owner UID cannot change", async () => {
