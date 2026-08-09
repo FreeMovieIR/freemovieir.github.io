@@ -11,8 +11,11 @@ export function getDeviceMediaProfile({ video = null, wrapper = null, nav = navi
     const audioWorklet = Boolean(win.AudioWorkletNode || win.AudioWorklet);
     const userAgentDataMobile = Boolean(nav.userAgentData?.mobile);
     const ua = String(nav.userAgent || "");
-    const mobile = userAgentDataMobile || /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    const safariFamily = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(ua);
+    const platform = String(nav.platform || "");
+    const maxTouchPoints = Number(nav.maxTouchPoints || 0);
+    const ios = /iPhone|iPad|iPod/i.test(ua) || /iPhone|iPad|iPod/i.test(platform) || (/Macintosh/i.test(ua) && maxTouchPoints > 1);
+    const mobile = userAgentDataMobile || ios || /Android|Mobile/i.test(ua);
+    const safariFamily = ios || /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(ua);
     const fullscreen = getFullscreenCapability({ wrapper, video: testVideo, doc });
 
     return {

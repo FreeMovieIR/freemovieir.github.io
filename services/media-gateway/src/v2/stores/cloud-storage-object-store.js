@@ -47,20 +47,23 @@ export class CloudStorageObjectStore {
     async createPlaybackAccess({ manifestObject, expiresAt }) {
         const manifestText = await this.readText(manifestObject);
         const basePrefix = manifestObject.replace(/[^/]+$/, "");
-        const signedSegments = new Map();
+        const pendingResources = [];
         const rewritten = rewriteManifest(manifestText, (segment) => {
-            const objectName = /^[a-z][a-z0-9+.-]*:/i.test(segment) ? segment : `${basePrefix}${segment}`;
-            signedSegments.set(segment, objectName);
-            return `__PENDING_SIGNED_SEGMENT_${signedSegments.size - 1}__`;
+            const objectName = `${basePrefix}${segment}`;
+            const placeholder = `__PENDING_SIGNED_RESOURCE_${pendingResources.length}__`;
+            pendingResources.push({ placeholder, objectName });
+            return placeholder;
         });
-        const replacements = [];
-        for (const objectName of signedSegments.values()) {
-            replacements.push(await this.signedReadUrl(objectName, expiresAt));
-        }
         let signedManifest = rewritten;
-        replacements.forEach((url, index) => {
-            signedManifest = signedManifest.replace(`__PENDING_SIGNED_SEGMENT_${index}__`, url);
-        });
+        const signedUrlCache = new Map();
+        for (const resource of pendingResources) {
+            let url = signedUrlCache.get(resource.objectName);
+            if (!url) {
+                url = await this.signedReadUrl(resource.objectName, expiresAt);
+                signedUrlCache.set(resource.objectName, url);
+            }
+            signedManifest = signedManifest.replaceAll(resource.placeholder, url);
+        }
         const signedManifestObject = `${manifestObject.replace(/\.m3u8$/i, "")}.signed.${expiresAt}.m3u8`;
         await this.putManifest(signedManifestObject, signedManifest, {
             cacheControl: "private, max-age=30"

@@ -24,11 +24,16 @@ function makeVideo() {
     };
 }
 
-function makeGatewayVideo() {
+function makeGatewayVideo({ recordLoads = null } = {}) {
     const video = makeVideo();
     video.duration = 100;
     video.canPlayType = (type) => type === "application/vnd.apple.mpegurl" ? "maybe" : "";
-    video.load = () => queueMicrotask(() => video.__listeners?.get("loadedmetadata")?.());
+    video.load = () => {
+        recordLoads?.push(video.src || "");
+        if (!video.src || video.src.includes(".m3u8")) {
+            queueMicrotask(() => video.__listeners?.get("loadedmetadata")?.());
+        }
+    };
     const listeners = new Map();
     video.__listeners = listeners;
     video.addEventListener = (type, handler) => { listeners.set(type, handler); };
@@ -204,6 +209,106 @@ test("mobile Safari MKV routes through Gateway when enabled and configured", asy
         assert.equal(calls[0].url, "https://gateway.example.test/v2/jobs");
         assert.equal(calls[0].options.headers.authorization, "Bearer mobile-token");
         assert.equal(video.src, "https://gateway.example.test/playback/job1/index.m3u8");
+        assert.equal(controller.diagnostics.adapter, "gateway-hls");
+        controller.destroySource();
+    } finally {
+        for (const [key, value] of Object.entries(previous)) {
+            Object.defineProperty(globalThis, key, { configurable: true, value });
+        }
+    }
+});
+
+test("iPhone Chrome MKV routes through Gateway immediately without native metadata timeout", async () => {
+    const previous = {
+        location: globalThis.location,
+        navigator: globalThis.navigator,
+        window: globalThis.window,
+        document: globalThis.document,
+        localStorage: globalThis.localStorage,
+        fetch: globalThis.fetch,
+        CSS: globalThis.CSS,
+        isSecureContext: globalThis.isSecureContext
+    };
+    const calls = [];
+    const loadedSources = [];
+    const storage = new Map();
+    const video = makeGatewayVideo({ recordLoads: loadedSources });
+    try {
+        Object.defineProperty(globalThis, "location", {
+            configurable: true,
+            value: { hostname: "freemovieir.github.io", href: "https://freemovieir.github.io/watch-party/" }
+        });
+        Object.defineProperty(globalThis, "navigator", {
+            configurable: true,
+            value: { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 CriOS/120.0.0.0 Mobile/15E148 Safari/604.1" }
+        });
+        Object.defineProperty(globalThis, "window", {
+            configurable: true,
+            value: { MediaSource: undefined, ManagedMediaSource: undefined, VideoDecoder: undefined, AudioDecoder: undefined }
+        });
+        Object.defineProperty(globalThis, "document", {
+            configurable: true,
+            value: {
+                body: { classList: { contains: () => false } },
+                fullscreenEnabled: false,
+                addEventListener() {},
+                removeEventListener() {},
+                createElement: () => ({ getContext: undefined, canPlayType: () => "" })
+            }
+        });
+        Object.defineProperty(globalThis, "localStorage", {
+            configurable: true,
+            value: {
+                getItem: (key) => storage.get(key) ?? null,
+                setItem: (key, value) => storage.set(key, String(value))
+            }
+        });
+        Object.defineProperty(globalThis, "CSS", {
+            configurable: true,
+            value: { supports: () => true }
+        });
+        globalThis.isSecureContext = true;
+        globalThis.fetch = async (url, options) => {
+            calls.push({ url, options });
+            if (url.endsWith("/v2/jobs")) {
+                return {
+                    ok: true,
+                    json: async () => ({ jobId: "job-chrome-ios", status: "processing", progress: { stage: "queued" } })
+                };
+            }
+            if (url.endsWith("/v2/jobs/job-chrome-ios")) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        jobId: "job-chrome-ios",
+                        status: "ready",
+                        playbackAvailable: true,
+                        playback: { manifestUrl: "/playback/job-chrome-ios/index.m3u8" }
+                    })
+                };
+            }
+            throw new Error(`unexpected Gateway request: ${url}`);
+        };
+
+        const controller = new MediaController(video, {
+            mediaGateway: {
+                enabled: true,
+                baseUrl: "https://gateway.example.test",
+                requestTimeoutMs: 1000,
+                jobTimeoutMs: 1000,
+                pollMs: 1
+            },
+            nativeMetadataTimeoutMs: 50
+        }, {
+            tokenProvider: async () => "ios-chrome-token"
+        });
+
+        await controller.load("https://cdn.example.test/movie.mkv");
+
+        assert.equal(calls[0].url, "https://gateway.example.test/v2/jobs");
+        assert.equal(calls[0].options.headers.authorization, "Bearer ios-chrome-token");
+        assert.equal(loadedSources.includes("https://cdn.example.test/movie.mkv"), false);
+        assert.equal(video.src, "https://gateway.example.test/playback/job-chrome-ios/index.m3u8");
         assert.equal(controller.diagnostics.adapter, "gateway-hls");
         controller.destroySource();
     } finally {

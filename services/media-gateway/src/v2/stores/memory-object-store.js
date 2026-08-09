@@ -53,7 +53,23 @@ export class MemoryObjectStore {
 export function rewriteManifest(text, signSegment) {
     return String(text || "").split(/\r?\n/).map((line) => {
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith("#") || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return line;
+        if (!trimmed) return line;
+        if (trimmed.startsWith("#")) return rewriteDirectiveUriAttributes(line, signSegment);
+        if (!shouldSignManifestUri(trimmed)) return line;
         return signSegment(trimmed);
     }).join("\n");
+}
+
+function rewriteDirectiveUriAttributes(line, signUri) {
+    return String(line).replace(/\bURI="([^"]*)"/g, (match, uri) => {
+        if (!shouldSignManifestUri(uri)) return match;
+        return `URI="${signUri(uri)}"`;
+    });
+}
+
+function shouldSignManifestUri(uri) {
+    const value = String(uri || "").trim();
+    if (!value) return false;
+    if (/^data:/i.test(value)) return false;
+    return !/^[a-z][a-z0-9+.-]*:/i.test(value);
 }
