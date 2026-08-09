@@ -47,7 +47,7 @@ const forbiddenText = [
     [/TURN password/i, "TURN password text"],
     [/__WATCH_PARTY_[A-Z0-9_]+__/i, "unexpanded template token"],
     [/__watchPartyTest|__WATCH_PARTY_TEST__/i, "Watch Party test hook"],
-    [/media-gateway-output|MEDIA_GATEWAY_|freemovieir-media-gateway/i, "media gateway source/config text"]
+    [/media-gateway-output|MEDIA_GATEWAY_/i, "media gateway source/config text"]
 ];
 
 const files = await listFiles(root);
@@ -185,6 +185,25 @@ function validateMediaGatewayConfig(mediaGateway) {
     }
     if (!mediaGateway.enabled && mediaGateway.baseUrl) {
         throw new Error("runtime config mediaGateway.baseUrl must be empty when Gateway is disabled.");
+    }
+    if (!mediaGateway.baseUrl) return;
+    let url;
+    try {
+        url = new URL(mediaGateway.baseUrl);
+    } catch {
+        throw new Error("runtime config mediaGateway.baseUrl must be a valid URL.");
+    }
+    if (url.protocol !== "https:") {
+        throw new Error("runtime config mediaGateway.baseUrl must use HTTPS.");
+    }
+    if (url.username || url.password) {
+        throw new Error("runtime config mediaGateway.baseUrl must not contain credentials.");
+    }
+    if (/^(localhost|127(?:\.\d{1,3}){3}|\[?::1\]?)$/i.test(url.hostname)) {
+        throw new Error("runtime config mediaGateway.baseUrl must not point to localhost or loopback.");
+    }
+    if (url.search || url.hash) {
+        throw new Error("runtime config mediaGateway.baseUrl must not contain query string or hash.");
     }
 }
 

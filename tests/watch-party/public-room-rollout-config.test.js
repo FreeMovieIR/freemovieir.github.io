@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -12,6 +12,7 @@ const root = resolve(import.meta.dirname, "../..");
 const generator = join(root, "scripts/generate-watch-party-config.mjs");
 const pagesBuilder = join(root, "scripts/build-pages.mjs");
 const artifactInspector = join(root, "scripts/inspect-pages-artifact.mjs");
+const productionGatewayUrl = "https://freemovieir-media-gateway-oaxdjaaqwq-uc.a.run.app";
 const productionEnv = Object.freeze({
     WATCH_PARTY_FIREBASE_API_KEY: "AIzaSyA0000000000000000000000000000000000",
     WATCH_PARTY_FIREBASE_AUTH_DOMAIN: "freemovieir-rollout-test.firebaseapp.com",
@@ -140,10 +141,24 @@ test("production Pages artifact inspector accepts explicit disabled and enabled 
 
     const enabled = await buildAndInspectProductionArtifact("gateway-enabled", {
         WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "true",
-        WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "https://gateway.example.test"
+        WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: productionGatewayUrl
     });
     assert.equal(enabled.mediaGateway.enabled, true);
-    assert.equal(enabled.mediaGateway.baseUrl, "https://gateway.example.test/");
+    assert.equal(enabled.mediaGateway.baseUrl, `${productionGatewayUrl}/`);
+});
+
+test("production Pages artifact inspector rejects backend Media Gateway environment text", async () => {
+    await assert.rejects(
+        () => buildAndInspectProductionArtifact("gateway-backend-env-leak", {
+            WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "true",
+            WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: productionGatewayUrl
+        }, {
+            injectedFiles: {
+                "watch-party/backend-leak.txt": "MEDIA_GATEWAY_PROJECT_ID=freemovieir-fd57a\n"
+            }
+        }),
+        /media gateway source\/config text found in artifact file watch-party\/backend-leak\.txt/
+    );
 });
 
 test("production Pages artifact inspector accepts every controlled public-room rollout state", async () => {
@@ -220,7 +235,7 @@ async function generateConfig({ mode, env }) {
     }
 }
 
-async function buildAndInspectProductionArtifact(name, flags) {
+async function buildAndInspectProductionArtifact(name, flags, options = {}) {
     const dir = await mkdtemp(join(tmpdir(), `watch-party-pages-${name}-`));
     const output = join(dir, "dist");
     try {
@@ -229,6 +244,9 @@ async function buildAndInspectProductionArtifact(name, flags) {
             env: sanitizedEnv({ ...productionEnv, ...flags }),
             windowsHide: true
         });
+        for (const [path, text] of Object.entries(options.injectedFiles || {})) {
+            await writeFile(join(output, path), text, "utf8");
+        }
         await execFileAsync(process.execPath, [artifactInspector, `--dir=${output}`], {
             cwd: root,
             env: sanitizedEnv({ ...productionEnv, ...flags }),
