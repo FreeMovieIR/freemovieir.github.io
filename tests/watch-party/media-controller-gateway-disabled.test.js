@@ -89,7 +89,7 @@ test("mobile Safari MKV with disabled gateway fails safely without starting a ga
 
         await assert.rejects(
             () => controller.load("https://cdn.example.test/movie.mkv"),
-            /MKV|آیفون|Ø¢ÛŒÙÙˆÙ†/
+            new RegExp(`MKV|${"\\u0622\\u06cc\\u0641\\u0648\\u0646"}`)
         );
         assert.equal(compatibilityEvents, 1);
         assert.equal(fetchCount, 0);

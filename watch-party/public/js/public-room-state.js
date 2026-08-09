@@ -66,6 +66,44 @@ export function getMemberCount(room) {
     return Object.keys(room?.members || {}).length;
 }
 
+export function formatMemberOccupancy(memberCount, capacity) {
+    const safeCapacity = clampPublicCapacity(capacity);
+    const safeCount = clampMemberCount(memberCount, safeCapacity);
+    return `${toPersianDigits(safeCount)} از ${toPersianDigits(safeCapacity)} نفر`;
+}
+
+export function formatRemainingSeats(memberCount, capacity) {
+    const safeCapacity = clampPublicCapacity(capacity);
+    const safeCount = clampMemberCount(memberCount, safeCapacity);
+    const remaining = Math.max(0, safeCapacity - safeCount);
+    if (remaining === 0) return "اتاق تکمیل است";
+    return `${toPersianDigits(remaining)} جای خالی`;
+}
+
+export function getPublicMemberInitial(displayName) {
+    const trimmed = String(displayName || "").trim();
+    return trimmed ? trimmed[0].toLocaleUpperCase("fa-IR") : "؟";
+}
+
+export function getPublicMemberStatusLabel(member) {
+    return member?.online ? "آنلاین" : "در حال اتصال مجدد";
+}
+
+export function sortPublicMembers(members, hostUid = "") {
+    return [...(members || [])].sort((a, b) => {
+        const aHost = a.uid === hostUid || a.role === PUBLIC_ROOM_MEMBER_ROLES.HOST;
+        const bHost = b.uid === hostUid || b.role === PUBLIC_ROOM_MEMBER_ROLES.HOST;
+        if (aHost !== bHost) return aHost ? -1 : 1;
+        const aOnline = a.online === true;
+        const bOnline = b.online === true;
+        if (aOnline !== bOnline) return aOnline ? -1 : 1;
+        const aJoined = Number(a.joinedAt || 0);
+        const bJoined = Number(b.joinedAt || 0);
+        if (aJoined !== bJoined) return aJoined - bJoined;
+        return String(a.displayName || a.uid || "").localeCompare(String(b.displayName || b.uid || ""), "fa");
+    });
+}
+
 export function isPublicRoomJoinable(directoryRoom) {
     return Boolean(
         directoryRoom
@@ -99,4 +137,10 @@ export function formatSlowModeLabel(value) {
 
 export function toPersianDigits(value) {
     return String(value).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
+}
+
+function clampMemberCount(value, capacity) {
+    const number = Math.floor(Number(value));
+    if (!Number.isFinite(number)) return 0;
+    return Math.min(capacity, Math.max(0, number));
 }

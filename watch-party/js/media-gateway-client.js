@@ -19,19 +19,19 @@ export class MediaGatewayClient {
     }
 
     async probe(mediaUrl, profile = {}) {
-        return this.request("/v1/probe", {
+        return this.request("/v2/probe", {
             method: "POST",
-            body: { mediaUrl, profile: sanitizeProfile(profile) },
+            body: { mediaUrl, deviceProfile: sanitizeProfile(profile) },
             timeoutMs: this.config.requestTimeoutMs
         });
     }
 
     async createJob(mediaUrl, profile = {}, options = {}) {
-        return this.request("/v1/jobs", {
+        return this.request("/v2/jobs", {
             method: "POST",
             body: {
                 mediaUrl,
-                profile: sanitizeProfile(profile),
+                deviceProfile: sanitizeProfile(profile),
                 preferRemux: options.preferRemux ?? this.config.preferRemux
             },
             timeoutMs: this.config.requestTimeoutMs
@@ -39,14 +39,21 @@ export class MediaGatewayClient {
     }
 
     async getJob(jobId) {
-        return this.request(`/v1/jobs/${encodeURIComponent(jobId)}`, {
+        return this.request(`/v2/jobs/${encodeURIComponent(jobId)}`, {
+            method: "GET",
+            timeoutMs: this.config.requestTimeoutMs
+        });
+    }
+
+    async getPlayback(jobId) {
+        return this.request(`/v2/jobs/${encodeURIComponent(jobId)}/playback`, {
             method: "GET",
             timeoutMs: this.config.requestTimeoutMs
         });
     }
 
     async cancelJob(jobId) {
-        return this.request(`/v1/jobs/${encodeURIComponent(jobId)}`, {
+        return this.request(`/v2/jobs/${encodeURIComponent(jobId)}`, {
             method: "DELETE",
             timeoutMs: this.config.requestTimeoutMs
         });
@@ -57,7 +64,10 @@ export class MediaGatewayClient {
         while (Date.now() < deadline) {
             if (signal?.aborted) throw new DOMException("Gateway job cancelled", "AbortError");
             const job = await this.getJob(jobId);
-            if (job.status === GATEWAY_JOB_STATUS.PLAYABLE || job.status === GATEWAY_JOB_STATUS.READY) return job;
+            if (job.status === GATEWAY_JOB_STATUS.PLAYABLE || job.status === GATEWAY_JOB_STATUS.READY) {
+                const playback = job.playback || (await this.getPlayback(jobId)).playback;
+                return { ...job, playback };
+            }
             if ([GATEWAY_JOB_STATUS.FAILED, GATEWAY_JOB_STATUS.CANCELLED, GATEWAY_JOB_STATUS.EXPIRED].includes(job.status)) {
                 throw new Error(job.message || "آماده‌سازی نسخه سازگار انجام نشد.");
             }
@@ -114,7 +124,8 @@ function sanitizeProfile(profile = {}) {
         mediaSource: Boolean(profile.mediaSource),
         managedMediaSource: Boolean(profile.managedMediaSource),
         webCodecsVideo: Boolean(profile.webCodecsVideo),
-        webCodecsAudio: Boolean(profile.webCodecsAudio)
+        webCodecsAudio: Boolean(profile.webCodecsAudio),
+        supportsHevc: Boolean(profile.supportsHevc)
     };
 }
 

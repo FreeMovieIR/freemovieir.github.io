@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Top Rated TV Shows - FreeMovie</title>
     <meta name="description" content="Explore the highest-rated TV shows on FreeMovie with detailed rankings.">
-    <meta name="keywords" content="top rated tv shows, freemovie, Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø±ØªØ±">
+    <meta name="keywords" content="top rated tv shows, freemovie, سریال‌های برتر">
     <meta name="robots" content="index, follow">
-    <meta name="author" content="ØªÛŒÙ… ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ">
+    <meta name="author" content="تیم فیری مووی">
     <link rel="canonical" href="https://freemovieir.github.io/top-rated.html">
-    <meta property="og:title" content="ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ - Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø±ØªØ±">
-    <meta property="og:description" content="Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø±ØªØ± Ø±Ø§ Ø¨Ø§ Ø±ØªØ¨Ù‡â€ŒØ¨Ù†Ø¯ÛŒ Ø¯Ø± ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ Ø¨Ø¨ÛŒÙ†ÛŒØ¯.">
+    <meta property="og:title" content="فیری مووی - سریال‌های برتر">
+    <meta property="og:description" content="سریال‌های برتر را با رتبه‌بندی در فیری مووی ببینید.">
     <meta property="og:image" content="https://freemovieir.github.io/images/tweet2.png">
     <meta property="og:url" content="https://freemovieir.github.io/top-rated.html">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ - Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø±ØªØ±">
-    <meta name="twitter:description" content="Ø¨Ù‡ØªØ±ÛŒÙ† Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ Ø±Ø§ Ø¨Ø§ Ø±ØªØ¨Ù‡â€ŒØ¨Ù†Ø¯ÛŒ Ø¯Ø± ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ Ø¨Ø¨ÛŒÙ†ÛŒØ¯.">
+    <meta name="twitter:title" content="فیری مووی - سریال‌های برتر">
+    <meta name="twitter:description" content="بهترین سریال‌ها را با رتبه‌بندی در فیری مووی ببینید.">
     <meta name="twitter:image" content="https://freemovieir.github.io/images/tweet2.png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vazir-font@30.1.0/dist/font-face.css" rel="stylesheet">
@@ -34,33 +34,33 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
-    <!-- Ù†ÙˆØ§Ø± Ù¾ÛŒØ´Ø±ÙØª -->
+    <!-- نوار پیشرفت -->
     <div id="loading-bar"></div>
 
-    <!-- Ù‡Ø¯Ø± -->
+    <!-- هدر -->
     <header class="bg-gray-800 p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
             <nav class="flex items-center space-x-4">
-                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4" aria-label="Ø®Ø§Ù†Ù‡"><i class="fas fa-home"></i></a>
-                <a href="/movies.html" class="hover:text-gray-300 p-4" aria-label="ÙÛŒÙ„Ù…â€ŒÙ‡Ø§"><i class="fas fa-film"></i></a>
-                <a href="/series.html" class="hover:text-gray-300 p-4" aria-label="Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§"><i class="fas fa-tv"></i></a>
-                <a href="/airing-today.html" class="hover:text-gray-300 p-4" aria-label="Ø¯Ø± Ø­Ø§Ù„ Ù¾Ø®Ø´"><i class="fas fa-play"></i></a>
-                <a href="/top-rated.html" class="hover:text-gray-300 p-4" aria-label="Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø±ØªØ±"><i class="fas fa-star"></i></a>
-                <a href="/genres.html" class="hover:text-gray-300 p-4" aria-label="Ø¯Ø³ØªÙ‡â€ŒØ¨Ù†Ø¯ÛŒâ€ŒÙ‡Ø§"><i class="fas fa-list"></i></a>
-                <a href="/watchlist" class="hover:text-gray-300" aria-label="ÙˆØ§Ú†â€ŒÙ„ÛŒØ³Øª"><i class="fas fa-bookmark"></i></a>
-                <a href="/search" class="hover:text-gray-300" aria-label="Ø¬Ø³ØªØ¬Ùˆ"><i class="fas fa-search"></i></a>
+                <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4" aria-label="خانه"><i class="fas fa-home"></i></a>
+                <a href="/movies.html" class="hover:text-gray-300 p-4" aria-label="فیلم‌ها"><i class="fas fa-film"></i></a>
+                <a href="/series.html" class="hover:text-gray-300 p-4" aria-label="سریال‌ها"><i class="fas fa-tv"></i></a>
+                <a href="/airing-today.html" class="hover:text-gray-300 p-4" aria-label="در حال پخش"><i class="fas fa-play"></i></a>
+                <a href="/top-rated.html" class="hover:text-gray-300 p-4" aria-label="سریال‌های برتر"><i class="fas fa-star"></i></a>
+                <a href="/genres.html" class="hover:text-gray-300 p-4" aria-label="دسته‌بندی‌ها"><i class="fas fa-list"></i></a>
+                <a href="/watchlist" class="hover:text-gray-300" aria-label="واچ‌لیست"><i class="fas fa-bookmark"></i></a>
+                <a href="/search" class="hover:text-gray-300" aria-label="جستجو"><i class="fas fa-search"></i></a>
             </nav>
             <div>
                 <a href="https://freemovieir.github.io/">
-                    <img src="https://freemovieir.github.io/logo.png" alt="Ù„ÙˆÚ¯ÙˆÛŒ ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ" class="h-10">
+                    <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10">
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Ø¨Ø®Ø´ Ø§ØµÙ„ÛŒ -->
+    <!-- بخش اصلی -->
     <main class="container mx-auto py-8 flex-1">
-        <h1 class="text-3xl font-bold mb-8 text-center">Ø³Ø±ÛŒØ§Ù„â€ŒÙ‡Ø§ÛŒ Ø¨Ø±ØªØ±</h1>
+        <h1 class="text-3xl font-bold mb-8 text-center">سریال‌های برتر</h1>
         <div id="top-rated" class="m-4">
             <div class="skeleton w-full"></div>
             <div class="skeleton w-full"></div>
@@ -72,11 +72,11 @@
         </div>
     </main>
 
-    <!-- ÙÙˆØªØ± -->
+    <!-- فوتر -->
     <footer class="bg-gray-800 p-4 mt-auto">
         <div class="container mx-auto text-center">
             <p>
-                ÙÛŒØ±ÛŒ Ù…ÙˆÙˆÛŒ - Ø³Ø§Ø®ØªÙ‡ Ø´Ø¯Ù‡ Ø¨Ø§ ðŸ¤
+                فیری مووی - ساخته شده با 🤍
                 <br>
             </p>
         </div>

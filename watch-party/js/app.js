@@ -433,7 +433,7 @@ async function createRoomGuarded(event) {
         else if (error instanceof ServiceAvailabilityError) ui.showServiceUnavailable(error.details || {}, { production: !shouldUseEmulators(config) });
         else if (isFirebaseAuthFailure(error)) showAuthFailure(error, "create");
         else if (error.message === MESSAGES.invalidUrl || error.message === MESSAGES.insecureUrl) ui.setFieldError("hostVideoError", error.message);
-        else if (/subtitle|زیرنویس|Ø²ÛŒØ±Ù†ÙˆÛŒØ³/i.test(error.message || "")) ui.setFieldError("hostSubtitleError", error.message);
+        else if (/subtitle|زیرنویس/i.test(error.message || "")) ui.setFieldError("hostSubtitleError", error.message);
         else ui.setFieldError("hostVideoError", error.message || "امکان ساخت اتاق وجود ندارد.");
         if (!(error instanceof ServiceAvailabilityError) && !isFirebaseAuthFailure(error)) ui.setState(APP_STATES.HOST_MEDIA);
     } finally {

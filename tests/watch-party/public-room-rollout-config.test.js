@@ -86,6 +86,66 @@ test("local and test configs keep public rooms enabled for emulator workflows", 
     assert.equal(testConfig.publicRooms.maintenance, false);
 });
 
+test("production Media Gateway rollout defaults off and requires explicit HTTPS base URL", async () => {
+    const defaults = await generateProductionConfig({});
+    assert.equal(defaults.mediaGateway.enabled, false);
+    assert.equal(defaults.mediaGateway.baseUrl, "");
+
+    await assert.rejects(
+        () => generateProductionConfig({
+            WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "true"
+        }),
+        /WATCH_PARTY_MEDIA_GATEWAY_BASE_URL is required/
+    );
+    await assert.rejects(
+        () => generateProductionConfig({
+            WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "true",
+            WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "http://gateway.example.test"
+        }),
+        /WATCH_PARTY_MEDIA_GATEWAY_BASE_URL must use HTTPS/
+    );
+
+    const enabled = await generateProductionConfig({
+        WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "true",
+        WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "https://gateway.example.test"
+    });
+    assert.equal(enabled.mediaGateway.enabled, true);
+    assert.equal(enabled.mediaGateway.baseUrl, "https://gateway.example.test/");
+
+    const disabledWithUrl = await generateProductionConfig({
+        WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "false",
+        WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "https://gateway.example.test"
+    });
+    assert.equal(disabledWithUrl.mediaGateway.enabled, false);
+    assert.equal(disabledWithUrl.mediaGateway.baseUrl, "");
+});
+
+test("production Media Gateway rollout rejects unexpected booleans", async () => {
+    await assert.rejects(
+        () => generateProductionConfig({
+            WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "yes",
+            WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "https://gateway.example.test"
+        }),
+        /WATCH_PARTY_MEDIA_GATEWAY_ENABLED must be one of/
+    );
+});
+
+test("production Pages artifact inspector accepts explicit disabled and enabled Media Gateway rollout states", async () => {
+    const disabled = await buildAndInspectProductionArtifact("gateway-disabled", {
+        WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "false",
+        WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "https://gateway.example.test"
+    });
+    assert.equal(disabled.mediaGateway.enabled, false);
+    assert.equal(disabled.mediaGateway.baseUrl, "");
+
+    const enabled = await buildAndInspectProductionArtifact("gateway-enabled", {
+        WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "true",
+        WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "https://gateway.example.test"
+    });
+    assert.equal(enabled.mediaGateway.enabled, true);
+    assert.equal(enabled.mediaGateway.baseUrl, "https://gateway.example.test/");
+});
+
 test("production Pages artifact inspector accepts every controlled public-room rollout state", async () => {
     const cases = [
         {
@@ -187,7 +247,10 @@ function sanitizedEnv(overrides) {
     for (const key of [
         "WATCH_PARTY_PUBLIC_ROOMS_ENABLED",
         "WATCH_PARTY_PUBLIC_ROOMS_CREATION_ENABLED",
-        "WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE"
+        "WATCH_PARTY_PUBLIC_ROOMS_MAINTENANCE",
+        "WATCH_PARTY_MEDIA_GATEWAY_ENABLED",
+        "WATCH_PARTY_MEDIA_GATEWAY_BASE_URL",
+        "WATCH_PARTY_MEDIA_GATEWAY_URL"
     ]) {
         if (!Object.prototype.hasOwnProperty.call(overrides, key)) delete env[key];
     }

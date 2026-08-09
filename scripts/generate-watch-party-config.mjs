@@ -23,6 +23,8 @@ const localDefaults = {
     WATCH_PARTY_FIREBASE_APP_ID: "1:1:web:demo",
     WATCH_PARTY_APP_CHECK_SITE_KEY: "",
     WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT: "",
+    WATCH_PARTY_MEDIA_GATEWAY_ENABLED: "",
+    WATCH_PARTY_MEDIA_GATEWAY_BASE_URL: "",
     WATCH_PARTY_MEDIA_GATEWAY_URL: "",
     WATCH_PARTY_RTC_ICE_SERVERS: JSON.stringify([
         { urls: "stun:stun.l.google.com:19302" },
@@ -78,10 +80,10 @@ const turnCredentialsEndpoint = normalizeOptionalEndpoint(
     "WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT",
     isProduction
 );
-const mediaGatewayUrl = normalizeOptionalHttpsUrl(getValue("WATCH_PARTY_MEDIA_GATEWAY_URL"), "WATCH_PARTY_MEDIA_GATEWAY_URL");
+const mediaGatewayFlags = resolveMediaGatewayFlags({ isProduction });
 assertNoPrivateCredential("WATCH_PARTY_APP_CHECK_SITE_KEY", appCheckSiteKey);
 assertNoPrivateCredential("WATCH_PARTY_TURN_CREDENTIALS_ENDPOINT", turnCredentialsEndpoint);
-assertNoPrivateCredential("WATCH_PARTY_MEDIA_GATEWAY_URL", mediaGatewayUrl);
+assertNoPrivateCredential("WATCH_PARTY_MEDIA_GATEWAY_BASE_URL", mediaGatewayFlags.baseUrl);
 
 const iceServers = parseIceServers(getValue("WATCH_PARTY_RTC_ICE_SERVERS") || "[]");
 const config = {
@@ -102,8 +104,8 @@ const config = {
         relayFallback: true
     },
     mediaGateway: {
-        enabled: Boolean(mediaGatewayUrl),
-        baseUrl: mediaGatewayUrl,
+        enabled: mediaGatewayFlags.enabled,
+        baseUrl: mediaGatewayFlags.baseUrl,
         requestTimeoutMs: 15000,
         jobTimeoutMs: 120000,
         preferRemux: true
@@ -224,6 +226,24 @@ function parseProductionBoolean(name, raw) {
     if (value === "" || value === "false" || value === "0") return false;
     if (value === "true" || value === "1") return true;
     throw new Error(`${name} must be one of: true, 1, false, 0, or empty.`);
+}
+
+function resolveMediaGatewayFlags({ isProduction }) {
+    const legacyUrl = getValue("WATCH_PARTY_MEDIA_GATEWAY_URL");
+    const requestedBaseUrl = getValue("WATCH_PARTY_MEDIA_GATEWAY_BASE_URL") || legacyUrl;
+    const baseUrl = normalizeOptionalHttpsUrl(requestedBaseUrl, "WATCH_PARTY_MEDIA_GATEWAY_BASE_URL");
+    if (!isProduction) {
+        return {
+            enabled: Boolean(baseUrl),
+            baseUrl
+        };
+    }
+    const enabled = parseProductionBoolean("WATCH_PARTY_MEDIA_GATEWAY_ENABLED", process.env.WATCH_PARTY_MEDIA_GATEWAY_ENABLED);
+    if (enabled && !baseUrl) throw new Error("WATCH_PARTY_MEDIA_GATEWAY_BASE_URL is required when WATCH_PARTY_MEDIA_GATEWAY_ENABLED=true.");
+    return {
+        enabled,
+        baseUrl: enabled ? baseUrl : ""
+    };
 }
 
 function normalizeOptionalHttpsUrl(raw, name) {

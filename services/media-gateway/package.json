@@ -6,7 +6,11 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "node src/server.js",
+    "worker": "node src/worker-main.js",
     "test": "node --test tests/**/*.test.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@google-cloud/storage": "7.16.0",
+    "firebase-admin": "13.4.0"
+  }
 }

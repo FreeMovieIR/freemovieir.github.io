@@ -26,13 +26,15 @@ test("gateway client sends sanitized profile and bearer token", async () => {
         const result = await client.createJob("https://cdn.example.test/movie.mkv?private=1", {
             profile: "mobile",
             browserFamily: "safari",
+            supportsHevc: true,
             uid: "must-not-send"
         });
         assert.equal(result.jobId, "job1");
-        assert.equal(calls[0].url, "https://gateway.example.test/v1/jobs");
+        assert.equal(calls[0].url, "https://gateway.example.test/v2/jobs");
         assert.equal(calls[0].options.headers.authorization, "Bearer token");
-        assert.equal(calls[0].body.profile.uid, undefined);
-        assert.equal(calls[0].body.profile.browserFamily, "safari");
+        assert.equal(calls[0].body.deviceProfile.uid, undefined);
+        assert.equal(calls[0].body.deviceProfile.browserFamily, "safari");
+        assert.equal(calls[0].body.deviceProfile.supportsHevc, true);
     } finally {
         globalThis.fetch = oldFetch;
     }
@@ -42,8 +44,10 @@ test("gateway client treats progressive playable state as ready for playback", a
     const client = new MediaGatewayClient({ enabled: true, baseUrl: "https://gateway.example.test", jobTimeoutMs: 1000 }, async () => "token");
     client.getJob = async () => ({
         status: GATEWAY_JOB_STATUS.PLAYABLE,
-        playback: { type: "hls", manifestUrl: "/media/job/index.m3u8" }
+        playbackAvailable: true
     });
+    client.getPlayback = async () => ({ playback: { type: "hls", manifestUrl: "https://signed.example.test/index.m3u8" } });
     const job = await client.waitForReady("job", { pollMs: 1, timeoutMs: 100 });
     assert.equal(job.status, GATEWAY_JOB_STATUS.PLAYABLE);
+    assert.equal(job.playback.manifestUrl, "https://signed.example.test/index.m3u8");
 });

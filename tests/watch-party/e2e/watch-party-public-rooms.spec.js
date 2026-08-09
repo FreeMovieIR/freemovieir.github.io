@@ -12,10 +12,12 @@ const ADMIN = encodeURIComponent(JSON.stringify({ uid: "public-e2e-admin", admin
 const ARTIFACT_DIR = path.resolve("artifacts/watch-party/public-v4", process.env.PUBLIC_V4_SCREENSHOT_PHASE || "final");
 const V3_ARTIFACT_DIR = path.resolve("artifacts/watch-party/public-v3");
 const V5_ARTIFACT_DIR = path.resolve("artifacts/watch-party/playback-v5");
+const V51_ARTIFACT_DIR = path.resolve("artifacts/watch-party/public-v5-1-mobile");
 
 mkdirSync(ARTIFACT_DIR, { recursive: true });
 mkdirSync(V3_ARTIFACT_DIR, { recursive: true });
 mkdirSync(V5_ARTIFACT_DIR, { recursive: true });
+mkdirSync(V51_ARTIFACT_DIR, { recursive: true });
 
 test.describe("Public Rooms V4 E2E", () => {
     test("production feature flags and maintenance mode do not start public Firebase work", async ({ browser }) => {
@@ -92,7 +94,7 @@ test.describe("Public Rooms V4 E2E", () => {
             await expect(host.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
             const roomId = new URL(host.page.url()).searchParams.get("room");
             expect(roomId).toMatch(/^[A-HJ-NP-Z2-9]{10,12}$/);
-            await expect(host.page.getByTestId("public-room-count")).toContainText("۱ / ۴");
+            await expect(host.page.getByTestId("public-room-count")).toContainText("۱ از ۴ نفر");
             await expect(host.page.getByTestId("public-open-host-controls")).toBeVisible();
             await expect(host.page.getByTestId("public-player-controls")).toBeVisible();
             await expect(host.page.getByTestId("public-play-pause")).toBeVisible();
@@ -123,6 +125,7 @@ test.describe("Public Rooms V4 E2E", () => {
             });
             await expect.poll(async () => (await readPublicRoom(roomId)).playback?.revision).toBeGreaterThan(seekRevision);
             await captureV5(host.page, "public-host-controls-desktop");
+            await captureV51(host.page, "host-desktop-regression");
             await host.page.getByTestId("public-open-host-controls").click();
             await expect(host.page.getByTestId("public-host-control-dialog")).toBeVisible();
             await expect(host.page.getByTestId("public-social-settings")).toBeVisible();
@@ -154,7 +157,7 @@ test.describe("Public Rooms V4 E2E", () => {
             await guest2.page.getByTestId("public-join-name").fill("Guest Two");
             await guest2.page.getByTestId("public-join-submit").click();
             await expect(guest2.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
-            await expect(host.page.getByTestId("public-room-count")).toContainText("۳ / ۴");
+            await expect(host.page.getByTestId("public-room-count")).toContainText("۳ از ۴ نفر");
             await expect(guest2.page.getByTestId("public-social-settings")).toBeHidden();
             await expect(guest2.page.getByTestId("public-leave-room")).toBeVisible();
             await expect(guest2.page.getByTestId("public-player-controls")).toBeVisible();
@@ -183,11 +186,16 @@ test.describe("Public Rooms V4 E2E", () => {
             });
             await expect.poll(async () => (await readPublicRoom(roomId)).playback?.revision).toBe(beforeGuestAudioControls);
             await captureV5(guest2.page, "public-guest-controls-desktop");
+            await captureV51(guest2.page, "guest-desktop-regression");
+            await captureV51ResponsiveSet(guest2.page, "guest");
+            await guest2.page.setViewportSize({ width: 1280, height: 720 });
             await host.page.getByTestId("public-members-tab").click();
             await capture(host.page, "members-desktop");
             await host.page.getByTestId("public-chat-tab").click();
             await capture(host.page, "lobby-two-users-owner");
             await capture(guest2.page, "guest-room-desktop");
+            await captureV51ResponsiveSet(host.page, "host");
+            await host.page.setViewportSize({ width: 1280, height: 720 });
 
             await guest1.page.getByTestId("public-chat-input").fill("سلام 👋");
             await guest1.page.getByTestId("public-chat-send").click();
@@ -266,7 +274,7 @@ test.describe("Public Rooms V4 E2E", () => {
             await lateGuest.page.getByTestId("public-join-name").fill("Late Guest");
             await lateGuest.page.getByTestId("public-join-submit").click();
             await expect(lateGuest.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
-            await expect(host.page.getByTestId("public-room-count")).toContainText("۴ / ۴");
+            await expect(host.page.getByTestId("public-room-count")).toContainText("۴ از ۴ نفر");
             await capture(lateGuest.page, "replacement-guest");
             await fullGuest.page.goto(`${PUBLIC_URL}?room=${roomId}`, { waitUntil: "domcontentloaded" });
             await expect(fullGuest.page.locator("#state-preview")).toBeVisible();
@@ -303,6 +311,91 @@ test.describe("Public Rooms V4 E2E", () => {
         } finally {
             await closeParticipants(host, guest1, guest2, lateGuest, fullGuest);
             buildIndex();
+        }
+    });
+
+    test("public V5.1 member panel uses room capacity, sorting, reconnecting, and moderation visibility", async ({ browser }) => {
+        const uniqueRoomName = `اتاق اعضا ${Date.now()}`;
+        const host = await newParticipant(browser, "public-v51-host", { viewport: { width: 390, height: 844 } });
+        const guest1 = await newParticipant(browser, "public-v51-guest-1", { viewport: { width: 390, height: 844 } });
+        const guest2 = await newParticipant(browser, "public-v51-guest-2", { viewport: { width: 390, height: 844 } });
+        const capacityParticipants = [];
+        try {
+            await host.page.goto(PUBLIC_URL, { waitUntil: "domcontentloaded" });
+            await expect(host.page.locator("#state-directory")).toBeVisible({ timeout: 30_000 });
+            await host.page.getByTestId("public-open-create").click();
+            await host.page.getByTestId("public-display-name").fill("میزبان Alpha");
+            await host.page.getByTestId("public-room-name").fill(uniqueRoomName);
+            await host.page.getByTestId("public-movie-title").fill("فیلم اعضا");
+            await host.page.getByTestId("public-media-url").fill(TEST_MEDIA_URL);
+            await host.page.getByTestId("public-capacity").selectOption("3");
+            await host.page.getByTestId("public-create-submit").click();
+            await expect(host.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
+            const roomId = new URL(host.page.url()).searchParams.get("room");
+            await host.page.getByTestId("public-members-tab").click();
+            await expect(host.page.getByTestId("public-member-occupancy")).toContainText("۱ از ۳ نفر");
+            await expect(host.page.getByTestId("public-member-remaining")).toContainText("۲ جای خالی");
+            await captureV51(host.page, "members-1-of-3-mobile");
+
+            await guest1.page.goto(`${PUBLIC_URL}?room=${roomId}`, { waitUntil: "domcontentloaded" });
+            await guest1.page.getByTestId("public-join-name").fill("Guest One خیلی بلند برای تست نمایش");
+            await guest1.page.getByTestId("public-join-submit").click();
+            await expect(guest1.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
+            await host.page.getByTestId("public-members-tab").click();
+            await expect(host.page.getByTestId("public-member-occupancy")).toContainText("۲ از ۳ نفر");
+            await expect(host.page.getByTestId("public-member-remaining")).toContainText("۱ جای خالی");
+            await captureV51(host.page, "members-2-of-3-mobile");
+
+            await guest2.page.goto(`${PUBLIC_URL}?room=${roomId}`, { waitUntil: "domcontentloaded" });
+            await guest2.page.getByTestId("public-join-name").fill("مهمان دوم");
+            await guest2.page.getByTestId("public-join-submit").click();
+            await expect(guest2.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
+            await expect(host.page.getByTestId("public-member-occupancy")).toContainText("۳ از ۳ نفر");
+            await expect(host.page.getByTestId("public-member-remaining")).toContainText("اتاق تکمیل است");
+            await captureV51(host.page, "members-3-of-3-full-mobile");
+
+            const hostMemberRows = host.page.getByTestId("public-member-list").locator(".member-card");
+            await expect(hostMemberRows.first()).toHaveAttribute("data-testid", "public-member-host");
+            await expect(host.page.getByTestId("public-kick-member")).toHaveCount(2);
+            await guest1.page.getByTestId("public-members-tab").click();
+            await expect(guest1.page.getByTestId("public-kick-member")).toHaveCount(0);
+
+            await closeParticipants(guest2);
+            await expect(host.page.getByTestId("public-member-list")).toContainText("در حال اتصال مجدد", { timeout: 15_000 });
+            await captureV51(host.page, "members-reconnecting");
+
+            const cap7Host = await newParticipant(browser, "public-v51-cap7-host", { viewport: { width: 390, height: 844 } });
+            capacityParticipants.push(cap7Host);
+            await cap7Host.page.goto(PUBLIC_URL, { waitUntil: "domcontentloaded" });
+            await expect(cap7Host.page.locator("#state-directory")).toBeVisible({ timeout: 30_000 });
+            await cap7Host.page.getByTestId("public-open-create").click();
+            await cap7Host.page.getByTestId("public-display-name").fill("Host Seven");
+            await cap7Host.page.getByTestId("public-room-name").fill(`اتاق هفت نفره ${Date.now()}`);
+            await cap7Host.page.getByTestId("public-movie-title").fill("فیلم ظرفیت هفت");
+            await cap7Host.page.getByTestId("public-media-url").fill(TEST_MEDIA_URL);
+            await cap7Host.page.getByTestId("public-capacity").selectOption("7");
+            await cap7Host.page.getByTestId("public-create-submit").click();
+            await expect(cap7Host.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
+            const cap7RoomId = new URL(cap7Host.page.url()).searchParams.get("room");
+            for (let index = 1; index <= 6; index += 1) {
+                const guest = await newParticipant(browser, `public-v51-cap7-guest-${index}`, { viewport: { width: 390, height: 844 } });
+                capacityParticipants.push(guest);
+                await guest.page.goto(`${PUBLIC_URL}?room=${cap7RoomId}`, { waitUntil: "domcontentloaded" });
+                await guest.page.getByTestId("public-join-name").fill(index % 2 === 0 ? `English Guest ${index}` : `مهمان ${index}`);
+                await guest.page.getByTestId("public-join-submit").click();
+                await expect(guest.page.locator("#state-room")).toBeVisible({ timeout: 30_000 });
+            }
+            await cap7Host.page.getByTestId("public-members-tab").click();
+            await expect(cap7Host.page.getByTestId("public-member-occupancy")).toContainText("۷ از ۷ نفر");
+            await captureV51(cap7Host.page, "members-7-capacity-mobile");
+
+            assertCleanParticipant(host);
+            assertCleanParticipant(guest1);
+            assertCleanParticipant(guest2);
+            for (const participant of capacityParticipants) assertCleanParticipant(participant);
+        } finally {
+            await closeParticipants(host, guest1, guest2, ...capacityParticipants);
+            buildV51Index();
         }
     });
 
@@ -390,10 +483,64 @@ function buildIndex() {
         ["MKV", ["mkv"]],
         ["Other", []]
     ]));
+    buildV51Index();
 }
 
 async function captureV5(page, name) {
     await page.screenshot({ path: path.join(V5_ARTIFACT_DIR, `${name}.png`), fullPage: false });
+}
+
+async function captureV51(page, name) {
+    await page.screenshot({ path: path.join(V51_ARTIFACT_DIR, `${name}.png`), fullPage: false });
+}
+
+async function captureV51ResponsiveSet(page, rolePrefix) {
+    const portraitViewports = [
+        { width: 320, height: 568 },
+        { width: 360, height: 800 },
+        { width: 375, height: 812 },
+        { width: 390, height: 844 },
+        { width: 430, height: 932 },
+        { width: 768, height: 900 }
+    ];
+    for (const viewport of portraitViewports) {
+        await page.setViewportSize(viewport);
+        await assertNoOverflow(page, viewport.width);
+        await captureV51(page, `${rolePrefix}-mobile-${viewport.width}`);
+    }
+    for (const viewport of [{ width: 844, height: 390 }, { width: 932, height: 430 }]) {
+        await page.setViewportSize(viewport);
+        await assertNoOverflow(page, viewport.width);
+        await captureV51(page, `${rolePrefix}-landscape-${viewport.width}x${viewport.height}`);
+    }
+}
+
+function buildV51Index() {
+    buildScreenshotIndex(V51_ARTIFACT_DIR, "Public Cinema V5.1 Mobile Screenshots", new Map([
+        ["Mobile Host", ["host-mobile"]],
+        ["Mobile Guest", ["guest-mobile"]],
+        ["Landscape", ["landscape"]],
+        ["Members", ["members"]],
+        ["Desktop Regression", ["desktop-regression"]],
+        ["Other", []]
+    ]));
+    writeFileSync(path.join(V51_ARTIFACT_DIR, "VISUAL_REVIEW.md"), [
+        "# Public Cinema V5.1 Visual Review",
+        "",
+        "Generated by the local Playwright V5.1 screenshot suite.",
+        "",
+        "## Review Notes",
+        "",
+        "- Mobile controls were checked at 320px, 360px, 375px, 390px, 430px, and 768px for host and guest layouts.",
+        "- Landscape controls were checked at 844x390 and 932x430.",
+        "- Member occupancy states were captured for 1/3, 2/3, 3/3 full, 7/7, and reconnecting.",
+        "- Refinement pass applied after initial implementation: mobile volume slider removed from phone layout, fullscreen collapsed to a compact symbol, member rows compacted for 3-7 participants, and duplicate guest authority text removed.",
+        "",
+        "## Remaining Manual Review",
+        "",
+        "- Human visual review on a real iPhone remains recommended before production rollout.",
+        ""
+    ].join("\n"), "utf8");
 }
 
 function buildScreenshotIndex(directory, title, groupMatchers) {

@@ -195,17 +195,17 @@
                         <div id="public-player-controls" data-testid="public-player-controls" class="public-player-controls" data-authority="guest">
                             <div class="player-progress-row">
                                 <span id="public-current-time" data-testid="public-current-time" class="time-readout">00:00</span>
-                                <input id="public-seek" data-testid="public-seek" class="public-seek" type="range" min="0" max="0" step="0.1" value="0" aria-label="Ù†ÙˆØ§Ø± Ø²Ù…Ø§Ù† ÙÛŒÙ„Ù…">
+                                <input id="public-seek" data-testid="public-seek" class="public-seek" type="range" min="0" max="0" step="0.1" value="0" aria-label="نوار زمان فیلم">
                                 <span id="public-duration" data-testid="public-duration" class="time-readout">00:00</span>
                             </div>
                             <div class="player-control-row">
                                 <div id="public-host-playback-controls" class="host-playback-controls">
-                                    <button id="public-skip-back" data-testid="public-skip-back" class="player-btn" type="button" aria-label="Û±Û° Ø«Ø§Ù†ÛŒÙ‡ Ø¹Ù‚Ø¨">-10</button>
-                                    <button id="public-play-pause" data-testid="public-play-pause" class="player-btn player-btn-primary" type="button" aria-label="Ù¾Ø®Ø´">Ù¾Ø®Ø´</button>
-                                    <button id="public-skip-forward" data-testid="public-skip-forward" class="player-btn" type="button" aria-label="Û±Û° Ø«Ø§Ù†ÛŒÙ‡ Ø¬Ù„Ùˆ">+10</button>
+                                    <button id="public-skip-back" data-testid="public-skip-back" class="player-btn" type="button" aria-label="۱۰ ثانیه عقب">-10</button>
+                                    <button id="public-play-pause" data-testid="public-play-pause" class="player-btn player-btn-primary" type="button" aria-label="پخش">پخش</button>
+                                    <button id="public-skip-forward" data-testid="public-skip-forward" class="player-btn" type="button" aria-label="۱۰ ثانیه جلو">+10</button>
                                     <label id="public-rate-label" class="player-rate-label">
-                                        <span>Ø³Ø±Ø¹Øª</span>
-                                        <select id="public-playback-rate" data-testid="public-playback-rate" aria-label="Ø³Ø±Ø¹Øª Ù¾Ø®Ø´">
+                                        <span>سرعت</span>
+                                        <select id="public-playback-rate" data-testid="public-playback-rate" aria-label="سرعت پخش">
                                             <option value="0.75">0.75x</option>
                                             <option value="1" selected>1x</option>
                                             <option value="1.25">1.25x</option>
@@ -215,9 +215,9 @@
                                     </label>
                                 </div>
                                 <div class="local-playback-controls">
-                                    <button id="public-mute" data-testid="public-mute" class="player-btn" type="button" aria-label="Ø¨ÛŒâ€ŒØµØ¯Ø§">ØµØ¯Ø§</button>
-                                    <input id="public-volume" data-testid="public-volume" class="public-volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Ø­Ø¬Ù… ØµØ¯Ø§">
-                                    <button id="public-fullscreen" data-testid="public-fullscreen" class="player-btn" type="button" aria-label="ØªÙ…Ø§Ù…â€ŒØµÙØ­Ù‡">ØªÙ…Ø§Ù…â€ŒØµÙØ­Ù‡</button>
+                                    <button id="public-mute" data-testid="public-mute" class="player-btn" type="button" aria-label="بی‌صدا">صدا</button>
+                                    <input id="public-volume" data-testid="public-volume" class="public-volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="حجم صدا">
+                                    <button id="public-fullscreen" data-testid="public-fullscreen" class="player-btn" type="button" aria-label="تمام‌صفحه" title="تمام‌صفحه">⛶</button>
                                 </div>
                             </div>
                         </div>
@@ -260,10 +260,13 @@
                         <div class="section-heading">
                             <div>
                                 <h2>افراد داخل اتاق</h2>
-                                <p>تا هفت نفر می‌توانند در این سینما باشند.</p>
+                                <p class="members-capacity-summary">
+                                    <span id="member-panel-occupancy" data-testid="public-member-occupancy">در حال بارگذاری...</span>
+                                    <span id="member-panel-remaining" data-testid="public-member-remaining"></span>
+                                </p>
                             </div>
                         </div>
-                        <div id="member-list" data-testid="public-member-list" class="member-list"></div>
+                        <div id="member-list" data-testid="public-member-list" class="member-list" role="list"></div>
                     </section>
 
                     <section id="social-room-panel" class="social-panel" data-public-panel="room" role="tabpanel" aria-labelledby="tab-room-button" hidden>

@@ -51,6 +51,8 @@ export function chooseConversionPolicy(probe = {}, target = {}) {
 export function buildFfprobeArgs(sourceUrl) {
     return [
         "-v", "error",
+        "-nostdin",
+        "-protocol_whitelist", "file,http,https,tcp,tls,crypto",
         "-show_format",
         "-show_streams",
         "-of", "json",
@@ -64,7 +66,9 @@ export function buildFfmpegArgs({ sourceUrl, outputManifest, policy }) {
         .replace(/[^/]+$/, "init.mp4");
     const args = [
         "-hide_banner",
+        "-nostdin",
         "-y",
+        "-protocol_whitelist", "file,http,https,tcp,tls,crypto",
         "-i", sourceUrl,
         "-map", "0:v:0",
         "-map", "0:a:0?"

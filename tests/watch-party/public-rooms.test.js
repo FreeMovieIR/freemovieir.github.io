@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { getPublicRoomCapabilities } from "../../watch-party/public/js/public-room-capabilities.js";
 import { normalizePublicRoomError, PUBLIC_ROOM_ERROR_CODES } from "../../watch-party/public/js/public-room-errors.js";
@@ -16,9 +17,14 @@ import {
     generatePublicRoomId,
     isValidPublicRoomId,
     clampPublicCapacity,
+    formatMemberOccupancy,
+    formatRemainingSeats,
+    getPublicMemberInitial,
+    getPublicMemberStatusLabel,
     isPublicRoomJoinable,
     sanitizePublicMessage,
-    formatSlowModeLabel
+    formatSlowModeLabel,
+    sortPublicMembers
 } from "../../watch-party/public/js/public-room-state.js";
 import { NoopPublicVoiceProvider } from "../../watch-party/public/js/voice/noop-public-voice-provider.js";
 import { PUBLIC_VOICE_STATES } from "../../watch-party/public/js/voice/public-voice-types.js";
@@ -39,6 +45,38 @@ test("public capacity and directory joinability are bounded", () => {
     assert.equal(isPublicRoomJoinable({ status: "open", joinable: true, memberCount: 6, capacity: 7 }), true);
     assert.equal(isPublicRoomJoinable({ status: "open", joinable: true, memberCount: 7, capacity: 7 }), false);
     assert.equal(isPublicRoomJoinable({ status: "locked", joinable: false, memberCount: 2, capacity: 7 }), false);
+});
+
+test("public member occupancy copy uses authoritative capacity and RTL-safe Persian text", () => {
+    assert.equal(formatMemberOccupancy(1, 2), "۱ از ۲ نفر");
+    assert.equal(formatMemberOccupancy(2, 3), "۲ از ۳ نفر");
+    assert.equal(formatMemberOccupancy(7, 7), "۷ از ۷ نفر");
+    assert.equal(formatMemberOccupancy(9, 3), "۳ از ۳ نفر");
+    assert.equal(formatRemainingSeats(1, 3), "۲ جای خالی");
+    assert.equal(formatRemainingSeats(2, 3), "۱ جای خالی");
+    assert.equal(formatRemainingSeats(3, 3), "اتاق تکمیل است");
+});
+
+test("public active room member panel does not hardcode the seven-person maximum", () => {
+    const html = readFileSync(new URL("../../watch-party/public/index.html", import.meta.url), "utf8");
+    const panelStart = html.indexOf('id="social-members-panel"');
+    const panelEnd = html.indexOf('id="social-room-panel"', panelStart);
+    const membersPanel = html.slice(panelStart, panelEnd);
+    assert.equal(membersPanel.includes("تا هفت نفر"), false);
+    assert.equal(membersPanel.includes("member-panel-occupancy"), true);
+    assert.equal(membersPanel.includes("member-panel-remaining"), true);
+});
+
+test("public member helpers sort host first and distinguish reconnecting state", () => {
+    const sorted = sortPublicMembers([
+        { uid: "guest-reconnect", role: "guest", displayName: "Guest B", online: false, joinedAt: 2 },
+        { uid: "guest-online", role: "guest", displayName: "Guest A", online: true, joinedAt: 3 },
+        { uid: "host", role: "host", displayName: "آرش", online: true, joinedAt: 5 }
+    ], "host");
+    assert.deepEqual(sorted.map((member) => member.uid), ["host", "guest-online", "guest-reconnect"]);
+    assert.equal(getPublicMemberInitial(" آرش "), "آ");
+    assert.equal(getPublicMemberStatusLabel({ online: true }), "آنلاین");
+    assert.equal(getPublicMemberStatusLabel({ online: false }), "در حال اتصال مجدد");
 });
 
 test("public room capabilities keep host and guest permissions explicit", () => {

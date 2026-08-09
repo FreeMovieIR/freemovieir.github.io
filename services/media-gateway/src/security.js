@@ -24,10 +24,10 @@ export function normalizeSourceUrl(raw) {
     return url;
 }
 
-export async function assertPublicHttpUrl(rawUrl) {
+export async function assertPublicHttpUrl(rawUrl, { lookup = dns.lookup } = {}) {
     const url = normalizeSourceUrl(rawUrl);
     if (BLOCKED_HOSTS.has(url.hostname.toLowerCase())) throw new Error("Metadata endpoints are blocked.");
-    const addresses = await dns.lookup(url.hostname, { all: true, verbatim: false });
+    const addresses = await lookup(url.hostname, { all: true, verbatim: false });
     if (!addresses.length) throw new Error("Source host did not resolve.");
     for (const address of addresses) {
         if (!isPublicAddress(address.address)) throw new Error("Private, loopback, and link-local addresses are blocked.");

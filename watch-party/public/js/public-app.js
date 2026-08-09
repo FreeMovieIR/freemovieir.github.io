@@ -5,14 +5,19 @@ import {
     PUBLIC_ALLOWED_REACTIONS,
     PUBLIC_APP_STATES,
     PUBLIC_ROOM_STATUSES,
+    formatMemberOccupancy,
     formatPublicClock,
     formatRelativeAge,
+    formatRemainingSeats,
     formatSlowModeLabel,
+    getPublicMemberInitial,
+    getPublicMemberStatusLabel,
     isPublicRoomJoinable,
     isValidPublicRoomId,
     normalizePublicRoomId,
     sanitizePublicMessage,
     sanitizePublicText,
+    sortPublicMembers,
     toPersianDigits
 } from "./public-room-state.js";
 import { expectedPublicPlaybackTime } from "./public-room-media-sync.js";
@@ -110,7 +115,7 @@ function collectElements() {
         "open-create", "directory-live-count", "directory-search", "directory-filter", "directory-language", "directory-sort", "only-joinable", "directory-loading", "directory-empty", "directory-list",
         "create-form", "create-display-name", "create-room-name", "create-movie-title", "create-media-url", "create-capacity", "create-language", "create-error", "create-submit",
         "join-form", "join-display-name", "join-error", "join-submit", "preview-room-name", "preview-details",
-        "room-status", "room-title", "room-subtitle", "room-count", "host-disconnected", "public-video-shell", "public-video", "public-media-status", "public-player-controls", "public-current-time", "public-duration", "public-seek", "public-host-playback-controls", "public-play-pause", "public-skip-back", "public-skip-forward", "public-playback-rate", "public-rate-label", "public-mute", "public-volume", "public-fullscreen", "guest-control-note", "media-sync-state", "member-list", "host-actions", "guest-actions", "toggle-lock", "end-room", "leave-room", "leave-room-panel",
+        "room-status", "room-title", "room-subtitle", "room-count", "host-disconnected", "public-video-shell", "public-video", "public-media-status", "public-player-controls", "public-current-time", "public-duration", "public-seek", "public-host-playback-controls", "public-play-pause", "public-skip-back", "public-skip-forward", "public-playback-rate", "public-rate-label", "public-mute", "public-volume", "public-fullscreen", "guest-control-note", "media-sync-state", "member-panel-occupancy", "member-panel-remaining", "member-list", "host-actions", "guest-actions", "toggle-lock", "end-room", "leave-room", "leave-room-panel",
         "room-facts", "open-host-controls", "host-control-dialog", "close-host-controls", "host-media-form", "host-movie-title", "host-media-url", "host-media-error", "host-media-submit",
         "tab-chat-button", "tab-members-button", "tab-room-button", "social-chat-panel", "social-members-panel", "social-room-panel",
         "public-reaction-layer", "public-chat-list", "public-new-messages", "public-chat-disabled", "public-chat-form", "public-chat-input", "public-chat-meta", "public-chat-send", "public-chat-error", "public-reaction-button", "reaction-picker",
@@ -187,6 +192,11 @@ function bindUi() {
     els.publicVideoShell?.addEventListener("mousemove", revealControlsTemporarily);
     els.publicVideoShell?.addEventListener("pointerdown", revealControlsTemporarily);
     els.publicPlayerControls?.addEventListener("focusin", () => setControlsVisible(true));
+    els.publicPlayerControls?.addEventListener("pointerdown", () => {
+        clearTimeout(state.controlsHideTimer);
+        setControlsVisible(true);
+    });
+    els.publicPlayerControls?.addEventListener("pointerup", revealControlsTemporarily);
     document.addEventListener("keydown", handlePlayerShortcuts);
     els.publicChatForm.addEventListener("submit", sendChatMessage);
     els.publicChatInput.addEventListener("input", updateComposer);
@@ -421,7 +431,7 @@ function renderRoomCard(room) {
     status.textContent = getDirectoryStatus(room);
     const count = document.createElement("span");
     count.className = "count-pill";
-    count.textContent = `${toPersianDigits(room.memberCount || 0)} / ${toPersianDigits(room.capacity || 0)}`;
+    count.textContent = formatMemberOccupancy(room.memberCount || 0, room.capacity);
     top.append(status, count);
 
     const identity = document.createElement("div");
@@ -484,7 +494,7 @@ function renderPreview(room) {
     for (const [label, value] of [
         ["فیلم", room.movieTitle || "فیلم"],
         ["میزبان", room.hostDisplayName || "میزبان"],
-        ["ظرفیت", `${toPersianDigits(room.memberCount || 0)} / ${toPersianDigits(room.capacity || 0)}`],
+        ["ظرفیت", formatMemberOccupancy(room.memberCount || 0, room.capacity)],
         ["زبان", room.language || "فارسی"],
         ["وضعیت", getDirectoryStatus(room)],
         ["گفتگو", room.chatEnabled ? "فعال" : "خاموش"],
@@ -501,20 +511,28 @@ function renderPreview(room) {
 }
 
 function renderRoom(room) {
-    const members = Object.entries(room.members || {}).map(([uid, member]) => ({ ...member, uid }));
+    const members = sortPublicMembers(
+        Object.entries(room.members || {}).map(([uid, member]) => ({ ...member, uid })),
+        room.hostUid
+    );
     const capabilities = getPublicRoomCapabilities({ role: state.role, settings: room.settings });
+    const occupancy = formatMemberOccupancy(members.length, room.capacity);
+    const remainingSeats = formatRemainingSeats(members.length, room.capacity);
     els.roomTitle.textContent = room.roomName || "اتاق عمومی";
     els.roomSubtitle.textContent = room.movieTitle || "فیلم";
     els.roomStatus.textContent = getDirectoryStatus(room);
-    els.roomCount.textContent = `${toPersianDigits(members.length)} / ${toPersianDigits(room.capacity || 0)}`;
+    els.roomCount.textContent = occupancy;
+    els.roomCount.setAttribute("aria-label", `ظرفیت اتاق: ${occupancy}`);
+    if (els.memberPanelOccupancy) els.memberPanelOccupancy.textContent = occupancy;
+    if (els.memberPanelRemaining) els.memberPanelRemaining.textContent = remainingSeats;
     els.openHostControls.hidden = !capabilities.canEndRoom;
     els.hostActions.hidden = !capabilities.canEndRoom;
     els.guestActions.hidden = !capabilities.canLeaveRoom;
     els.leaveRoom.hidden = !capabilities.canLeaveRoom;
-    els.guestControlNote.hidden = capabilities.canControlPlayback;
+    els.guestControlNote.hidden = true;
     els.toggleLock.textContent = room.status === PUBLIC_ROOM_STATUSES.LOCKED ? "باز کردن اتاق" : "قفل اتاق";
     els.hostDisconnected.hidden = Boolean(room.members?.[room.hostUid]?.online);
-    els.mediaSyncState.textContent = capabilities.canControlPlayback ? "کنترل پخش با شماست" : "کنترل پخش با میزبان است";
+    els.mediaSyncState.textContent = capabilities.canControlPlayback ? "کنترل پخش با شماست" : "پخش با میزبان";
     els.memberList.replaceChildren(...members.map((member) => renderMember(member, capabilities)));
     renderRoomFacts(room, members, capabilities);
     renderSocialSettings(room, capabilities);
@@ -527,7 +545,7 @@ function renderRoom(room) {
 function renderRoomFacts(room, members, capabilities) {
     const facts = [
         ["فیلم", room.movieTitle || "فیلم"],
-        ["اعضا", `${toPersianDigits(members.length)} / ${toPersianDigits(room.capacity || 0)}`],
+        ["اعضا", formatMemberOccupancy(members.length, room.capacity)],
         ["وضعیت", getDirectoryStatus(room)],
         ["گفتگو", room.settings?.chatEnabled ? "فعال" : "خاموش"],
         ["واکنش‌ها", room.settings?.reactionsEnabled ? "فعال" : "خاموش"],
@@ -547,24 +565,38 @@ function renderRoomFacts(room, members, capabilities) {
 
 function renderMember(member, capabilities) {
     const card = document.createElement("div");
-    card.className = `member-card ${member.online ? "is-online" : "is-reconnecting"}`;
+    const isHost = member.role === "host";
+    card.className = `member-card ${isHost ? "is-host" : "is-guest"} ${member.online ? "is-online" : "is-reconnecting"}`;
+    card.setAttribute("role", "listitem");
     card.dataset.testid = member.role === "host" ? "public-member-host" : "public-member-guest";
     card.dataset.memberName = member.displayName || "";
+
+    const avatar = document.createElement("div");
+    avatar.className = "member-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = getPublicMemberInitial(member.displayName);
+
     const info = document.createElement("div");
+    info.className = "member-info";
+    const main = document.createElement("div");
+    main.className = "member-main-line";
     const name = document.createElement("div");
     name.className = "member-name";
     name.textContent = member.displayName || "مهمان";
     const role = document.createElement("div");
-    role.className = "member-role";
-    role.textContent = member.role === "host" ? "میزبان" : "مهمان";
+    role.className = `member-role ${isHost ? "is-host-role" : ""}`;
+    role.textContent = isHost ? "میزبان" : "مهمان";
+    main.append(name, role);
+
     const status = document.createElement("div");
     status.className = "member-status";
-    status.textContent = member.online ? "آنلاین" : "در حال اتصال مجدد";
-    info.append(name, role, status);
-    card.append(info);
+    status.textContent = getPublicMemberStatusLabel(member);
+    info.append(main, status);
+    card.append(avatar, info);
+
     if (capabilities.canKickMembers && member.role !== "host") {
         const button = document.createElement("button");
-        button.className = "secondary-btn small";
+        button.className = "member-action-btn";
         button.type = "button";
         button.dataset.testid = "public-kick-member";
         button.setAttribute("aria-label", `اخراج ${member.displayName || "مهمان"}`);
@@ -798,6 +830,8 @@ function hostSkip(delta) {
 
 function previewSeek() {
     state.seekDragging = true;
+    clearTimeout(state.controlsHideTimer);
+    setControlsVisible(true);
     els.publicCurrentTime.textContent = toPersianDigits(formatPublicTime(Number(els.publicSeek.value || 0)));
 }
 
@@ -805,6 +839,7 @@ function commitSeek() {
     if (state.role !== "host") return;
     state.seekDragging = false;
     els.publicVideo.currentTime = clampPublicTime(Number(els.publicSeek.value || 0), els.publicVideo.duration);
+    revealControlsTemporarily();
 }
 
 function updateHostPlaybackRate() {
@@ -820,6 +855,7 @@ function toggleLocalMute() {
 }
 
 function updateLocalVolume() {
+    clearTimeout(state.controlsHideTimer);
     const volume = Number(els.publicVolume.value || 0);
     state.mediaController?.setMovieVolume(volume);
     els.publicVideo.volume = Math.min(1, Math.max(0, volume));

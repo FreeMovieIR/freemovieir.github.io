@@ -101,6 +101,7 @@ if (JSON.stringify(config).match(/127\.0\.0\.1|localhost|demo-freemovieir|servic
     throw new Error("runtime config contains forbidden local/test/private text.");
 }
 validatePublicRoomRolloutConfig(config.publicRooms);
+validateMediaGatewayConfig(config.mediaGateway);
 
 const wpHtml = await readFile(join(root, "watch-party/index.html"), "utf8");
 const publicHtml = await readFile(join(root, "watch-party/public/index.html"), "utf8");
@@ -166,6 +167,24 @@ function validatePublicRoomRolloutConfig(publicRooms) {
     }
     if (typeof publicRooms.functionTimeoutMs !== "number" || publicRooms.functionTimeoutMs < 1000 || publicRooms.functionTimeoutMs > 60000) {
         throw new Error("runtime config publicRooms.functionTimeoutMs must be a sane numeric value.");
+    }
+}
+
+function validateMediaGatewayConfig(mediaGateway) {
+    if (!mediaGateway || typeof mediaGateway !== "object" || Array.isArray(mediaGateway)) {
+        throw new Error("runtime config mediaGateway must be an object.");
+    }
+    if (typeof mediaGateway.enabled !== "boolean") {
+        throw new Error("runtime config mediaGateway.enabled must be boolean.");
+    }
+    if (typeof mediaGateway.baseUrl !== "string") {
+        throw new Error("runtime config mediaGateway.baseUrl must be a string.");
+    }
+    if (mediaGateway.enabled && !/^https:\/\//i.test(mediaGateway.baseUrl)) {
+        throw new Error("runtime config mediaGateway.baseUrl must use HTTPS when Gateway is enabled.");
+    }
+    if (!mediaGateway.enabled && mediaGateway.baseUrl) {
+        throw new Error("runtime config mediaGateway.baseUrl must be empty when Gateway is disabled.");
     }
 }
 
