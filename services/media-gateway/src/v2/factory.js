@@ -62,6 +62,17 @@ export async function createGatewayAdminDatabase(config, modules = null) {
     return getDatabase(app);
 }
 
+export async function closeGatewayAdminDatabaseApp(config, modules = null) {
+    const appModule = modules || await import("firebase-admin/app");
+    const { deleteApp, getApps } = Array.isArray(appModule) ? appModule[0] : appModule;
+    const appName = getGatewayDatabaseAppName(config);
+    if (appName === "[DEFAULT]") return false;
+    const app = getApps().find((candidate) => candidate.name === appName);
+    if (!app) return false;
+    await deleteApp(app);
+    return true;
+}
+
 export function getGatewayDatabaseAppName(config) {
     if (!config?.dbAuthUid) throw new Error("MEDIA_GATEWAY_DB_AUTH_UID is required for the Gateway database app.");
     return `media-gateway-db-${config.dbAuthUid}`;
