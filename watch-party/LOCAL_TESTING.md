@@ -374,6 +374,27 @@ Checklist:
 - End the room and confirm the room, chat, and reactions disappear from Emulator UI.
 - Confirm no microphone controls appear and no browser microphone permission prompt is requested.
 
+## Public Playback V5 Manual Test
+
+Use a host browser context and a separate guest browser context.
+
+- Host with `http://127.0.0.1:8080/test-assets/sample.mp4` sees play/pause, `-10`, `+10`, seek, speed, mute, volume, and fullscreen.
+- Guest sees current time/duration, read-only progress, mute, volume, and fullscreen.
+- Guest does not see play, pause, seek, skip, or speed as interactive shared controls.
+- Press `F` in either context and verify fullscreen or Cinema Mode starts.
+- Press `M` in either context and verify only local mute changes.
+- Press Space and arrow keys as host and verify shared playback changes.
+- Press Space and arrow keys as guest and verify shared playback does not change.
+- Send several reactions, reload/join a new guest, and verify old retained reactions do not animate.
+- Send a new reaction after the guest has joined and verify it animates exactly once.
+- For MKV mobile checks, use `watch-party/MANUAL_MOBILE_MEDIA_TEST.md`.
+
+V5 visual artifacts are written under:
+
+```text
+artifacts/watch-party/playback-v5/
+```
+
 ## Manual Stuck-Restore Test
 
 1. Start the emulators and static server.

@@ -11,9 +11,11 @@ const NS = "demo-freemovieir-default-rtdb";
 const ADMIN = encodeURIComponent(JSON.stringify({ uid: "public-e2e-admin", admin: true }));
 const ARTIFACT_DIR = path.resolve("artifacts/watch-party/public-v4", process.env.PUBLIC_V4_SCREENSHOT_PHASE || "final");
 const V3_ARTIFACT_DIR = path.resolve("artifacts/watch-party/public-v3");
+const V5_ARTIFACT_DIR = path.resolve("artifacts/watch-party/playback-v5");
 
 mkdirSync(ARTIFACT_DIR, { recursive: true });
 mkdirSync(V3_ARTIFACT_DIR, { recursive: true });
+mkdirSync(V5_ARTIFACT_DIR, { recursive: true });
 
 test.describe("Public Rooms V4 E2E", () => {
     test("production feature flags and maintenance mode do not start public Firebase work", async ({ browser }) => {
@@ -92,6 +94,35 @@ test.describe("Public Rooms V4 E2E", () => {
             expect(roomId).toMatch(/^[A-HJ-NP-Z2-9]{10,12}$/);
             await expect(host.page.getByTestId("public-room-count")).toContainText("۱ / ۴");
             await expect(host.page.getByTestId("public-open-host-controls")).toBeVisible();
+            await expect(host.page.getByTestId("public-player-controls")).toBeVisible();
+            await expect(host.page.getByTestId("public-play-pause")).toBeVisible();
+            await expect(host.page.getByTestId("public-skip-back")).toBeVisible();
+            await expect(host.page.getByTestId("public-skip-forward")).toBeVisible();
+            await expect(host.page.getByTestId("public-seek")).toBeEnabled();
+            await expect(host.page.getByTestId("public-fullscreen")).toBeVisible();
+            const firstPlaybackRevision = (await readPublicRoom(roomId)).playback?.revision || 0;
+            await host.page.getByTestId("public-play-pause").click();
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.action).toBe("play");
+            const afterPlayRevision = (await readPublicRoom(roomId)).playback?.revision || 0;
+            expect(afterPlayRevision).toBeGreaterThan(firstPlaybackRevision);
+            await host.page.getByTestId("public-play-pause").click();
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.action).toBe("pause");
+            const afterPauseRevision = (await readPublicRoom(roomId)).playback?.revision || 0;
+            expect(afterPauseRevision).toBeGreaterThan(afterPlayRevision);
+            await host.page.getByTestId("public-skip-forward").click();
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.action).toBe("seek");
+            const afterForwardRevision = (await readPublicRoom(roomId)).playback?.revision || 0;
+            expect(afterForwardRevision).toBeGreaterThan(afterPauseRevision);
+            await host.page.getByTestId("public-skip-back").click();
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.revision).toBeGreaterThan(afterForwardRevision);
+            const seekRevision = (await readPublicRoom(roomId)).playback?.revision || 0;
+            await host.page.getByTestId("public-seek").evaluate((input) => {
+                input.value = "1";
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.revision).toBeGreaterThan(seekRevision);
+            await captureV5(host.page, "public-host-controls-desktop");
             await host.page.getByTestId("public-open-host-controls").click();
             await expect(host.page.getByTestId("public-host-control-dialog")).toBeVisible();
             await expect(host.page.getByTestId("public-social-settings")).toBeVisible();
@@ -126,6 +157,32 @@ test.describe("Public Rooms V4 E2E", () => {
             await expect(host.page.getByTestId("public-room-count")).toContainText("۳ / ۴");
             await expect(guest2.page.getByTestId("public-social-settings")).toBeHidden();
             await expect(guest2.page.getByTestId("public-leave-room")).toBeVisible();
+            await expect(guest2.page.getByTestId("public-player-controls")).toBeVisible();
+            await expect(guest2.page.getByTestId("public-play-pause")).toBeHidden();
+            await expect(guest2.page.getByTestId("public-skip-back")).toBeHidden();
+            await expect(guest2.page.getByTestId("public-skip-forward")).toBeHidden();
+            await expect(guest2.page.getByTestId("public-seek")).toBeDisabled();
+            await expect(guest2.page.getByTestId("public-fullscreen")).toBeVisible();
+            const beforeFullscreenPlayback = (await readPublicRoom(roomId)).playback?.revision;
+            await guest2.page.getByTestId("public-fullscreen").click();
+            await guest2.page.keyboard.press("Escape").catch(() => {});
+            if (await guest2.page.evaluate(() => Boolean(document.fullscreenElement))) {
+                await guest2.page.getByTestId("public-fullscreen").click();
+            }
+            await expect.poll(async () => guest2.page.evaluate(() => ({
+                standardFullscreen: Boolean(document.fullscreenElement),
+                cinemaMode: document.querySelector("#public-video-shell")?.classList.contains("cinema-mode-active") || false,
+                cinemaLock: document.body.classList.contains("watch-party-cinema-lock")
+            }))).toEqual({ standardFullscreen: false, cinemaMode: false, cinemaLock: false });
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.revision).toBe(beforeFullscreenPlayback);
+            const beforeGuestAudioControls = (await readPublicRoom(roomId)).playback?.revision;
+            await guest2.page.getByTestId("public-mute").click();
+            await guest2.page.getByTestId("public-volume").evaluate((input) => {
+                input.value = "0.25";
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+            });
+            await expect.poll(async () => (await readPublicRoom(roomId)).playback?.revision).toBe(beforeGuestAudioControls);
+            await captureV5(guest2.page, "public-guest-controls-desktop");
             await host.page.getByTestId("public-members-tab").click();
             await capture(host.page, "members-desktop");
             await host.page.getByTestId("public-chat-tab").click();
@@ -185,6 +242,7 @@ test.describe("Public Rooms V4 E2E", () => {
             await guest2.page.setViewportSize({ width: 360, height: 800 });
             await assertNoOverflow(guest2.page, 360);
             await capture(guest2.page, "guest-room-mobile");
+            await captureV5(guest2.page, "public-guest-controls-mobile");
             await guest2.page.getByTestId("public-members-tab").click();
             await capture(guest2.page, "members-mobile");
             await guest2.page.getByTestId("public-chat-tab").click();
@@ -226,6 +284,7 @@ test.describe("Public Rooms V4 E2E", () => {
 
             await host.page.setViewportSize({ width: 390, height: 844 });
             await assertNoOverflow(host.page, 390);
+            await captureV5(host.page, "public-host-controls-mobile");
             await host.page.getByTestId("public-open-host-controls").click();
             await capture(host.page, "host-management-mobile");
             await host.page.getByTestId("public-end-room").click();
@@ -324,6 +383,17 @@ function buildIndex() {
         ["Mobile", ["mobile"]],
         ["Other", []]
     ]));
+    buildScreenshotIndex(V5_ARTIFACT_DIR, "Public Playback V5 Screenshots", new Map([
+        ["Host Controls", ["host-controls"]],
+        ["Guest Controls", ["guest-controls"]],
+        ["Fullscreen", ["fullscreen"]],
+        ["MKV", ["mkv"]],
+        ["Other", []]
+    ]));
+}
+
+async function captureV5(page, name) {
+    await page.screenshot({ path: path.join(V5_ARTIFACT_DIR, `${name}.png`), fullPage: false });
 }
 
 function buildScreenshotIndex(directory, title, groupMatchers) {

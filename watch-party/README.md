@@ -218,6 +218,20 @@ Direct Mode remains the default for MP4, WebM, HLS, and best-effort MKV. iPhone 
 
 Real iPhone validation steps are documented in `watch-party/IOS_TESTING.md`.
 
+## Public Playback V5
+
+Public Cinema Rooms now use custom controls instead of native browser controls. Shared playback authority is separate from local player capability:
+
+- Host shared controls: play, pause, seek, skip backward, skip forward, and playback speed.
+- Every participant local controls: mute, volume, fullscreen, and Cinema Mode fallback.
+- Guest progress is read-only and guest fullscreen/volume/mute never writes shared playback state.
+
+Public Rooms use the same `MediaController` path as the private Watch Party. MP4/WebM/OGG remain direct-first, HLS uses native HLS or HLS.js, and MKV falls back to the optional Media Compatibility Gateway when direct playback is unsafe for the current device.
+
+Reaction overlays use a subscription baseline: retained reactions that existed before a client joined are marked seen without animation, and only future reaction IDs animate once.
+
+Real-device mobile media checks are in `watch-party/MANUAL_MOBILE_MEDIA_TEST.md`.
+
 ## Production Build Path
 
 Production config is generated at deploy time into the Pages output directory:

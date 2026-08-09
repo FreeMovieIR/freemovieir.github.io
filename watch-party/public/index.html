@@ -188,9 +188,39 @@
             <div id="host-disconnected" class="connection-banner" hidden>اتصال میزبان موقتاً قطع شده؛ در انتظار بازگشت...</div>
             <div class="room-layout">
                 <section class="cinema-panel">
-                    <div class="video-shell">
-                        <video id="public-video" data-testid="public-active-player" playsinline controls preload="metadata"></video>
+                    <div id="public-video-shell" class="video-shell">
+                        <video id="public-video" data-testid="public-active-player" playsinline preload="metadata"></video>
+                        <div id="public-media-status" data-testid="public-media-status" class="public-media-status" hidden aria-live="polite"></div>
                         <div id="public-reaction-layer" data-testid="public-reaction-layer" class="reaction-layer" aria-live="polite"></div>
+                        <div id="public-player-controls" data-testid="public-player-controls" class="public-player-controls" data-authority="guest">
+                            <div class="player-progress-row">
+                                <span id="public-current-time" data-testid="public-current-time" class="time-readout">00:00</span>
+                                <input id="public-seek" data-testid="public-seek" class="public-seek" type="range" min="0" max="0" step="0.1" value="0" aria-label="Ù†ÙˆØ§Ø± Ø²Ù…Ø§Ù† ÙÛŒÙ„Ù…">
+                                <span id="public-duration" data-testid="public-duration" class="time-readout">00:00</span>
+                            </div>
+                            <div class="player-control-row">
+                                <div id="public-host-playback-controls" class="host-playback-controls">
+                                    <button id="public-skip-back" data-testid="public-skip-back" class="player-btn" type="button" aria-label="Û±Û° Ø«Ø§Ù†ÛŒÙ‡ Ø¹Ù‚Ø¨">-10</button>
+                                    <button id="public-play-pause" data-testid="public-play-pause" class="player-btn player-btn-primary" type="button" aria-label="Ù¾Ø®Ø´">Ù¾Ø®Ø´</button>
+                                    <button id="public-skip-forward" data-testid="public-skip-forward" class="player-btn" type="button" aria-label="Û±Û° Ø«Ø§Ù†ÛŒÙ‡ Ø¬Ù„Ùˆ">+10</button>
+                                    <label id="public-rate-label" class="player-rate-label">
+                                        <span>Ø³Ø±Ø¹Øª</span>
+                                        <select id="public-playback-rate" data-testid="public-playback-rate" aria-label="Ø³Ø±Ø¹Øª Ù¾Ø®Ø´">
+                                            <option value="0.75">0.75x</option>
+                                            <option value="1" selected>1x</option>
+                                            <option value="1.25">1.25x</option>
+                                            <option value="1.5">1.5x</option>
+                                            <option value="2">2x</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="local-playback-controls">
+                                    <button id="public-mute" data-testid="public-mute" class="player-btn" type="button" aria-label="Ø¨ÛŒâ€ŒØµØ¯Ø§">ØµØ¯Ø§</button>
+                                    <input id="public-volume" data-testid="public-volume" class="public-volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Ø­Ø¬Ù… ØµØ¯Ø§">
+                                    <button id="public-fullscreen" data-testid="public-fullscreen" class="player-btn" type="button" aria-label="ØªÙ…Ø§Ù…â€ŒØµÙØ­Ù‡">ØªÙ…Ø§Ù…â€ŒØµÙØ­Ù‡</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="playback-note-row">
                         <p id="guest-control-note" class="guest-note" hidden>کنترل پخش با میزبان است.</p>

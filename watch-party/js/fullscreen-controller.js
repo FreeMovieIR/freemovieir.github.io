@@ -15,7 +15,7 @@ export class FullscreenController extends EventTarget {
         this.window = win;
         this.mode = null;
         this.scrollY = 0;
-        this.boundExit = () => this.exitCinemaMode();
+        this.boundExit = () => this.exit();
         this.boundWebkitBegin = () => this.dispatchMode(FULLSCREEN_CAPABILITY.WEBKIT_VIDEO_FULLSCREEN, true);
         this.boundWebkitEnd = () => this.dispatchMode(FULLSCREEN_CAPABILITY.WEBKIT_VIDEO_FULLSCREEN, false);
         this.boundStandardChange = () => {
@@ -40,6 +40,10 @@ export class FullscreenController extends EventTarget {
     }
 
     enterFromUserGesture() {
+        if (this.isActive()) {
+            this.exit();
+            return true;
+        }
         const capability = this.getCapability();
         if (capability === FULLSCREEN_CAPABILITY.STANDARD_ELEMENT_FULLSCREEN) {
             return this.enterStandardFullscreen();
@@ -55,6 +59,27 @@ export class FullscreenController extends EventTarget {
         }
         this.dispatchEvent(new CustomEvent("unavailable"));
         return false;
+    }
+
+    isActive() {
+        return this.mode === FULLSCREEN_CAPABILITY.CSS_CINEMA_MODE
+            || this.wrapper?.classList?.contains?.("cinema-mode-active")
+            || this.document?.body?.classList?.contains?.("watch-party-cinema-lock")
+            || this.document?.fullscreenElement === this.wrapper;
+    }
+
+    exit() {
+        if (this.document?.fullscreenElement === this.wrapper && typeof this.document.exitFullscreen === "function") {
+            this.document.exitFullscreen().catch?.(() => {});
+        }
+        if (typeof this.video?.webkitExitFullscreen === "function") {
+            try {
+                this.video.webkitExitFullscreen();
+            } catch {
+                // Some WebKit builds throw when the video is not currently fullscreen.
+            }
+        }
+        this.exitCinemaMode({ force: true });
     }
 
     async enterStandardFullscreen() {
@@ -104,11 +129,14 @@ export class FullscreenController extends EventTarget {
     }
 
     handleCinemaKeydown = (event) => {
-        if (event.key === "Escape") this.exitCinemaMode();
+        if (event.key === "Escape") this.exit();
     };
 
-    exitCinemaMode() {
-        if (this.mode !== FULLSCREEN_CAPABILITY.CSS_CINEMA_MODE) return;
+    exitCinemaMode({ force = false } = {}) {
+        const hasCinemaDom = this.wrapper?.classList?.contains?.("cinema-mode-active")
+            || this.document.body?.classList?.contains?.("watch-party-cinema-lock");
+        if (!force && this.mode !== FULLSCREEN_CAPABILITY.CSS_CINEMA_MODE) return;
+        if (force && this.mode !== FULLSCREEN_CAPABILITY.CSS_CINEMA_MODE && !hasCinemaDom) return;
         this.mode = null;
         this.wrapper?.classList.remove("cinema-mode-active");
         this.wrapper?.querySelector("[data-cinema-exit]")?.remove();
@@ -121,7 +149,7 @@ export class FullscreenController extends EventTarget {
     }
 
     destroy() {
-        this.exitCinemaMode();
+        this.exitCinemaMode({ force: true });
         this.video?.removeEventListener?.("webkitbeginfullscreen", this.boundWebkitBegin);
         this.video?.removeEventListener?.("webkitendfullscreen", this.boundWebkitEnd);
         this.document?.removeEventListener?.("fullscreenchange", this.boundStandardChange);

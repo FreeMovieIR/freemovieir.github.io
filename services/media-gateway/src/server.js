@@ -1,24 +1,27 @@
 import http from "node:http";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
 import { assertPublicHttpUrl, redactUrl } from "./security.js";
 import { buildFfmpegArgs, buildFfprobeArgs, chooseConversionPolicy } from "./ffmpeg-policy.js";
+import { authorizeRequest } from "./auth.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const OUTPUT_ROOT = resolve(process.env.MEDIA_GATEWAY_OUTPUT_DIR || ".media-gateway-output");
 const JOB_TTL_MS = Number(process.env.MEDIA_GATEWAY_JOB_TTL_MS || 2 * 60 * 60 * 1000);
 const MAX_ACTIVE_JOBS = Number(process.env.MEDIA_GATEWAY_MAX_ACTIVE_JOBS || 2);
 const REQUIRE_AUTH = process.env.MEDIA_GATEWAY_REQUIRE_AUTH !== "false";
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || "";
 const jobs = new Map();
 
 const server = http.createServer(async (request, response) => {
     try {
-        if (REQUIRE_AUTH && !/^Bearer\s+[-._~+/=A-Za-z0-9]+$/.test(request.headers.authorization || "")) {
-            return json(response, 401, { message: "Firebase ID token is required." });
-        }
+        request.auth = await authorizeRequest(request, {
+            requireAuth: REQUIRE_AUTH,
+            projectId: FIREBASE_PROJECT_ID
+        });
         const url = new URL(request.url, `http://${request.headers.host}`);
         if (request.method === "POST" && url.pathname === "/v1/probe") return handleProbe(request, response);
         if (request.method === "POST" && url.pathname === "/v1/jobs") return handleCreateJob(request, response);
@@ -27,7 +30,7 @@ const server = http.createServer(async (request, response) => {
         if (jobMatch && request.method === "DELETE") return handleCancelJob(response, jobMatch[1]);
         return json(response, 404, { message: "Not found." });
     } catch (error) {
-        return json(response, 400, { message: error.message || "Request failed." });
+        return json(response, error.status || 400, { message: error.message || "Request failed." });
     }
 });
 
@@ -39,10 +42,18 @@ async function handleProbe(request, response) {
 }
 
 async function handleCreateJob(request, response) {
-    const activeJobs = Array.from(jobs.values()).filter((job) => ["queued", "processing"].includes(job.status)).length;
-    if (activeJobs >= MAX_ACTIVE_JOBS) return json(response, 429, { message: "Too many active jobs." });
     const body = await readJson(request);
     const sourceUrl = await assertPublicHttpUrl(body.mediaUrl);
+    const profile = sanitizeProfile(body.profile || {});
+    const conversionKey = makeConversionKey(sourceUrl.href, profile);
+    const reusable = Array.from(jobs.values()).find((job) => (
+        job.conversionKey === conversionKey
+        && job.expiresAt > Date.now()
+        && ["queued", "processing", "ready", "playable"].includes(job.status)
+    ));
+    if (reusable) return json(response, reusable.status === "ready" ? 200 : 202, publicJob(reusable));
+    const activeJobs = Array.from(jobs.values()).filter((job) => ["queued", "processing"].includes(job.status)).length;
+    if (activeJobs >= MAX_ACTIVE_JOBS) return json(response, 429, { message: "Too many active jobs." });
     const jobId = randomUUID().replace(/-/g, "");
     const outputDir = join(OUTPUT_ROOT, jobId);
     const outputManifest = join(outputDir, "index.m3u8");
@@ -51,13 +62,14 @@ async function handleCreateJob(request, response) {
         jobId,
         status: "queued",
         progress: { stage: "queued" },
-        source: { url: redactUrl(sourceUrl.href) },
+        source: { urlHash: hashSourceUrl(sourceUrl.href) },
+        conversionKey,
         outputDir,
         expiresAt,
         playback: null
     };
     jobs.set(jobId, job);
-    runJob(job, sourceUrl.href, outputManifest, body.profile || {}).catch((error) => {
+    runJob(job, sourceUrl.href, outputManifest, profile).catch((error) => {
         job.status = "failed";
         job.message = error.message || "Conversion failed.";
     });
@@ -157,6 +169,31 @@ function publicJob(job) {
         expiresAt: job.expiresAt,
         message: job.message
     };
+}
+
+function sanitizeProfile(profile = {}) {
+    return {
+        profile: String(profile.profile || "unknown").slice(0, 32),
+        browserFamily: String(profile.browserFamily || "unknown").slice(0, 32),
+        nativeHls: Boolean(profile.nativeHls),
+        mediaSource: Boolean(profile.mediaSource),
+        managedMediaSource: Boolean(profile.managedMediaSource),
+        webCodecsVideo: Boolean(profile.webCodecsVideo),
+        webCodecsAudio: Boolean(profile.webCodecsAudio),
+        supportsHevc: Boolean(profile.supportsHevc)
+    };
+}
+
+function makeConversionKey(sourceUrl, profile = {}) {
+    return createHash("sha256")
+        .update(hashSourceUrl(sourceUrl))
+        .update(":")
+        .update(JSON.stringify(profile))
+        .digest("hex");
+}
+
+function hashSourceUrl(sourceUrl) {
+    return createHash("sha256").update(String(sourceUrl)).digest("hex");
 }
 
 function json(response, status, body) {

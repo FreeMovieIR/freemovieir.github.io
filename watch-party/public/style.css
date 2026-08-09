@@ -663,15 +663,20 @@ textarea:disabled {
 
 .room-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(340px, 30%);
+    direction: ltr;
+    grid-template-columns: minmax(340px, 30%) minmax(0, 1fr);
+    grid-template-areas: "social cinema";
     gap: 20px;
     align-items: start;
 }
 
 .cinema-panel {
+    grid-area: cinema;
+    direction: rtl;
     padding: 14px;
-    position: sticky;
-    top: 14px;
+    position: relative;
+    z-index: 1;
+    min-width: 0;
 }
 
 .video-shell {
@@ -689,6 +694,194 @@ video {
     background: #000;
 }
 
+#public-video {
+    pointer-events: none;
+}
+
+.public-media-status {
+    position: absolute;
+    inset-inline: 16px;
+    top: 16px;
+    z-index: 4;
+    width: fit-content;
+    max-width: calc(100% - 32px);
+    border: 1px solid rgba(216, 189, 122, .28);
+    border-radius: 14px;
+    background: rgba(5, 6, 8, .84);
+    color: #f8e7bd;
+    padding: 10px 12px;
+    font-size: .86rem;
+    font-weight: 900;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .42);
+}
+
+.public-player-controls {
+    position: absolute;
+    inset-inline: 12px;
+    bottom: 12px;
+    z-index: 5;
+    display: grid;
+    gap: 9px;
+    border: 1px solid rgba(226, 214, 196, .16);
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .03)),
+        rgba(6, 7, 9, .82);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    padding: 10px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, .56);
+    transition: opacity .2s ease, transform .2s ease;
+    pointer-events: none;
+}
+
+.public-player-controls :is(button, input, select, label) {
+    pointer-events: auto;
+}
+
+.video-shell.controls-hidden .public-player-controls {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+}
+
+.player-progress-row,
+.player-control-row,
+.host-playback-controls,
+.local-playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-progress-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.time-readout {
+    min-width: 54px;
+    color: var(--fm-text-soft);
+    font: 850 .82rem/1.2 Vazirmatn, Tahoma, sans-serif;
+    direction: ltr;
+    text-align: center;
+}
+
+.public-seek,
+.public-volume {
+    accent-color: var(--fm-gold-hover);
+}
+
+.public-seek {
+    width: 100%;
+}
+
+.public-seek:disabled {
+    cursor: default;
+    opacity: .72;
+}
+
+.player-control-row {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.player-btn {
+    min-width: 44px;
+    min-height: 44px;
+    border: 1px solid rgba(226, 214, 196, .14);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .06);
+    color: var(--fm-text);
+    cursor: pointer;
+    padding: 0 12px;
+    font-weight: 950;
+}
+
+.player-btn:hover,
+.player-btn:focus-visible {
+    border-color: rgba(216, 189, 122, .36);
+    background: rgba(216, 189, 122, .12);
+}
+
+.player-btn-primary {
+    min-width: 72px;
+    background: linear-gradient(180deg, #d8bd7a, #b99045);
+    color: #10100d;
+}
+
+.player-rate-label {
+    min-height: 44px;
+    display: flex;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: 8px;
+    color: var(--fm-text-muted);
+    font-size: .8rem;
+}
+
+.player-rate-label select {
+    min-height: 40px;
+    width: auto;
+    padding-inline: 10px;
+    border-radius: 12px;
+}
+
+.public-volume {
+    width: 112px;
+    min-height: 44px;
+}
+
+.cinema-mode-active {
+    position: fixed !important;
+    inset: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0 !important;
+    z-index: 9999;
+    border-radius: 0 !important;
+    display: grid;
+    place-items: center;
+    background: #000;
+}
+
+.cinema-mode-active video {
+    width: 100%;
+    max-height: 100dvh;
+}
+
+.watch-party-cinema-lock {
+    position: fixed;
+    inset-inline: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.cinema-exit-button,
+.cinema-orientation-hint {
+    position: absolute;
+    z-index: 8;
+    border-radius: 999px;
+    background: rgba(12, 14, 17, .86);
+    color: var(--fm-text);
+    border: 1px solid rgba(216, 189, 122, .32);
+    box-shadow: var(--fm-shadow);
+}
+
+.cinema-exit-button {
+    inset-inline-start: 16px;
+    top: 16px;
+    min-height: 44px;
+    padding: 0 16px;
+    cursor: pointer;
+    font-weight: 950;
+}
+
+.cinema-orientation-hint {
+    inset-inline: 16px;
+    top: 74px;
+    margin: 0;
+    padding: 10px 14px;
+    text-align: center;
+}
+
 .playback-note-row {
     justify-content: space-between;
     flex-wrap: wrap;
@@ -702,6 +895,10 @@ video {
 }
 
 .social-rail {
+    grid-area: social;
+    direction: rtl;
+    position: relative;
+    z-index: 20;
     min-width: 0;
     overflow: hidden;
 }
@@ -741,8 +938,9 @@ video {
 }
 
 .public-chat-list {
-    min-height: 320px;
-    max-height: min(52vh, 520px);
+    min-height: 180px;
+    height: clamp(180px, 32vh, 320px);
+    max-height: min(42vh, 440px);
     overflow: auto;
     display: grid;
     align-content: start;
@@ -821,6 +1019,7 @@ video {
 
 .chat-composer {
     position: sticky;
+    z-index: 21;
     bottom: 0;
     display: grid;
     gap: 8px;
@@ -834,7 +1033,15 @@ video {
 }
 
 .composer-row {
+    position: relative;
+    z-index: 22;
     justify-content: space-between;
+}
+
+#public-reaction-button {
+    position: relative;
+    z-index: 23;
+    pointer-events: auto;
 }
 
 .chat-meta {
@@ -1025,6 +1232,12 @@ video {
         grid-template-columns: 1fr;
     }
 
+    .room-layout {
+        grid-template-areas:
+            "cinema"
+            "social";
+    }
+
     .creation-copy,
     .cinema-panel {
         position: static;
@@ -1122,6 +1335,46 @@ video {
     .public-chat-list {
         min-height: 300px;
         max-height: 48vh;
+    }
+
+    .public-player-controls {
+        inset-inline: 8px;
+        bottom: 8px;
+        border-radius: 16px;
+        padding: 8px;
+    }
+
+    .player-control-row,
+    .host-playback-controls,
+    .local-playback-controls {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .host-playback-controls {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(44px, 1fr));
+        gap: 8px;
+    }
+
+    .player-rate-label {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    .local-playback-controls {
+        display: grid;
+        grid-template-columns: auto minmax(92px, 1fr) auto;
+        gap: 8px;
+    }
+
+    .public-volume {
+        width: 100%;
+    }
+
+    .player-btn {
+        min-height: 46px;
+        padding-inline: 10px;
     }
 
     .chat-composer textarea {

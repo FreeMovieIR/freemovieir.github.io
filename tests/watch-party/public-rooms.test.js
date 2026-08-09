@@ -4,6 +4,12 @@ import { getPublicRoomCapabilities } from "../../watch-party/public/js/public-ro
 import { normalizePublicRoomError, PUBLIC_ROOM_ERROR_CODES } from "../../watch-party/public/js/public-room-errors.js";
 import { expectedPublicPlaybackTime, makeInitialPublicPlayback, nextPublicPlaybackState } from "../../watch-party/public/js/public-room-media-sync.js";
 import {
+    PublicReactionBaseline,
+    clampPublicTime,
+    getPublicPlayerControlModel,
+    shouldIgnorePublicShortcut
+} from "../../watch-party/public/js/public-player-controls.js";
+import {
     PUBLIC_ALLOWED_REACTIONS,
     PUBLIC_SLOW_MODE_VALUES,
     normalizePublicRoomId,
@@ -71,6 +77,51 @@ test("public playback state remains host-authoritative and revisioned", () => {
     assert.equal(next.revision, 2);
     assert.equal(next.updatedBy, "host");
     assert.equal(expectedPublicPlaybackTime(next, 4000), 13);
+});
+
+test("public custom controls separate shared host authority from local guest controls", () => {
+    const host = getPublicPlayerControlModel({ role: "host", playback: { paused: true }, duration: 120 });
+    assert.equal(host.canUseSharedPlayback, true);
+    assert.equal(host.showPlayPause, true);
+    assert.equal(host.showSeek, true);
+    assert.equal(host.showSkip, true);
+    assert.equal(host.showPlaybackRate, true);
+    assert.equal(host.showLocalFullscreen, true);
+    assert.equal(host.showLocalVolume, true);
+
+    const guest = getPublicPlayerControlModel({ role: "guest", playback: { paused: false }, duration: 120 });
+    assert.equal(guest.canUseSharedPlayback, false);
+    assert.equal(guest.showPlayPause, false);
+    assert.equal(guest.showSeek, false);
+    assert.equal(guest.showSkip, false);
+    assert.equal(guest.showPlaybackRate, false);
+    assert.equal(guest.showReadOnlyProgress, true);
+    assert.equal(guest.showLocalFullscreen, true);
+    assert.equal(guest.showLocalMute, true);
+    assert.equal(clampPublicTime(130, 120), 120);
+    assert.equal(clampPublicTime(-5, 120), 0);
+    assert.equal(shouldIgnorePublicShortcut({ tagName: "INPUT" }), true);
+});
+
+test("public reaction baseline prevents retained reaction replay and animates only future ids", () => {
+    const tracker = new PublicReactionBaseline();
+    const retained = Object.fromEntries(Array.from({ length: 10 }, (_, index) => [
+        `old-${index}`,
+        { emoji: "🍿", createdAt: index + 1, uid: "guest" }
+    ]));
+    assert.deepEqual(tracker.collectNew(retained), []);
+    assert.deepEqual(tracker.collectNew(retained), []);
+    const oneNew = tracker.collectNew({ ...retained, fresh: { emoji: "😂", createdAt: 20, uid: "host" } });
+    assert.equal(oneNew.length, 1);
+    assert.equal(oneNew[0].id, "fresh");
+    assert.deepEqual(tracker.collectNew({ ...retained, fresh: { emoji: "😂", createdAt: 20, uid: "host" } }), []);
+    const five = Object.fromEntries(Array.from({ length: 5 }, (_, index) => [
+        `new-${index}`,
+        { emoji: "❤️", createdAt: 30 + index, uid: "guest" }
+    ]));
+    assert.equal(tracker.collectNew({ ...retained, fresh: { emoji: "😂", createdAt: 20, uid: "host" }, ...five }).length, 5);
+    tracker.reset();
+    assert.deepEqual(tracker.collectNew({ ...retained, ...five }), []);
 });
 
 test("public room errors normalize emulator permission variants", () => {

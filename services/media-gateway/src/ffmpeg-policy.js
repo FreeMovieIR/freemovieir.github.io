@@ -10,8 +10,34 @@ export function chooseConversionPolicy(probe = {}, target = {}) {
     if (/matroska|mkv|webm/.test(container) && h264 && aac) {
         return { mode: "remux", videoCodec: "copy", audioCodec: "copy", output: "hls-fmp4" };
     }
+    if (/matroska|mkv|webm/.test(container) && h264 && !aac) {
+        return {
+            mode: "transcode-audio",
+            videoCodec: "copy",
+            audioCodec: "aac",
+            audioChannels: 2,
+            output: "hls-fmp4"
+        };
+    }
     if (hevc && aac && targetSupportsHevc) {
         return { mode: "remux", videoCodec: "copy", audioCodec: "copy", output: "hls-fmp4" };
+    }
+    if (hevc && !aac && targetSupportsHevc) {
+        return {
+            mode: "transcode-audio",
+            videoCodec: "copy",
+            audioCodec: "aac",
+            audioChannels: 2,
+            output: "hls-fmp4"
+        };
+    }
+    if (aac) {
+        return {
+            mode: "transcode-video",
+            videoCodec: "libx264",
+            audioCodec: "copy",
+            output: "hls-fmp4"
+        };
     }
     return {
         mode: "transcode",
@@ -43,18 +69,23 @@ export function buildFfmpegArgs({ sourceUrl, outputManifest, policy }) {
         "-map", "0:v:0",
         "-map", "0:a:0?"
     ];
-    if (policy.mode === "remux") {
-        args.push("-c:v", "copy", "-c:a", "copy");
+    if (policy.videoCodec === "copy") {
+        args.push("-c:v", "copy");
     } else {
         args.push(
             "-c:v", "libx264",
             "-preset", "veryfast",
             "-profile:v", "main",
-            "-pix_fmt", "yuv420p",
-            "-c:a", "aac",
-            "-ac", "2",
-            "-b:a", "160k"
+            "-pix_fmt", "yuv420p"
         );
+    }
+    if (policy.audioCodec === "copy") {
+        args.push("-c:a", "copy");
+    } else {
+        args.push("-c:a", "aac", "-ac", String(policy.audioChannels || 2), "-b:a", "160k");
+    }
+    if (policy.mode === "remux") {
+        args.push("-max_muxing_queue_size", "4096");
     }
     args.push(
         "-f", "hls",

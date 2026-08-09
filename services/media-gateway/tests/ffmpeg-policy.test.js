@@ -17,6 +17,27 @@ test("incompatible video or audio transcodes to H.264/AAC", () => {
     assert.equal(policy.audioChannels, 2);
 });
 
+test("H.264 with incompatible audio copies video and transcodes audio only", () => {
+    const policy = chooseConversionPolicy({ container: "matroska", videoCodec: "h264", audioCodec: "ac3" });
+    assert.equal(policy.mode, "transcode-audio");
+    assert.equal(policy.videoCodec, "copy");
+    assert.equal(policy.audioCodec, "aac");
+    const args = buildFfmpegArgs({
+        sourceUrl: "https://example.com/movie.mkv",
+        outputManifest: "out/index.m3u8",
+        policy
+    });
+    assert.deepEqual(args.slice(args.indexOf("-c:v"), args.indexOf("-c:v") + 2), ["-c:v", "copy"]);
+    assert.deepEqual(args.slice(args.indexOf("-c:a"), args.indexOf("-c:a") + 2), ["-c:a", "aac"]);
+});
+
+test("compatible audio with incompatible video can copy audio", () => {
+    const policy = chooseConversionPolicy({ container: "matroska", videoCodec: "vp9", audioCodec: "aac" });
+    assert.equal(policy.mode, "transcode-video");
+    assert.equal(policy.videoCodec, "libx264");
+    assert.equal(policy.audioCodec, "copy");
+});
+
 test("FFmpeg command uses argument arrays and HLS output", () => {
     const args = buildFfmpegArgs({
         sourceUrl: "https://example.com/movie.mkv",

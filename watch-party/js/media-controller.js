@@ -2,20 +2,22 @@ import { isHlsUrl, isHttpsUrl, MESSAGES, safeLog } from "./utils.js";
 import { classifyMediaElementError, diagnoseMediaElement, MEDIA_ADAPTERS, MEDIA_ERROR_KIND, selectMediaAdapter } from "./media-probe.js";
 import { MkvAudioCompanion } from "./mkv-audio.js";
 import { getDeviceMediaProfile } from "./device-media-profile.js";
-import { isGatewayConfigured } from "./media-gateway-client.js";
+import { isGatewayConfigured, MediaGatewayClient } from "./media-gateway-client.js";
 
 const HLS_VERSION = "1.5.13";
 const HLS_URL = `https://cdn.jsdelivr.net/npm/hls.js@${HLS_VERSION}/dist/hls.min.js`;
 
 export class MediaController extends EventTarget {
-    constructor(video, config = {}) {
+    constructor(video, config = {}, options = {}) {
         super();
         this.video = video;
         this.config = config;
+        this.options = options;
         this.hls = null;
         this.abortController = null;
         this.generation = 0;
         this.diagnostics = null;
+        this.gateway = new MediaGatewayClient(config, options.tokenProvider || config.mediaGatewayTokenProvider || null);
         this.mkvAudio = new MkvAudioCompanion(video, config);
         this.mkvAudio.addEventListener("status", (event) => {
             this.updateDiagnostics(this.lastSelection, MEDIA_ADAPTERS.MKV, {
@@ -56,6 +58,10 @@ export class MediaController extends EventTarget {
                     gatewayAvailable: detail.gatewayAvailable
                 });
                 this.dispatchEvent(new CustomEvent("compatibilityNeeded", { detail }));
+                if (detail.gatewayAvailable) {
+                    await this.loadViaGateway(url, startTime, generation, profile);
+                    return;
+                }
                 throw new Error(detail.gatewayAvailable ? `${MESSAGES.mkvIphoneIncompatible} ${MESSAGES.gatewayOffer}` : MESSAGES.mkvIphoneIncompatible);
             }
             this.updateDiagnostics(selection, MEDIA_ADAPTERS.MKV, { mkvProbeStatus: "native-compatibility-attempt" });
@@ -74,6 +80,11 @@ export class MediaController extends EventTarget {
                 return;
             } catch (error) {
                 this.updateDiagnostics(selection, MEDIA_ADAPTERS.MKV, { mkvProbeStatus: "native-compatibility-failed" });
+                if (isGatewayConfigured(this.config)) {
+                    const profile = getDeviceMediaProfile({ video: this.video, wrapper: this.video?.parentElement });
+                    await this.loadViaGateway(url, startTime, generation, profile);
+                    return;
+                }
                 throw new Error(`${MESSAGES.mkvLimited} ${error.message || ""}`.trim());
             }
         }
@@ -146,6 +157,41 @@ export class MediaController extends EventTarget {
         this.hls.attachMedia(this.video);
     }
 
+    async loadViaGateway(url, startTime, generation, profile = {}) {
+        if (!this.gateway.enabled) throw new Error(MESSAGES.mkvIphoneIncompatible);
+        this.dispatchGatewayStatus("probe");
+        const created = await this.gateway.createJob(url, profile);
+        if (!this.isCurrent(generation)) return;
+        this.dispatchGatewayStatus(created.progress?.stage || created.status || "processing");
+        const ready = await this.gateway.waitForReady(created.jobId, {
+            signal: this.abortController?.signal,
+            pollMs: Number(this.config.mediaGateway?.pollMs || 2500)
+        });
+        if (!this.isCurrent(generation)) return;
+        const manifestUrl = resolveGatewayPlaybackUrl(ready.playback?.manifestUrl, this.gateway.config.baseUrl);
+        if (!manifestUrl) throw new Error("نسخه سازگار آماده نشد.");
+        this.updateDiagnostics(selectMediaAdapter(url), "gateway-hls", {
+            mkvProbeStatus: "gateway-hls",
+            gatewayJobStatus: ready.status,
+            gatewayExpiresAt: ready.expiresAt || null
+        });
+        this.dispatchGatewayStatus("ready");
+        if (!this.video.canPlayType("application/vnd.apple.mpegurl")) {
+            await this.loadHls(manifestUrl, generation);
+        } else {
+            await this.loadNative(manifestUrl, startTime, generation, selectMediaAdapter(manifestUrl), "gateway-hls");
+        }
+        if (Number.isFinite(startTime) && startTime > 0) {
+            this.video.currentTime = Math.min(startTime, this.video.duration || startTime);
+        }
+    }
+
+    dispatchGatewayStatus(stage, extra = {}) {
+        this.dispatchEvent(new CustomEvent("gatewayStatus", {
+            detail: { stage, message: stage === "ready" ? "نسخه سازگار آماده پخش است" : MESSAGES.gatewayPreparing, ...extra }
+        }));
+    }
+
     ensureHlsScript() {
         if (window.Hls) return Promise.resolve();
         return new Promise((resolve, reject) => {
@@ -211,6 +257,15 @@ export class MediaController extends EventTarget {
 
     isCurrent(generation) {
         return generation === this.generation;
+    }
+}
+
+function resolveGatewayPlaybackUrl(manifestUrl, baseUrl) {
+    if (!manifestUrl) return "";
+    try {
+        return new URL(manifestUrl, baseUrl).href;
+    } catch {
+        return "";
     }
 }
 

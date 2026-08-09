@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { MediaGatewayClient, isGatewayConfigured, normalizeGatewayConfig } from "../../watch-party/js/media-gateway-client.js";
+import { GATEWAY_JOB_STATUS, MediaGatewayClient, isGatewayConfigured, normalizeGatewayConfig } from "../../watch-party/js/media-gateway-client.js";
 
 test("gateway config is disabled when URL is absent", () => {
     assert.equal(isGatewayConfigured({ mediaGateway: { enabled: true, baseUrl: "" } }), false);
@@ -36,4 +36,14 @@ test("gateway client sends sanitized profile and bearer token", async () => {
     } finally {
         globalThis.fetch = oldFetch;
     }
+});
+
+test("gateway client treats progressive playable state as ready for playback", async () => {
+    const client = new MediaGatewayClient({ enabled: true, baseUrl: "https://gateway.example.test", jobTimeoutMs: 1000 }, async () => "token");
+    client.getJob = async () => ({
+        status: GATEWAY_JOB_STATUS.PLAYABLE,
+        playback: { type: "hls", manifestUrl: "/media/job/index.m3u8" }
+    });
+    const job = await client.waitForReady("job", { pollMs: 1, timeoutMs: 100 });
+    assert.equal(job.status, GATEWAY_JOB_STATUS.PLAYABLE);
 });

@@ -87,7 +87,7 @@ try {
     assertRequested(requests, "/watch-party/js/app.js", "app.js");
 
     await page.goto(`${BASE_URL}/watch-party/public/`, { waitUntil: "domcontentloaded" });
-    await page.locator("#state-unavailable:not([hidden])").waitFor({ timeout: 5000 });
+    await page.locator("#state-unavailable:not([hidden]), #state-directory:not([hidden])").waitFor({ timeout: 7000 });
     assertRequested(requests, "/watch-party/public/js/public-app.js", "watch-party/public/js/public-app.js");
 
     const requiredModules = [
@@ -125,35 +125,53 @@ try {
 }
 
 async function installFirebaseSdkMocks(context) {
-    await context.route(/https:\/\/www\.gstatic\.com\/firebasejs\/10\.12\.5\/firebase-(app|auth|database|app-check)\.js$/, async (route) => {
+    await context.route(/https:\/\/www\.gstatic\.com\/firebasejs\/10\.12\.5\/firebase-(app|auth|database|functions|app-check)\.js$/, async (route) => {
         const url = route.request().url();
         let body;
         if (url.endsWith("firebase-app.js")) {
             body = `
 const apps = [];
-export function initializeApp(options) {
-    const app = { name: "[DEFAULT]", options };
+export function initializeApp(options, name = "[DEFAULT]") {
+    const app = { name, options };
     apps.push(app);
     return app;
 }
 export function getApps() { return apps; }
-export function getApp() { return apps[0]; }
+export function getApp(name = "[DEFAULT]") { return apps.find((app) => app.name === name) || apps[0]; }
 `;
         } else if (url.endsWith("firebase-auth.js")) {
             body = `
 export function getAuth(app) { return { app, currentUser: null }; }
 export async function signInAnonymously(auth) {
-    auth.currentUser = { uid: "production-smoke-user" };
+    auth.currentUser = { uid: "production-smoke-user", getIdToken: async () => "smoke-token" };
     return { user: auth.currentUser };
 }
 export function connectAuthEmulator() { throw new Error("connectAuthEmulator must not run in production"); }
 `;
         } else if (url.endsWith("firebase-database.js")) {
             body = `
+const emptySnapshot = { exists: () => false, val: () => null };
 export function getDatabase(app) { return { app }; }
 export function connectDatabaseEmulator() { throw new Error("connectDatabaseEmulator must not run in production"); }
+export function ref(database, path = "") { return { database, path }; }
+export function query(reference, ...constraints) { return { reference, constraints }; }
+export function orderByChild(child) { return { type: "orderByChild", child }; }
+export function limitToLast(limit) { return { type: "limitToLast", limit }; }
+export function onValue(target, next) {
+    queueMicrotask(() => next(target?.reference?.path === "publicRoomDirectory" ? { exists: () => true, val: () => ({}) } : emptySnapshot));
+    return () => {};
+}
+export async function get() { return emptySnapshot; }
+export async function update() {}
+export function onDisconnect() { return { update: async () => {} }; }
 export function serverTimestamp() { return { ".sv": "timestamp" }; }
 export function increment(value) { return { ".sv": { increment: value } }; }
+`;
+        } else if (url.endsWith("firebase-functions.js")) {
+            body = `
+export function getFunctions(app, region) { return { app, region }; }
+export function connectFunctionsEmulator() { throw new Error("connectFunctionsEmulator must not run in production"); }
+export function httpsCallable() { return async () => ({ data: { result: {} } }); }
 `;
         } else {
             body = `

@@ -16,7 +16,17 @@ import {
     toPersianDigits
 } from "./public-room-state.js";
 import { expectedPublicPlaybackTime } from "./public-room-media-sync.js";
+import {
+    PublicReactionBaseline,
+    clampPublicTime,
+    formatPublicTime,
+    getPublicPlayerControlModel,
+    shouldIgnorePublicShortcut
+} from "./public-player-controls.js";
 import { NoopPublicVoiceProvider } from "./voice/noop-public-voice-provider.js";
+import { MediaController } from "../../js/media-controller.js";
+import { FullscreenController } from "../../js/fullscreen-controller.js";
+import { MESSAGES } from "../../js/utils.js";
 
 const MESSAGE_GROUP_MS = 2 * 60 * 1000;
 
@@ -32,11 +42,20 @@ const state = {
     directorySort: "newest",
     preview: null,
     currentRoom: null,
+    activeRoomId: "",
     currentUid: "",
     role: "",
     activeSocialTab: "chat",
     applyingRemote: false,
     mediaUrl: "",
+    mediaController: null,
+    fullscreenController: null,
+    reactionBaseline: new PublicReactionBaseline(),
+    controlsHideTimer: null,
+    controlsVisible: true,
+    seekDragging: false,
+    lastDuration: 0,
+    lastCurrentTime: 0,
     chatAutoScroll: true,
     unreadMessages: 0,
     knownMessageIds: new Set(),
@@ -56,6 +75,7 @@ init().catch((error) => showError(error));
 async function init() {
     setState(PUBLIC_APP_STATES.LOADING);
     state.config = await loadPublicRoomConfig();
+    setupMediaInfrastructure();
     if (!state.config?.publicRooms?.enabled) {
         showUnavailable("سینمای عمومی هنوز برای نسخه اصلی فعال نشده است.");
         return;
@@ -90,7 +110,7 @@ function collectElements() {
         "open-create", "directory-live-count", "directory-search", "directory-filter", "directory-language", "directory-sort", "only-joinable", "directory-loading", "directory-empty", "directory-list",
         "create-form", "create-display-name", "create-room-name", "create-movie-title", "create-media-url", "create-capacity", "create-language", "create-error", "create-submit",
         "join-form", "join-display-name", "join-error", "join-submit", "preview-room-name", "preview-details",
-        "room-status", "room-title", "room-subtitle", "room-count", "host-disconnected", "public-video", "guest-control-note", "media-sync-state", "member-list", "host-actions", "guest-actions", "toggle-lock", "end-room", "leave-room", "leave-room-panel",
+        "room-status", "room-title", "room-subtitle", "room-count", "host-disconnected", "public-video-shell", "public-video", "public-media-status", "public-player-controls", "public-current-time", "public-duration", "public-seek", "public-host-playback-controls", "public-play-pause", "public-skip-back", "public-skip-forward", "public-playback-rate", "public-rate-label", "public-mute", "public-volume", "public-fullscreen", "guest-control-note", "media-sync-state", "member-list", "host-actions", "guest-actions", "toggle-lock", "end-room", "leave-room", "leave-room-panel",
         "room-facts", "open-host-controls", "host-control-dialog", "close-host-controls", "host-media-form", "host-movie-title", "host-media-url", "host-media-error", "host-media-submit",
         "tab-chat-button", "tab-members-button", "tab-room-button", "social-chat-panel", "social-members-panel", "social-room-panel",
         "public-reaction-layer", "public-chat-list", "public-new-messages", "public-chat-disabled", "public-chat-form", "public-chat-input", "public-chat-meta", "public-chat-send", "public-chat-error", "public-reaction-button", "reaction-picker",
@@ -149,6 +169,25 @@ function bindUi() {
     els.publicVideo.addEventListener("pause", () => hostPlayback("pause"));
     els.publicVideo.addEventListener("seeked", () => hostPlayback("seek"));
     els.publicVideo.addEventListener("ratechange", () => hostPlayback("rate"));
+    els.publicVideo.addEventListener("timeupdate", updatePlayerControls);
+    els.publicVideo.addEventListener("loadedmetadata", updatePlayerControls);
+    els.publicVideo.addEventListener("durationchange", updatePlayerControls);
+    els.publicVideo.addEventListener("volumechange", updatePlayerControls);
+    els.publicVideo.addEventListener("waiting", () => setMediaStatus("در حال دریافت ویدیو...", false));
+    els.publicVideo.addEventListener("playing", () => setMediaStatus("", true));
+    els.publicPlayPause?.addEventListener("click", toggleHostPlayback);
+    els.publicSkipBack?.addEventListener("click", () => hostSkip(-10));
+    els.publicSkipForward?.addEventListener("click", () => hostSkip(10));
+    els.publicSeek?.addEventListener("input", previewSeek);
+    els.publicSeek?.addEventListener("change", commitSeek);
+    els.publicPlaybackRate?.addEventListener("change", updateHostPlaybackRate);
+    els.publicMute?.addEventListener("click", toggleLocalMute);
+    els.publicVolume?.addEventListener("input", updateLocalVolume);
+    els.publicFullscreen?.addEventListener("click", () => state.fullscreenController?.enterFromUserGesture());
+    els.publicVideoShell?.addEventListener("mousemove", revealControlsTemporarily);
+    els.publicVideoShell?.addEventListener("pointerdown", revealControlsTemporarily);
+    els.publicPlayerControls?.addEventListener("focusin", () => setControlsVisible(true));
+    document.addEventListener("keydown", handlePlayerShortcuts);
     els.publicChatForm.addEventListener("submit", sendChatMessage);
     els.publicChatInput.addEventListener("input", updateComposer);
     els.publicChatInput.addEventListener("compositionstart", () => { state.isComposing = true; });
@@ -163,7 +202,10 @@ function bindUi() {
     els.publicNewMessages.addEventListener("click", () => scrollChatToBottom(true));
     els.publicReactionButton.addEventListener("click", toggleReactionPicker);
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") hideReactionPicker();
+        if (event.key === "Escape") {
+            state.fullscreenController?.exit();
+            hideReactionPicker();
+        }
     });
     document.addEventListener("click", (event) => {
         if (els.reactionPicker.hidden) return;
@@ -172,6 +214,35 @@ function bindUi() {
     els.socialChatEnabled.addEventListener("change", () => updateSocialSettings({ chatEnabled: els.socialChatEnabled.checked }));
     els.socialReactionsEnabled.addEventListener("change", () => updateSocialSettings({ reactionsEnabled: els.socialReactionsEnabled.checked }));
     els.socialSlowMode.addEventListener("change", () => updateSocialSettings({ slowModeMs: Number(els.socialSlowMode.value) }));
+}
+
+function setupMediaInfrastructure() {
+    if (!state.mediaController && els.publicVideo) {
+        state.mediaController = new MediaController(els.publicVideo, state.config, {
+            tokenProvider: async () => state.service?.auth?.currentUser?.getIdToken?.() || ""
+        });
+        state.mediaController.addEventListener("error", (event) => setMediaStatus(event.detail || MESSAGES.network, false));
+        state.mediaController.addEventListener("compatibilityNeeded", (event) => {
+            const detail = event.detail || {};
+            setMediaStatus(detail.gatewayAvailable ? MESSAGES.gatewayPreparing : detail.message, false);
+        });
+        state.mediaController.addEventListener("gatewayStatus", (event) => {
+            setMediaStatus(getGatewayStatusMessage(event.detail?.stage), event.detail?.stage === "ready");
+        });
+        state.mediaController.addEventListener("ready", () => {
+            setMediaStatus("", true);
+            updatePlayerControls();
+        });
+    }
+    if (!state.fullscreenController && els.publicVideoShell && els.publicVideo) {
+        state.fullscreenController = new FullscreenController({
+            wrapper: els.publicVideoShell,
+            video: els.publicVideo,
+            controlsRoot: els.publicPlayerControls
+        });
+        state.fullscreenController.addEventListener("change", () => revealControlsTemporarily());
+        state.fullscreenController.addEventListener("unavailable", () => toast("تمام‌صفحه در این مرورگر در دسترس نیست."));
+    }
 }
 
 function showUnavailable(message) {
@@ -268,7 +339,11 @@ async function joinPreviewRoom(event) {
 
 function listenRoom(roomId) {
     state.knownMessageIds.clear();
-    state.shownReactionIds.clear();
+    if (state.activeRoomId !== roomId) {
+        state.activeRoomId = roomId;
+        state.reactionBaseline.reset();
+        state.shownReactionIds.clear();
+    }
     state.service.listenMemberNotice(roomId, (notice) => {
         if (notice?.type === "kicked") showEnded("میزبان شما را از اتاق خارج کرد.");
     });
@@ -598,11 +673,8 @@ function renderMessageGroups(messages, capabilities) {
 }
 
 function renderReactions(room) {
-    const reactions = Object.entries(room.reactions || {})
-        .map(([id, reaction]) => ({ id, ...reaction }))
-        .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
-    for (const reaction of reactions) {
-        if (state.shownReactionIds.has(reaction.id)) continue;
+    const freshReactions = state.reactionBaseline.collectNew(room.reactions || {});
+    for (const reaction of freshReactions) {
         state.shownReactionIds.add(reaction.id);
         showReaction(reaction, room.members || {});
     }
@@ -642,13 +714,18 @@ function applyMedia(room, capabilities) {
     const url = room.media?.url || "";
     if (url && state.mediaUrl !== url) {
         state.mediaUrl = url;
-        els.publicVideo.src = url;
-        els.publicVideo.load();
+        setMediaStatus("در حال آماده‌سازی ویدیو...", false);
+        const startTime = expectedPublicPlaybackTime(room.playback || {});
+        state.mediaController?.load(url, startTime).catch((error) => {
+            setMediaStatus(error.message || MESSAGES.network, false);
+        });
     }
-    els.publicVideo.controls = Boolean(capabilities.canControlPlayback);
+    els.publicVideo.controls = false;
+    updateControlAuthority(capabilities, room);
 }
 
 function applyPlayback(playback, capabilities) {
+    updatePlayerControls(playback);
     if (!playback || capabilities.canControlPlayback) return;
     state.applyingRemote = true;
     const expected = expectedPublicPlaybackTime(playback);
@@ -669,6 +746,145 @@ function hostPlayback(action) {
         currentTime: els.publicVideo.currentTime,
         playbackRate: els.publicVideo.playbackRate
     }).catch(showError);
+}
+
+function updateControlAuthority(capabilities, room) {
+    const model = getPublicPlayerControlModel({
+        role: capabilities.canControlPlayback ? "host" : "guest",
+        playback: room.playback,
+        duration: els.publicVideo.duration
+    });
+    els.publicPlayerControls.dataset.authority = model.canUseSharedPlayback ? "host" : "guest";
+    els.publicHostPlaybackControls.hidden = !model.canUseSharedPlayback;
+    els.publicSeek.disabled = !model.canUseSharedPlayback;
+    els.publicSeek.setAttribute("aria-readonly", String(!model.canUseSharedPlayback));
+    els.publicRateLabel.hidden = !model.canUseSharedPlayback;
+    updatePlayerControls(room.playback);
+}
+
+function updatePlayerControls(playback = state.currentRoom?.playback || {}) {
+    const video = els.publicVideo;
+    const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : state.lastDuration;
+    const current = state.seekDragging ? Number(els.publicSeek.value || 0) : (video.currentTime || expectedPublicPlaybackTime(playback));
+    state.lastDuration = duration || state.lastDuration || 0;
+    state.lastCurrentTime = current || 0;
+    els.publicCurrentTime.textContent = toPersianDigits(formatPublicTime(state.lastCurrentTime));
+    els.publicDuration.textContent = toPersianDigits(formatPublicTime(state.lastDuration));
+    els.publicSeek.max = String(state.lastDuration || 0);
+    if (!state.seekDragging) els.publicSeek.value = String(clampPublicTime(state.lastCurrentTime, state.lastDuration));
+    els.publicPlayPause.textContent = video.paused ? "پخش" : "توقف";
+    els.publicPlayPause.setAttribute("aria-label", video.paused ? "پخش فیلم" : "توقف فیلم");
+    els.publicMute.textContent = video.muted || video.volume === 0 ? "بی‌صدا" : "صدا";
+    els.publicVolume.value = String(video.muted ? 0 : video.volume);
+    const rate = String(video.playbackRate || playback.playbackRate || 1);
+    if ([...els.publicPlaybackRate.options].some((option) => option.value === rate)) {
+        els.publicPlaybackRate.value = rate;
+    }
+}
+
+function toggleHostPlayback() {
+    if (state.role !== "host") return;
+    if (els.publicVideo.paused) {
+        els.publicVideo.play().catch(() => setMediaStatus("برای شروع پخش روی ویدیو بزنید.", false));
+    } else {
+        els.publicVideo.pause();
+    }
+}
+
+function hostSkip(delta) {
+    if (state.role !== "host") return;
+    els.publicVideo.currentTime = clampPublicTime((els.publicVideo.currentTime || 0) + delta, els.publicVideo.duration);
+}
+
+function previewSeek() {
+    state.seekDragging = true;
+    els.publicCurrentTime.textContent = toPersianDigits(formatPublicTime(Number(els.publicSeek.value || 0)));
+}
+
+function commitSeek() {
+    if (state.role !== "host") return;
+    state.seekDragging = false;
+    els.publicVideo.currentTime = clampPublicTime(Number(els.publicSeek.value || 0), els.publicVideo.duration);
+}
+
+function updateHostPlaybackRate() {
+    if (state.role !== "host") return;
+    els.publicVideo.playbackRate = Number(els.publicPlaybackRate.value || 1);
+}
+
+function toggleLocalMute() {
+    const muted = !(els.publicVideo.muted || els.publicVideo.volume === 0);
+    state.mediaController?.setMovieMuted(muted);
+    els.publicVideo.muted = muted;
+    updatePlayerControls();
+}
+
+function updateLocalVolume() {
+    const volume = Number(els.publicVolume.value || 0);
+    state.mediaController?.setMovieVolume(volume);
+    els.publicVideo.volume = Math.min(1, Math.max(0, volume));
+    if (volume > 0) {
+        state.mediaController?.setMovieMuted(false);
+        els.publicVideo.muted = false;
+    }
+    updatePlayerControls();
+}
+
+function revealControlsTemporarily() {
+    setControlsVisible(true);
+    clearTimeout(state.controlsHideTimer);
+    if (els.publicVideo.paused) return;
+    state.controlsHideTimer = setTimeout(() => setControlsVisible(false), 2600);
+}
+
+function setControlsVisible(visible) {
+    state.controlsVisible = Boolean(visible);
+    els.publicVideoShell?.classList.toggle("controls-hidden", !state.controlsVisible);
+}
+
+function handlePlayerShortcuts(event) {
+    if (state.appState !== PUBLIC_APP_STATES.ROOM || shouldIgnorePublicShortcut(event.target)) return;
+    const key = event.key?.toLowerCase();
+    if (key === "f") {
+        event.preventDefault();
+        state.fullscreenController?.enterFromUserGesture();
+        return;
+    }
+    if (key === "m") {
+        event.preventDefault();
+        toggleLocalMute();
+        return;
+    }
+    if (state.role !== "host") return;
+    if (event.code === "Space") {
+        event.preventDefault();
+        toggleHostPlayback();
+        return;
+    }
+    if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        hostSkip(-10);
+        return;
+    }
+    if (event.key === "ArrowRight") {
+        event.preventDefault();
+        hostSkip(10);
+    }
+}
+
+function setMediaStatus(message, ready) {
+    if (!els.publicMediaStatus) return;
+    els.publicMediaStatus.hidden = !message;
+    els.publicMediaStatus.textContent = message || "";
+    els.publicVideoShell?.classList.toggle("is-media-ready", Boolean(ready));
+}
+
+function getGatewayStatusMessage(stage) {
+    if (stage === "probe") return "در حال بررسی فایل";
+    if (stage === "processing" || stage === "prepare" || stage === "remux" || stage === "transcode") return MESSAGES.gatewayPreparing;
+    if (stage === "ready") return "نسخه سازگار آماده پخش است";
+    if (stage === "failed") return "آماده‌سازی نسخه سازگار انجام نشد.";
+    return stage ? MESSAGES.gatewayPreparing : "";
 }
 
 async function sendChatMessage(event) {
@@ -749,14 +965,15 @@ async function leaveRoom() {
 async function goDirectory() {
     state.service?.clearRoomSession();
     state.currentRoom = null;
+    state.activeRoomId = "";
     state.preview = null;
     state.role = "";
     state.mediaUrl = "";
     state.knownMessageIds.clear();
     state.shownReactionIds.clear();
+    state.reactionBaseline.reset();
     els.publicReactionLayer.replaceChildren();
-    els.publicVideo.removeAttribute("src");
-    els.publicVideo.load();
+    state.mediaController?.destroySource();
     history.replaceState(null, "", "/watch-party/public/");
     setState(PUBLIC_APP_STATES.DIRECTORY);
     renderDirectory();
@@ -764,6 +981,9 @@ async function goDirectory() {
 
 function showEnded(message) {
     state.service?.clearRoomSession();
+    state.mediaController?.destroySource();
+    state.reactionBaseline.reset();
+    state.activeRoomId = "";
     els.endedMessage.textContent = message;
     history.replaceState(null, "", "/watch-party/public/");
     setState(PUBLIC_APP_STATES.ENDED);
@@ -777,6 +997,7 @@ function showError(error) {
     const message = getPublicRoomErrorMessage(error);
     if (state.appState === PUBLIC_APP_STATES.CREATE) els.createError.textContent = message;
     else if (state.appState === PUBLIC_APP_STATES.PREVIEW || state.appState === PUBLIC_APP_STATES.JOINING) els.joinError.textContent = message;
+    else if (state.appState === PUBLIC_APP_STATES.LOADING) showUnavailable(message);
     else toast(message);
 }
 

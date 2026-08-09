@@ -1,6 +1,7 @@
 export const GATEWAY_JOB_STATUS = Object.freeze({
     QUEUED: "queued",
     PROCESSING: "processing",
+    PLAYABLE: "playable",
     READY: "ready",
     FAILED: "failed",
     CANCELLED: "cancelled",
@@ -56,7 +57,7 @@ export class MediaGatewayClient {
         while (Date.now() < deadline) {
             if (signal?.aborted) throw new DOMException("Gateway job cancelled", "AbortError");
             const job = await this.getJob(jobId);
-            if (job.status === GATEWAY_JOB_STATUS.READY) return job;
+            if (job.status === GATEWAY_JOB_STATUS.PLAYABLE || job.status === GATEWAY_JOB_STATUS.READY) return job;
             if ([GATEWAY_JOB_STATUS.FAILED, GATEWAY_JOB_STATUS.CANCELLED, GATEWAY_JOB_STATUS.EXPIRED].includes(job.status)) {
                 throw new Error(job.message || "آماده‌سازی نسخه سازگار انجام نشد.");
             }

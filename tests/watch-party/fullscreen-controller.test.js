@@ -94,3 +94,20 @@ test("CSS Cinema Mode locks scroll and cleans up", () => {
     assert.equal(doc.body.classList.contains("watch-party-cinema-lock"), false);
     assert.equal(win.restored, 42);
 });
+
+test("fullscreen exit clears stale cinema DOM state even when mode is out of sync", () => {
+    const doc = makeDoc();
+    const wrapper = makeElement();
+    const video = makeElement("video");
+    const win = { scrollY: 0, scrollTo(x, y) { this.restored = y; }, setTimeout, matchMedia: () => ({ matches: false }) };
+    const controller = new FullscreenController({ wrapper, video, doc, win });
+    wrapper.classList.add("cinema-mode-active");
+    doc.body.classList.add("watch-party-cinema-lock");
+    controller.mode = null;
+
+    assert.equal(controller.isActive(), true);
+    controller.exit();
+
+    assert.equal(wrapper.classList.contains("cinema-mode-active"), false);
+    assert.equal(doc.body.classList.contains("watch-party-cinema-lock"), false);
+});
