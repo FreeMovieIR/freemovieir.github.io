@@ -1,6 +1,6 @@
 import { loadWatchPartyConfig, createFirebaseClient, ensureFirebaseServicesAvailable, shouldUseEmulators } from "./firebase-client.js";
 import { RoomService } from "./room-service.js";
-import { MediaController } from "./media-controller.js";
+import { createPrivateMediaController } from "./private-media-controller.js";
 import { SyncController } from "./sync-controller.js";
 import { SubtitleController } from "./subtitle-controller.js";
 import { VoiceCall } from "./voice/voice-call.js";
@@ -267,7 +267,7 @@ function handleRoomAccessLoss(error) {
 async function ensureFirebase() {
     if (firebase) return firebase;
     firebase = await createFirebaseClient(config, getServiceCheckOptions());
-    mediaController = new MediaController(ui.els.video, config);
+    mediaController = createPrivateMediaController(ui.els.video, config, firebase);
     subtitleController = new SubtitleController(ui.els.video, ui.els.track, config);
     if (firebase.emulatorMode) ui.banner(MESSAGES.emulatorMode, true);
     return firebase;

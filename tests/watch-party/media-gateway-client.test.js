@@ -40,6 +40,29 @@ test("gateway client sends sanitized profile and bearer token", async () => {
     }
 });
 
+test("gateway client omits authorization header when token is unavailable", async () => {
+    const calls = [];
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+        calls.push({ url, options });
+        return {
+            ok: true,
+            json: async () => ({ jobId: "job1", status: "queued" })
+        };
+    };
+    try {
+        const client = new MediaGatewayClient({
+            enabled: true,
+            baseUrl: "https://gateway.example.test",
+            requestTimeoutMs: 1000
+        }, async () => "");
+        await client.createJob("https://cdn.example.test/movie.mkv");
+        assert.equal("authorization" in calls[0].options.headers, false);
+    } finally {
+        globalThis.fetch = oldFetch;
+    }
+});
+
 test("gateway client treats progressive playable state as ready for playback", async () => {
     const client = new MediaGatewayClient({ enabled: true, baseUrl: "https://gateway.example.test", jobTimeoutMs: 1000 }, async () => "token");
     client.getJob = async () => ({
