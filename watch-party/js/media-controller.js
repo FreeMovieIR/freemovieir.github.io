@@ -104,7 +104,7 @@ export class MediaController extends EventTarget {
 
     async loadNative(url, startTime, generation, selection, adapter = MEDIA_ADAPTERS.NATIVE, options = {}) {
         this.video.removeAttribute("crossorigin");
-        this.video.preload = "metadata";
+        this.video.preload = options.preload === "auto" ? "auto" : "metadata";
         const timeoutMs = Number(this.config.nativeMetadataTimeoutMs || 15000);
         const signal = this.abortController.signal;
         const readiness = options.readiness || NATIVE_READINESS.METADATA;
@@ -201,7 +201,8 @@ export class MediaController extends EventTarget {
             await this.loadHls(manifestUrl, generation);
         } else {
             await this.loadNative(manifestUrl, startTime, generation, selectMediaAdapter(manifestUrl), "gateway-hls", {
-                readiness: NATIVE_READINESS.PLAYABLE
+                readiness: NATIVE_READINESS.PLAYABLE,
+                preload: "auto"
             });
         }
         if (Number.isFinite(startTime) && startTime > 0) {

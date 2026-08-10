@@ -822,6 +822,7 @@ function handleMediaMetadata() {
     markPublicMediaEvent(state.mediaPlayback, "loadedmetadata", els.publicVideo);
     updatePlayerControls();
     updatePublicMediaDiagnostics();
+    applyLatestGuestPlayback();
 }
 
 function handleMediaPlayable(event) {
@@ -852,7 +853,7 @@ function applyLatestGuestPlayback() {
     const playback = state.mediaPlayback.latestPlayback;
     const expected = expectedPublicPlaybackTime(playback);
     state.applyingRemote = true;
-    playAuthoritativeGuestPlayback({
+    applyAuthoritativeGuestPlayback({
         video: els.publicVideo,
         playback,
         mediaState: state.mediaPlayback,

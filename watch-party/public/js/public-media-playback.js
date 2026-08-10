@@ -27,6 +27,8 @@ export function createPublicMediaPlaybackState() {
         autoplayBlocked: false,
         playbackFailed: false,
         latestPlayback: null,
+        playAttemptInFlight: false,
+        playAttemptToken: 0,
         lastMediaEvent: "",
         playRejectionName: "",
         gatewayJobStatus: ""
@@ -73,13 +75,26 @@ export async function applyAuthoritativeGuestPlayback({ video, playback, mediaSt
     if (!video || !mediaState || !playback) return { applied: false, reason: "missing" };
     mediaState.latestPlayback = { ...playback };
     if (playback.paused) {
+        mediaState.playAttemptToken += 1;
+        mediaState.playAttemptInFlight = false;
         video.pause?.();
         mediaState.playRequested = false;
         if (!mediaState.playbackFailed) mediaState.mediaState = PUBLIC_LOCAL_MEDIA_STATE.PAUSED;
         return { applied: true, paused: true };
     }
     mediaState.playRequested = true;
+    if (mediaState.playAttemptInFlight) {
+        if (!mediaState.autoplayBlocked && !mediaState.playbackFailed) {
+            mediaState.mediaState = mediaState.metadataReady
+                ? PUBLIC_LOCAL_MEDIA_STATE.METADATA_READY
+                : PUBLIC_LOCAL_MEDIA_STATE.MEDIA_PREPARING;
+        }
+        return { applied: false, deferred: true, inFlight: true };
+    }
     if (!mediaState.playableReady) {
+        if (mediaState.metadataReady && hasMediaSource(video) && !mediaState.autoplayBlocked && !mediaState.playbackFailed) {
+            return playAuthoritativeGuestPlayback({ video, playback, mediaState, expectedTime });
+        }
         if (!mediaState.autoplayBlocked && !mediaState.playbackFailed) {
             mediaState.mediaState = mediaState.metadataReady
                 ? PUBLIC_LOCAL_MEDIA_STATE.METADATA_READY
@@ -94,9 +109,25 @@ export async function playAuthoritativeGuestPlayback({ video, playback, mediaSta
     if (!video || !mediaState || !playback) return { applied: false, reason: "missing" };
     mediaState.latestPlayback = { ...playback };
     mediaState.playRequested = true;
+    const attemptToken = mediaState.playAttemptToken + 1;
+    mediaState.playAttemptToken = attemptToken;
+    mediaState.playAttemptInFlight = true;
     reconcileVideoToPlayback(video, playback, expectedTime);
     try {
         await video.play();
+        if (attemptToken !== mediaState.playAttemptToken) {
+            return { applied: false, stale: true };
+        }
+        mediaState.playAttemptInFlight = false;
+        const latestPlayback = mediaState.latestPlayback || playback;
+        if (latestPlayback.paused) {
+            video.pause?.();
+            mediaState.playRequested = false;
+            mediaState.mediaState = PUBLIC_LOCAL_MEDIA_STATE.PAUSED;
+            return { applied: true, paused: true, stale: true };
+        }
+        const latestExpectedTime = latestPlayback.revision === playback.revision ? expectedTime : undefined;
+        reconcileVideoToPlayback(video, latestPlayback, latestExpectedTime);
         mediaState.playRequested = false;
         mediaState.autoplayBlocked = false;
         mediaState.playbackFailed = false;
@@ -104,6 +135,10 @@ export async function playAuthoritativeGuestPlayback({ video, playback, mediaSta
         mediaState.mediaState = PUBLIC_LOCAL_MEDIA_STATE.PLAYING;
         return { applied: true, playing: true };
     } catch (error) {
+        if (attemptToken !== mediaState.playAttemptToken) {
+            return { applied: false, stale: true };
+        }
+        mediaState.playAttemptInFlight = false;
         const category = classifyPublicPlayRejection(error);
         mediaState.playRejectionName = safeErrorName(error);
         if (category === PUBLIC_PLAY_REJECTION.AUTOPLAY_BLOCKED) {
@@ -167,6 +202,10 @@ function reconcileVideoToPlayback(video, playback, expectedTime) {
         video.currentTime = target;
     }
     video.playbackRate = Number(playback.playbackRate || 1);
+}
+
+function hasMediaSource(video) {
+    return Boolean(video?.currentSrc || video?.src || video?.srcObject);
 }
 
 function safeErrorName(error) {
