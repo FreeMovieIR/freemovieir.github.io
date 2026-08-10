@@ -32,6 +32,19 @@ import { NoopPublicVoiceProvider } from "./voice/noop-public-voice-provider.js";
 import { MediaController } from "../../js/media-controller.js";
 import { FullscreenController } from "../../js/fullscreen-controller.js";
 import { MESSAGES } from "../../js/utils.js";
+import {
+    PUBLIC_LOCAL_MEDIA_STATE,
+    PUBLIC_PLAY_REJECTION,
+    applyAuthoritativeGuestPlayback,
+    captureSafePublicMediaDiagnostics,
+    classifyPublicPlayRejection,
+    createPublicMediaPlaybackState,
+    getPublicPlayRejectionMessage,
+    markPublicMediaEvent,
+    playAuthoritativeGuestPlayback,
+    resetPublicMediaPlaybackState,
+    shouldShowPublicWaiting
+} from "./public-media-playback.js";
 
 const MESSAGE_GROUP_MS = 2 * 60 * 1000;
 
@@ -54,6 +67,7 @@ const state = {
     applyingRemote: false,
     mediaUrl: "",
     mediaController: null,
+    mediaPlayback: createPublicMediaPlaybackState(),
     fullscreenController: null,
     reactionBaseline: new PublicReactionBaseline(),
     controlsHideTimer: null,
@@ -175,11 +189,13 @@ function bindUi() {
     els.publicVideo.addEventListener("seeked", () => hostPlayback("seek"));
     els.publicVideo.addEventListener("ratechange", () => hostPlayback("rate"));
     els.publicVideo.addEventListener("timeupdate", updatePlayerControls);
-    els.publicVideo.addEventListener("loadedmetadata", updatePlayerControls);
+    els.publicVideo.addEventListener("loadedmetadata", handleMediaMetadata);
+    els.publicVideo.addEventListener("loadeddata", handleMediaPlayable);
+    els.publicVideo.addEventListener("canplay", handleMediaPlayable);
     els.publicVideo.addEventListener("durationchange", updatePlayerControls);
     els.publicVideo.addEventListener("volumechange", updatePlayerControls);
-    els.publicVideo.addEventListener("waiting", () => setMediaStatus("در حال دریافت ویدیو...", false));
-    els.publicVideo.addEventListener("playing", () => setMediaStatus("", true));
+    els.publicVideo.addEventListener("waiting", handleMediaWaiting);
+    els.publicVideo.addEventListener("playing", handleMediaPlaying);
     els.publicPlayPause?.addEventListener("click", toggleHostPlayback);
     els.publicSkipBack?.addEventListener("click", () => hostSkip(-10));
     els.publicSkipForward?.addEventListener("click", () => hostSkip(10));
@@ -231,17 +247,35 @@ function setupMediaInfrastructure() {
         state.mediaController = new MediaController(els.publicVideo, state.config, {
             tokenProvider: async () => state.service?.auth?.currentUser?.getIdToken?.() || ""
         });
-        state.mediaController.addEventListener("error", (event) => setMediaStatus(event.detail || MESSAGES.network, false));
+        state.mediaController.addEventListener("error", (event) => {
+            state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.PLAYBACK_FAILED;
+            state.mediaPlayback.playbackFailed = true;
+            setMediaStatus(event.detail || MESSAGES.network, false);
+            updatePublicMediaDiagnostics();
+        });
         state.mediaController.addEventListener("compatibilityNeeded", (event) => {
             const detail = event.detail || {};
+            state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.MEDIA_PREPARING;
             setMediaStatus(detail.gatewayAvailable ? MESSAGES.gatewayPreparing : detail.message, false);
+            updatePublicMediaDiagnostics();
         });
         state.mediaController.addEventListener("gatewayStatus", (event) => {
-            setMediaStatus(getGatewayStatusMessage(event.detail?.stage), event.detail?.stage === "ready");
+            state.mediaPlayback.gatewayJobStatus = String(event.detail?.stage || "");
+            if (event.detail?.stage !== "ready") state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.MEDIA_PREPARING;
+            setMediaStatus(getGatewayStatusMessage(event.detail?.stage), false);
+            updatePublicMediaDiagnostics();
+        });
+        state.mediaController.addEventListener("metadata", () => {
+            markPublicMediaEvent(state.mediaPlayback, "loadedmetadata", els.publicVideo);
+            updatePlayerControls();
+            updatePublicMediaDiagnostics();
         });
         state.mediaController.addEventListener("ready", () => {
+            markPublicMediaEvent(state.mediaPlayback, "canplay", els.publicVideo);
             setMediaStatus("", true);
             updatePlayerControls();
+            updatePublicMediaDiagnostics();
+            applyLatestGuestPlayback();
         });
     }
     if (!state.fullscreenController && els.publicVideoShell && els.publicVideo) {
@@ -746,10 +780,15 @@ function applyMedia(room, capabilities) {
     const url = room.media?.url || "";
     if (url && state.mediaUrl !== url) {
         state.mediaUrl = url;
+        resetPublicMediaPlaybackState(state.mediaPlayback);
+        state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.MEDIA_PREPARING;
         setMediaStatus("در حال آماده‌سازی ویدیو...", false);
         const startTime = expectedPublicPlaybackTime(room.playback || {});
         state.mediaController?.load(url, startTime).catch((error) => {
+            state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.PLAYBACK_FAILED;
+            state.mediaPlayback.playbackFailed = true;
             setMediaStatus(error.message || MESSAGES.network, false);
+            updatePublicMediaDiagnostics();
         });
     }
     els.publicVideo.controls = false;
@@ -761,13 +800,111 @@ function applyPlayback(playback, capabilities) {
     if (!playback || capabilities.canControlPlayback) return;
     state.applyingRemote = true;
     const expected = expectedPublicPlaybackTime(playback);
-    if (Math.abs(els.publicVideo.currentTime - expected) > 1) {
-        els.publicVideo.currentTime = expected;
+    applyAuthoritativeGuestPlayback({
+        video: els.publicVideo,
+        playback,
+        mediaState: state.mediaPlayback,
+        expectedTime: expected
+    }).then((result) => {
+        handleGuestPlaybackResult(result);
+    }).catch((error) => {
+        handleGuestPlaybackResult({
+            rejected: true,
+            category: classifyPublicPlayRejection(error)
+        });
+    }).finally(() => {
+        state.applyingRemote = false;
+        updatePublicMediaDiagnostics();
+    });
+}
+
+function handleMediaMetadata() {
+    markPublicMediaEvent(state.mediaPlayback, "loadedmetadata", els.publicVideo);
+    updatePlayerControls();
+    updatePublicMediaDiagnostics();
+}
+
+function handleMediaPlayable(event) {
+    markPublicMediaEvent(state.mediaPlayback, event.type, els.publicVideo);
+    setMediaStatus("", true);
+    updatePlayerControls();
+    updatePublicMediaDiagnostics();
+}
+
+function handleMediaWaiting() {
+    state.mediaPlayback.lastMediaEvent = "waiting";
+    if (shouldShowPublicWaiting(state.mediaPlayback, state.currentRoom?.playback, els.publicVideo)) {
+        state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.BUFFERING;
+        setMediaStatus("در حال دریافت ویدیو...", false);
     }
-    els.publicVideo.playbackRate = Number(playback.playbackRate || 1);
-    const playPromise = playback.paused ? Promise.resolve(els.publicVideo.pause()) : els.publicVideo.play();
-    Promise.resolve(playPromise).catch(() => {});
-    queueMicrotask(() => { state.applyingRemote = false; });
+    updatePublicMediaDiagnostics();
+}
+
+function handleMediaPlaying() {
+    markPublicMediaEvent(state.mediaPlayback, "playing", els.publicVideo);
+    setMediaStatus("", true);
+    updatePlayerControls();
+    updatePublicMediaDiagnostics();
+}
+
+function applyLatestGuestPlayback() {
+    if (state.role === "host" || !state.mediaPlayback.latestPlayback) return;
+    const playback = state.mediaPlayback.latestPlayback;
+    const expected = expectedPublicPlaybackTime(playback);
+    state.applyingRemote = true;
+    playAuthoritativeGuestPlayback({
+        video: els.publicVideo,
+        playback,
+        mediaState: state.mediaPlayback,
+        expectedTime: expected
+    }).then((result) => {
+        handleGuestPlaybackResult(result);
+    }).finally(() => {
+        state.applyingRemote = false;
+        updatePublicMediaDiagnostics();
+    });
+}
+
+function handleGuestPlaybackResult(result = {}) {
+    if (result.deferred) {
+        if (state.mediaPlayback.mediaState !== PUBLIC_LOCAL_MEDIA_STATE.AUTOPLAY_BLOCKED) {
+            setMediaStatus("در حال دریافت ویدیو...", false);
+        }
+        return;
+    }
+    if (result.paused) {
+        setMediaStatus("", true);
+        return;
+    }
+    if (result.playing) {
+        setMediaStatus("", true);
+        return;
+    }
+    if (!result.rejected) return;
+    const message = getPublicPlayRejectionMessage(result.category);
+    if (result.category === PUBLIC_PLAY_REJECTION.AUTOPLAY_BLOCKED) {
+        setMediaStatus(message, false, {
+            actionLabel: "شروع پخش",
+            onAction: unlockGuestPlayback
+        });
+        return;
+    }
+    if (message) setMediaStatus(message, false);
+}
+
+function unlockGuestPlayback() {
+    const playback = state.mediaPlayback.latestPlayback || state.currentRoom?.playback;
+    if (!playback) return;
+    playAuthoritativeGuestPlayback({
+        video: els.publicVideo,
+        playback,
+        mediaState: state.mediaPlayback,
+        expectedTime: expectedPublicPlaybackTime(playback)
+    }).then((result) => {
+        handleGuestPlaybackResult(result);
+    }).finally(() => {
+        updatePublicMediaDiagnostics();
+    });
 }
 
 function hostPlayback(action) {
@@ -908,11 +1045,34 @@ function handlePlayerShortcuts(event) {
     }
 }
 
-function setMediaStatus(message, ready) {
+function setMediaStatus(message, ready, options = {}) {
     if (!els.publicMediaStatus) return;
     els.publicMediaStatus.hidden = !message;
-    els.publicMediaStatus.textContent = message || "";
+    els.publicMediaStatus.replaceChildren();
+    if (message) {
+        const text = document.createElement("span");
+        text.textContent = message;
+        els.publicMediaStatus.append(text);
+        if (options.actionLabel && typeof options.onAction === "function") {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "media-status-action";
+            button.textContent = options.actionLabel;
+            button.addEventListener("click", options.onAction);
+            els.publicMediaStatus.append(button);
+        }
+    }
     els.publicVideoShell?.classList.toggle("is-media-ready", Boolean(ready));
+}
+
+function updatePublicMediaDiagnostics() {
+    const diagnostics = captureSafePublicMediaDiagnostics(els.publicVideo, state.mediaPlayback, {
+        adapter: state.mediaController?.diagnostics?.adapter || "",
+        gatewayJobStatus: state.mediaPlayback.gatewayJobStatus
+    });
+    if (location.hostname === "localhost" || location.hostname === "127.0.0.1" || new URLSearchParams(location.search).get("mediaDebug") === "1") {
+        window.__publicMediaDiagnostics = diagnostics;
+    }
 }
 
 function getGatewayStatusMessage(stage) {

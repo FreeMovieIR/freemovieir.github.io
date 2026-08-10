@@ -715,6 +715,28 @@ video {
     box-shadow: 0 18px 44px rgba(0, 0, 0, .42);
 }
 
+.public-media-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.media-status-action {
+    min-height: 36px;
+    border: 1px solid rgba(248, 231, 189, .42);
+    border-radius: 10px;
+    background: rgba(245, 178, 45, .16);
+    color: #fff5d6;
+    padding: 7px 11px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.media-status-action:focus-visible {
+    outline: 2px solid #f5b22d;
+    outline-offset: 2px;
+}
+
 .public-player-controls {
     position: absolute;
     inset-inline: 12px;

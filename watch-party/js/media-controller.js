@@ -6,6 +6,11 @@ import { isGatewayConfigured, MediaGatewayClient } from "./media-gateway-client.
 
 const HLS_VERSION = "1.5.13";
 const HLS_URL = `https://cdn.jsdelivr.net/npm/hls.js@${HLS_VERSION}/dist/hls.min.js`;
+const NATIVE_READINESS = Object.freeze({
+    METADATA: "metadata",
+    PLAYABLE: "playable"
+});
+const HAVE_CURRENT_DATA = 2;
 
 export class MediaController extends EventTarget {
     constructor(video, config = {}, options = {}) {
@@ -97,18 +102,20 @@ export class MediaController extends EventTarget {
         await this.loadNative(url, startTime, generation, selection, MEDIA_ADAPTERS.NATIVE);
     }
 
-    async loadNative(url, startTime, generation, selection, adapter = MEDIA_ADAPTERS.NATIVE) {
+    async loadNative(url, startTime, generation, selection, adapter = MEDIA_ADAPTERS.NATIVE, options = {}) {
         this.video.removeAttribute("crossorigin");
         this.video.preload = "metadata";
         const timeoutMs = Number(this.config.nativeMetadataTimeoutMs || 15000);
         const signal = this.abortController.signal;
+        const readiness = options.readiness || NATIVE_READINESS.METADATA;
 
         const result = await new Promise((resolve, reject) => {
             let settled = false;
             const cleanup = () => {
                 clearTimeout(timer);
-                this.video.removeEventListener("loadedmetadata", ready);
-                this.video.removeEventListener("canplay", ready);
+                this.video.removeEventListener("loadedmetadata", metadataReady);
+                this.video.removeEventListener("loadeddata", playableReady);
+                this.video.removeEventListener("canplay", playableReady);
                 this.video.removeEventListener("error", fail);
             };
             const finish = (fn, value) => {
@@ -117,12 +124,23 @@ export class MediaController extends EventTarget {
                 cleanup();
                 fn(value);
             };
-            const ready = () => finish(resolve, { ok: true });
+            const metadataReady = () => {
+                if (!this.isCurrent(generation)) return;
+                this.updateDiagnostics(selection, adapter, { nativeReadiness: readiness, metadataReady: true });
+                this.dispatchEvent(new CustomEvent("metadata", { detail: this.diagnostics }));
+                if (readiness === NATIVE_READINESS.METADATA) finish(resolve, { ok: true, readiness: NATIVE_READINESS.METADATA });
+            };
+            const playableReady = () => {
+                if (!this.isCurrent(generation)) return;
+                if (readiness === NATIVE_READINESS.PLAYABLE && Number(this.video.readyState || 0) < HAVE_CURRENT_DATA) return;
+                finish(resolve, { ok: true, readiness });
+            };
             const fail = () => finish(reject, makeMediaError(this.video));
             const timer = setTimeout(() => finish(reject, makeMediaError(this.video, true)), timeoutMs);
             signal.addEventListener("abort", () => finish(reject, new DOMException("Media load cancelled", "AbortError")), { once: true });
-            this.video.addEventListener("loadedmetadata", ready);
-            this.video.addEventListener("canplay", ready);
+            this.video.addEventListener("loadedmetadata", metadataReady);
+            this.video.addEventListener("loadeddata", playableReady);
+            this.video.addEventListener("canplay", playableReady);
             this.video.addEventListener("error", fail);
             this.video.src = url;
             this.video.load();
@@ -132,7 +150,10 @@ export class MediaController extends EventTarget {
         if (Number.isFinite(startTime) && startTime > 0) {
             this.video.currentTime = Math.min(startTime, this.video.duration || startTime);
         }
-        this.updateDiagnostics(selection, adapter);
+        this.updateDiagnostics(selection, adapter, {
+            nativeReadiness: readiness,
+            playableReady: readiness === NATIVE_READINESS.PLAYABLE || Number(this.video.readyState || 0) >= HAVE_CURRENT_DATA
+        });
         this.dispatchEvent(new CustomEvent("ready", { detail: this.diagnostics }));
         return result;
     }
@@ -179,7 +200,9 @@ export class MediaController extends EventTarget {
         if (!this.video.canPlayType("application/vnd.apple.mpegurl")) {
             await this.loadHls(manifestUrl, generation);
         } else {
-            await this.loadNative(manifestUrl, startTime, generation, selectMediaAdapter(manifestUrl), "gateway-hls");
+            await this.loadNative(manifestUrl, startTime, generation, selectMediaAdapter(manifestUrl), "gateway-hls", {
+                readiness: NATIVE_READINESS.PLAYABLE
+            });
         }
         if (Number.isFinite(startTime) && startTime > 0) {
             this.video.currentTime = Math.min(startTime, this.video.duration || startTime);
