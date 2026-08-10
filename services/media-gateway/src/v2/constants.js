@@ -1,5 +1,5 @@
 export const GATEWAY_SCHEMA_VERSION = 2;
-export const GATEWAY_POLICY_VERSION = "mkv-hls-v2";
+export const GATEWAY_POLICY_VERSION = "mkv-hls-v3-ios-safe";
 
 export const JOB_STATUS = Object.freeze({
     IDLE: "idle",

@@ -8,7 +8,14 @@ import { JOB_STAGES, JOB_STATUS, SAFE_ERROR } from "../src/v2/constants.js";
 import { makeJobKey, hashSourceUrl, makeProfileHash, normalizeDeviceProfile } from "../src/v2/hash.js";
 import { MemoryJobStore } from "../src/v2/stores/memory-job-store.js";
 import { MemoryObjectStore } from "../src/v2/stores/memory-object-store.js";
-import { cleanupExpiredGatewayJobs, isTemporaryHlsFile, runMediaWorker, uploadHlsOutput } from "../src/v2/worker.js";
+import {
+    cleanupExpiredGatewayJobs,
+    hasPlayableHls,
+    isTemporaryHlsFile,
+    parseFfprobeOutput,
+    runMediaWorker,
+    uploadHlsOutput
+} from "../src/v2/worker.js";
 
 test("V2 worker is lease-idempotent and a second simultaneous attempt exits safely", async () => {
     const fixture = await createQueuedJob();
@@ -82,6 +89,52 @@ test("V2 worker uses configured ffprobe and FFmpeg timeouts", async () => {
     const ffmpegCall = calls.find((call) => call.command === "ffmpeg");
     assert.equal(ffmpegCall?.cwd, dirname(ffmpegCall?.outputManifest || ""));
     assert.match(ffmpegCall?.cwd || "", /media-gateway-/);
+});
+
+test("V2 ffprobe parser persists sanitized compatibility metadata", () => {
+    const probe = parseFfprobeOutput(JSON.stringify({
+        format: { format_name: "matroska,webm", duration: "4076.5" },
+        streams: [
+            {
+                codec_type: "video",
+                codec_name: "h264",
+                profile: "High 10",
+                level: 41,
+                pix_fmt: "yuv420p10le",
+                bits_per_raw_sample: "10",
+                codec_tag_string: "avc1",
+                width: 1920,
+                height: 1080
+            },
+            {
+                codec_type: "audio",
+                codec_name: "aac",
+                profile: "LC",
+                channels: 6,
+                channel_layout: "5.1",
+                sample_rate: "48000"
+            }
+        ]
+    }));
+
+    assert.deepEqual(probe, {
+        container: "matroska,webm",
+        videoCodec: "h264",
+        videoProfile: "High 10",
+        videoLevel: 41,
+        pixelFormat: "yuv420p10le",
+        bitsPerRawSample: 10,
+        bitDepth: 10,
+        codecTag: "avc1",
+        audioCodec: "aac",
+        audioProfile: "LC",
+        audioChannels: 6,
+        audioChannelLayout: "5.1",
+        audioSampleRate: 48000,
+        duration: 4076.5,
+        width: 1920,
+        height: 1080
+    });
 });
 
 test("V2 worker failure diagnostics identify ffprobe parse boundary without leaking raw output", async () => {
@@ -193,6 +246,34 @@ test("V2 uploader keeps finalized segment locally when upload fails", async () =
     await access(join(workspace, "seg-0001.m4s"));
 });
 
+test("fMP4 PLAYABLE requires manifest, init.mp4, and at least one m4s segment", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "media-gateway-playable-"));
+    await writeFile(join(workspace, "index.m3u8"), "#EXTM3U\n#EXT-X-MAP:URI=\"init.mp4\"\nseg-0001.m4s\n");
+    await writeFile(join(workspace, "seg-0001.m4s"), "segment");
+    assert.equal(await hasPlayableHls(workspace), false);
+
+    await writeFile(join(workspace, "init.mp4"), "init");
+    assert.equal(await hasPlayableHls(workspace), true);
+});
+
+test("fMP4 PLAYABLE accepts uploaded-and-deleted m4s only when init.mp4 is present", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "media-gateway-uploaded-playable-"));
+    const uploaded = new Map();
+    await writeFile(join(workspace, "index.m3u8"), "#EXTM3U\n#EXT-X-MAP:URI=\"init.mp4\"\nseg-0001.m4s\n");
+    uploaded.set("seg-0001.m4s", { deleted: true });
+    assert.equal(await hasPlayableHls(workspace, uploaded), false);
+
+    uploaded.set("init.mp4", { deleted: false });
+    assert.equal(await hasPlayableHls(workspace, uploaded), true);
+});
+
+test("TS HLS PLAYABLE remains manifest plus ts segment", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "media-gateway-ts-playable-"));
+    await writeFile(join(workspace, "index.m3u8"), "#EXTM3U\nseg-0001.ts\n");
+    await writeFile(join(workspace, "seg-0001.ts"), "segment");
+    assert.equal(await hasPlayableHls(workspace), true);
+});
+
 test("V2 worker marks progressive PLAYABLE before READY while deleted local segments remain available remotely", async () => {
     const fixture = await createQueuedJob({ jobStore: new TrackingJobStore() });
     const result = await runMediaWorker({
@@ -215,6 +296,27 @@ test("V2 worker marks progressive PLAYABLE before READY while deleted local segm
     assert.equal(await fixture.objectStore.exists(`jobs/${fixture.jobKey}/index.m3u8`), true);
 });
 
+test("V2 worker does not mark PLAYABLE when fMP4 init.mp4 is missing", async () => {
+    const fixture = await createQueuedJob({ jobStore: new TrackingJobStore() });
+    const result = await runMediaWorker({
+        jobKey: fixture.jobKey,
+        jobStore: fixture.jobStore,
+        objectStore: fixture.objectStore,
+        config: fixture.config,
+        runProcess: missingInitRunProcess,
+        workspaceRoot: fixture.workspace
+    });
+    const statusUpdates = fixture.jobStore.updates
+        .map((patch) => patch.status)
+        .filter(Boolean);
+    const job = await fixture.jobStore.get(fixture.jobKey);
+    assert.equal(result.failed, true);
+    assert.equal(job.status, JOB_STATUS.FAILED);
+    assert.equal(statusUpdates.includes(JOB_STATUS.PLAYABLE), false);
+    assert.equal(await fixture.objectStore.exists(`jobs/${fixture.jobKey}/seg-0001.m4s`), true);
+    assert.equal(await fixture.objectStore.exists(`jobs/${fixture.jobKey}/init.mp4`), false);
+});
+
 test("V2 incremental cleanup keeps workspace bounded in a synthetic long HLS simulation", async () => {
     const workspace = mkdtempSync(join(tmpdir(), "media-gateway-long-hls-"));
     const objectStore = new MemoryObjectStore();
@@ -233,6 +335,19 @@ test("V2 incremental cleanup keeps workspace bounded in a synthetic long HLS sim
     }
     assert.equal(uploaded.size, 62);
     assert.equal(await objectStore.exists("jobs/job-long/seg-0059.m4s"), true);
+});
+
+test("storage content types remain correct for init and fMP4 media segments", async () => {
+    const workspace = mkdtempSync(join(tmpdir(), "media-gateway-content-types-"));
+    const objectStore = new MemoryObjectStore();
+    await writeFile(join(workspace, "index.m3u8"), "#EXTM3U\n");
+    await writeFile(join(workspace, "init.mp4"), "init");
+    await writeFile(join(workspace, "seg-0001.m4s"), "segment");
+
+    await uploadHlsOutput({ objectStore, workspace, outputPrefix: "jobs/job-types/" });
+
+    assert.equal(objectStore.objects.get("jobs/job-types/init.mp4").metadata.contentType, "video/mp4");
+    assert.equal(objectStore.objects.get("jobs/job-types/seg-0001.m4s").metadata.contentType, "video/iso.segment");
 });
 
 test("V2 cleanup removes expired metadata and temporary output", async () => {
@@ -338,6 +453,20 @@ async function progressiveRunProcess(command, args, timeoutMs, onProgress) {
         await assert.rejects(access(join(outputDir, "seg-0001.m4s")));
         await writeFile(join(outputDir, "seg-0002.m4s"), "segment-2");
         await writeFile(outputManifest, "#EXTM3U\n#EXTINF:4.0,\nseg-0001.m4s\n#EXTINF:4.0,\nseg-0002.m4s\n#EXT-X-ENDLIST\n");
+        return { stdout: "", stderr: "" };
+    }
+    throw new Error(`unexpected command ${command}`);
+}
+
+async function missingInitRunProcess(command, args, timeoutMs, onProgress) {
+    if (command === "ffprobe") return fakeRunProcess(command, args, timeoutMs, onProgress);
+    if (command === "ffmpeg") {
+        const outputManifest = args.at(-1);
+        const outputDir = outputManifest.replace(/[\\/][^\\/]+$/, "");
+        await mkdir(outputDir, { recursive: true });
+        await writeFile(join(outputDir, "seg-0001.m4s"), "segment");
+        await writeFile(outputManifest, "#EXTM3U\n#EXT-X-MAP:URI=\"init.mp4\"\n#EXTINF:4.0,\nseg-0001.m4s\n#EXT-X-ENDLIST\n");
+        if (onProgress) await onProgress();
         return { stdout: "", stderr: "" };
     }
     throw new Error(`unexpected command ${command}`);

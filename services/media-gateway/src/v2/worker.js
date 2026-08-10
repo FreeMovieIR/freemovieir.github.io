@@ -46,7 +46,10 @@ export async function runMediaWorker({
             stage = nextStage;
             safeLog("worker-stage", { jobId: jobKey, stage });
         });
-        const policy = chooseConversionPolicy(probe, { supportsHevc: Boolean(job.deviceProfile?.supportsHevc) });
+        const policy = chooseConversionPolicy(probe, {
+            ...(job.deviceProfile || {}),
+            supportsHevc: Boolean(job.deviceProfile?.supportsHevc)
+        });
         stage = "persist-probe";
         safeLog("worker-stage", { jobId: jobKey, stage });
         await jobStore.update(jobKey, {
@@ -59,7 +62,7 @@ export async function runMediaWorker({
         await writeFile(join(workspace, "policy.json"), JSON.stringify({ policy, probe }, null, 2), "utf8");
         stage = "ffmpeg";
         safeLog("worker-stage", { jobId: jobKey, stage, policy: policy.mode });
-        await runFfmpegAndUploadHls({
+        const uploaded = await runFfmpegAndUploadHls({
             sourceUrl: sourceUrl.href,
             outputManifest,
             policy,
@@ -73,7 +76,10 @@ export async function runMediaWorker({
         });
         stage = "storage-upload";
         safeLog("worker-stage", { jobId: jobKey, stage });
-        await uploadHlsOutput({ objectStore, workspace, outputPrefix: job.outputPrefix });
+        await uploadHlsOutput({ objectStore, workspace, outputPrefix: job.outputPrefix, uploaded });
+        if (!await hasPlayableHls(workspace, uploaded)) {
+            throw new Error("HLS output is missing required playable fMP4 files.");
+        }
         const manifestObject = `${job.outputPrefix}index.m3u8`;
         stage = "mark-playable";
         safeLog("worker-stage", { jobId: jobKey, stage });
@@ -126,13 +132,29 @@ async function probeSource(sourceUrl, runProcess, timeoutMs, setStage = null) {
     setStage?.("ffprobe");
     const result = await runProcess("ffprobe", buildFfprobeArgs(sourceUrl), timeoutMs);
     setStage?.("ffprobe-parse");
-    const parsed = JSON.parse(result.stdout || "{}");
+    return parseFfprobeOutput(result.stdout || "{}");
+}
+
+export function parseFfprobeOutput(stdout) {
+    const parsed = JSON.parse(stdout || "{}");
     const video = parsed.streams?.find((stream) => stream.codec_type === "video") || {};
     const audio = parsed.streams?.find((stream) => stream.codec_type === "audio") || {};
+    const bitsPerRawSample = safeInteger(video.bits_per_raw_sample);
+    const bitDepth = bitsPerRawSample || bitDepthFromPixelFormat(video.pix_fmt);
     return {
-        container: parsed.format?.format_name || "",
-        videoCodec: video.codec_name || "",
-        audioCodec: audio.codec_name || "",
+        container: safeString(parsed.format?.format_name),
+        videoCodec: safeString(video.codec_name),
+        videoProfile: safeString(video.profile),
+        videoLevel: safeInteger(video.level),
+        pixelFormat: safeString(video.pix_fmt),
+        bitsPerRawSample,
+        bitDepth,
+        codecTag: safeString(video.codec_tag_string),
+        audioCodec: safeString(audio.codec_name),
+        audioProfile: safeString(audio.profile),
+        audioChannels: safeInteger(audio.channels),
+        audioChannelLayout: safeString(audio.channel_layout),
+        audioSampleRate: safeInteger(audio.sample_rate),
         duration: Number(parsed.format?.duration || 0),
         width: Number(video.width || 0),
         height: Number(video.height || 0)
@@ -160,6 +182,7 @@ async function runFfmpegAndUploadHls(options) {
         outputManifest: options.outputManifest,
         policy: options.policy
     }), timeoutMs, uploadChanged, { cwd: options.workspace });
+    return uploaded;
 }
 
 export async function uploadHlsOutput({ objectStore, workspace, outputPrefix, uploaded = null, deleteUploadedMedia = true }) {
@@ -206,10 +229,14 @@ export async function uploadHlsOutput({ objectStore, workspace, outputPrefix, up
     return result;
 }
 
-async function hasPlayableHls(workspace, uploaded = null) {
+export async function hasPlayableHls(workspace, uploaded = null) {
     const files = await readdir(workspace).catch(() => []);
-    return files.some((file) => /\.m3u8$/i.test(file))
-        && (files.some((file) => isMediaSegment(file)) || hasUploadedMediaSegment(uploaded));
+    const allFiles = new Set([...files, ...uploadedFileNames(uploaded)]);
+    const hasManifest = Array.from(allFiles).some((file) => /\.m3u8$/i.test(file));
+    const hasInit = allFiles.has("init.mp4");
+    const hasM4s = Array.from(allFiles).some((file) => /\.m4s$/i.test(file));
+    const hasTs = Array.from(allFiles).some((file) => /\.ts$/i.test(file));
+    return hasManifest && ((hasM4s && hasInit) || hasTs);
 }
 
 function stageForPolicy(policy) {
@@ -241,6 +268,23 @@ function contentTypeFor(fileName) {
     return "video/mp2t";
 }
 
+function safeString(value, maxLength = 80) {
+    return String(value || "").trim().slice(0, maxLength);
+}
+
+function safeInteger(value) {
+    const number = Number(value);
+    return Number.isInteger(number) && number >= 0 ? number : 0;
+}
+
+function bitDepthFromPixelFormat(pixelFormat) {
+    const value = String(pixelFormat || "").toLowerCase();
+    const match = /(?:^|[^\d])(\d{2})(?:le|be)?$/.exec(value) || /p(\d{2})(?:le|be)?$/.exec(value);
+    if (match) return Number(match[1]);
+    if (value === "yuv420p" || value === "yuvj420p") return 8;
+    return 0;
+}
+
 export function isTemporaryHlsFile(fileName) {
     return /\.tmp$/i.test(fileName) || /\.tmp\./i.test(fileName);
 }
@@ -253,9 +297,9 @@ function isMediaSegment(fileName) {
     return /\.(m4s|ts)$/i.test(fileName);
 }
 
-function hasUploadedMediaSegment(uploaded) {
-    if (!uploaded) return false;
-    return Array.from(uploaded.keys()).some((fileName) => isMediaSegment(fileName));
+function uploadedFileNames(uploaded) {
+    if (!uploaded) return [];
+    return Array.from(uploaded.keys());
 }
 
 function defaultRunProcess(command, args, timeoutMs, onProgress = null, options = {}) {

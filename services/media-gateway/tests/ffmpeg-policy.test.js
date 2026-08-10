@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildFfmpegArgs, buildFfprobeArgs, chooseConversionPolicy } from "../src/ffmpeg-policy.js";
+import { buildFfmpegArgs, buildFfprobeArgs, chooseConversionPolicy, isIosSafeH264Probe } from "../src/ffmpeg-policy.js";
 
 test("H.264/AAC MKV prefers remux", () => {
     const policy = chooseConversionPolicy({ container: "matroska", videoCodec: "h264", audioCodec: "aac" });
@@ -29,6 +29,73 @@ test("H.264 with incompatible audio copies video and transcodes audio only", () 
     });
     assert.deepEqual(args.slice(args.indexOf("-c:v"), args.indexOf("-c:v") + 2), ["-c:v", "copy"]);
     assert.deepEqual(args.slice(args.indexOf("-c:a"), args.indexOf("-c:a") + 2), ["-c:a", "aac"]);
+});
+
+test("iOS safe H.264 High yuv420p with AAC remuxes without video transcode", () => {
+    const policy = chooseConversionPolicy(safeH264Probe({ audioCodec: "aac" }), iosTarget());
+    assert.equal(policy.mode, "remux");
+    assert.equal(policy.videoCodec, "copy");
+    assert.equal(policy.audioCodec, "copy");
+});
+
+test("iOS safe H.264 Main yuv420p with non-AAC transcodes audio only", () => {
+    const policy = chooseConversionPolicy(safeH264Probe({ videoProfile: "Main", audioCodec: "ac3" }), iosTarget());
+    assert.equal(policy.mode, "transcode-audio");
+    assert.equal(policy.videoCodec, "copy");
+    assert.equal(policy.audioCodec, "aac");
+});
+
+test("iOS H.264 High 10 yuv420p10le with AAC transcodes video", () => {
+    const probe = safeH264Probe({
+        videoProfile: "High 10",
+        pixelFormat: "yuv420p10le",
+        bitDepth: 10,
+        bitsPerRawSample: 10,
+        audioCodec: "aac"
+    });
+    assert.equal(isIosSafeH264Probe(probe), false);
+    const policy = chooseConversionPolicy(probe, iosTarget());
+    assert.equal(policy.mode, "transcode-video");
+    assert.equal(policy.videoCodec, "libx264");
+    assert.equal(policy.audioCodec, "copy");
+});
+
+test("iOS H.264 High 10 with incompatible audio transcodes video and audio", () => {
+    const policy = chooseConversionPolicy(safeH264Probe({
+        videoProfile: "High 10",
+        pixelFormat: "yuv420p10le",
+        bitDepth: 10,
+        audioCodec: "dts"
+    }), iosTarget());
+    assert.equal(policy.mode, "transcode");
+    assert.equal(policy.videoCodec, "libx264");
+    assert.equal(policy.audioCodec, "aac");
+});
+
+test("iOS H.264 with unknown profile or pixel format conservatively transcodes video", () => {
+    const missingProfile = chooseConversionPolicy(safeH264Probe({ videoProfile: "", audioCodec: "aac" }), iosTarget());
+    assert.equal(missingProfile.mode, "transcode-video");
+    const missingPixelFormat = chooseConversionPolicy(safeH264Probe({ pixelFormat: "", audioCodec: "aac" }), iosTarget());
+    assert.equal(missingPixelFormat.mode, "transcode-video");
+});
+
+test("iOS yuv422p and yuv444p H.264 transcode video", () => {
+    for (const pixelFormat of ["yuv422p", "yuv444p"]) {
+        const policy = chooseConversionPolicy(safeH264Probe({ pixelFormat, audioCodec: "aac" }), iosTarget());
+        assert.equal(policy.mode, "transcode-video", pixelFormat);
+        assert.equal(policy.videoCodec, "libx264", pixelFormat);
+    }
+});
+
+test("desktop H.264/AAC behavior remains current", () => {
+    const policy = chooseConversionPolicy(safeH264Probe({
+        videoProfile: "High 10",
+        pixelFormat: "yuv420p10le",
+        audioCodec: "aac"
+    }), { profile: "desktop", browserFamily: "safari" });
+    assert.equal(policy.mode, "remux");
+    assert.equal(policy.videoCodec, "copy");
+    assert.equal(policy.audioCodec, "copy");
 });
 
 test("video-only H.264 MKV keeps optional audio mapping valid", () => {
@@ -79,3 +146,25 @@ test("ffprobe omits ffmpeg-only stdin flag while ffmpeg keeps it", () => {
     assert.equal(ffprobeArgs.includes("-nostdin"), false);
     assert.equal(ffmpegArgs.includes("-nostdin"), true);
 });
+
+function iosTarget() {
+    return {
+        profile: "mobile",
+        browserFamily: "safari",
+        nativeHls: true,
+        supportsHevc: false
+    };
+}
+
+function safeH264Probe(patch = {}) {
+    return {
+        container: "matroska,webm",
+        videoCodec: "h264",
+        videoProfile: "High",
+        pixelFormat: "yuv420p",
+        bitDepth: 8,
+        bitsPerRawSample: 8,
+        audioCodec: "aac",
+        ...patch
+    };
+}

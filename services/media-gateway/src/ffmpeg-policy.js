@@ -3,9 +3,41 @@ export function chooseConversionPolicy(probe = {}, target = {}) {
     const audioCodec = String(probe.audioCodec || "").toLowerCase();
     const container = String(probe.container || "").toLowerCase();
     const targetSupportsHevc = Boolean(target.supportsHevc);
+    const iosWebKitTarget = isIosWebKitTarget(target);
     const h264 = /h264|avc/.test(videoCodec);
     const hevc = /hevc|h265|h\.265/.test(videoCodec);
     const aac = /aac/.test(audioCodec);
+
+    if (/matroska|mkv|webm/.test(container) && h264 && iosWebKitTarget) {
+        const safeH264 = isIosSafeH264Probe(probe);
+        if (safeH264 && aac) {
+            return { mode: "remux", videoCodec: "copy", audioCodec: "copy", output: "hls-fmp4" };
+        }
+        if (safeH264 && !aac) {
+            return {
+                mode: "transcode-audio",
+                videoCodec: "copy",
+                audioCodec: "aac",
+                audioChannels: 2,
+                output: "hls-fmp4"
+            };
+        }
+        if (!safeH264 && aac) {
+            return {
+                mode: "transcode-video",
+                videoCodec: "libx264",
+                audioCodec: "copy",
+                output: "hls-fmp4"
+            };
+        }
+        return {
+            mode: "transcode",
+            videoCodec: "libx264",
+            audioCodec: "aac",
+            audioChannels: 2,
+            output: "hls-fmp4"
+        };
+    }
 
     if (/matroska|mkv|webm/.test(container) && h264 && aac) {
         return { mode: "remux", videoCodec: "copy", audioCodec: "copy", output: "hls-fmp4" };
@@ -46,6 +78,28 @@ export function chooseConversionPolicy(probe = {}, target = {}) {
         audioChannels: 2,
         output: "hls-fmp4"
     };
+}
+
+export function isIosWebKitTarget(target = {}) {
+    return String(target.profile || "").toLowerCase() === "mobile"
+        && String(target.browserFamily || "").toLowerCase() === "safari";
+}
+
+export function isIosSafeH264Probe(probe = {}) {
+    const videoCodec = String(probe.videoCodec || "").toLowerCase();
+    if (!/h264|avc/.test(videoCodec)) return false;
+
+    const profile = String(probe.videoProfile || "").trim().toLowerCase();
+    const pixelFormat = String(probe.pixelFormat || "").trim().toLowerCase();
+    const bitDepth = Number(probe.bitDepth || probe.bitsPerRawSample || 0);
+
+    if (!profile || !pixelFormat) return false;
+    if (bitDepth && bitDepth > 8) return false;
+    if (/10|4:2:2|4:2:0|4:4:4|predictive|intra|high\s*422|high\s*444/i.test(profile)) return false;
+    if (!/^(constrained baseline|baseline|main|high)$/i.test(profile)) return false;
+    if (pixelFormat !== "yuv420p") return false;
+    if (/10|12|14|16|422|444|yuv422|yuv444|gbr|rgb|p10|p12|gray10/i.test(pixelFormat)) return false;
+    return true;
 }
 
 export function buildFfprobeArgs(sourceUrl) {

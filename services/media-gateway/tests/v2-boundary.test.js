@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { parseAllowedOrigins, validateProductionGatewayConfig, loadGatewayConfig } from "../src/v2/config.js";
-import { DEFAULT_LIMITS } from "../src/v2/constants.js";
+import { DEFAULT_LIMITS, GATEWAY_POLICY_VERSION } from "../src/v2/constants.js";
 import { normalizeDedupUrl, makeJobKey } from "../src/v2/hash.js";
 import { buildFfmpegArgs } from "../src/ffmpeg-policy.js";
 import {
@@ -266,6 +266,17 @@ test("dedup key normalizes URL fragments, casing, profile, and policy without ra
     assert.match(a, /^[a-f0-9]{64}$/);
     assert.equal(a.includes("movie"), false);
     assert.equal(normalizeDedupUrl("https://Example.com:443/a.mkv#x"), "https://example.com/a.mkv");
+});
+
+test("policy version bump invalidates unsafe v2 READY job reuse", () => {
+    assert.equal(GATEWAY_POLICY_VERSION, "mkv-hls-v3-ios-safe");
+    assert.notEqual(GATEWAY_POLICY_VERSION, "mkv-hls-v2");
+    const sourceUrl = "https://example.com/movie.mkv";
+    const profile = { profile: "mobile", browserFamily: "safari", nativeHls: true };
+    assert.notEqual(
+        makeJobKey(sourceUrl, profile, "mkv-hls-v2"),
+        makeJobKey(sourceUrl, profile, GATEWAY_POLICY_VERSION)
+    );
 });
 
 function assertRtdbThrows(fn, expectedCategory, label) {
