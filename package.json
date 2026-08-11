@@ -10,6 +10,7 @@
     "watch-party:test:e2e:headed": "node scripts/watch-party-e2e-runner.mjs --headed",
     "watch-party:test:e2e:ui": "node scripts/watch-party-e2e-runner.mjs --ui",
     "watch-party:test:e2e:report": "playwright show-report",
+    "watch-party:test:mediabunny-browser": "node scripts/watch-party-mediabunny-browser-test.mjs",
     "watch-party:test:public-load": "node scripts/watch-party-public-load-test.mjs",
     "watch-party:build": "npm run watch-party:build:production",
     "watch-party:test:production": "node scripts/watch-party-production-check.mjs",

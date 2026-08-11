@@ -42,6 +42,14 @@ export default defineConfig({
             }
         },
         {
+            name: "mediabunny-browser",
+            testMatch: /watch-party-mediabunny-browser\.spec\.js/,
+            use: {
+                browserName: "chromium",
+                viewport: { width: 960, height: 720 }
+            }
+        },
+        {
             name: "mobile-390",
             testMatch: /watch-party-mobile\.spec\.js/,
             use: {
