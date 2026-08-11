@@ -1,8 +1,7 @@
 import { isLocalHostname, safeLog } from "./utils.js";
 
-const MEDIABUNNY_VERSION = "1.52.3";
-const MEDIABUNNY_URL = `https://esm.sh/mediabunny@${MEDIABUNNY_VERSION}`;
-const MEDIABUNNY_AC3_URL = `https://esm.sh/@mediabunny/ac3@${MEDIABUNNY_VERSION}`;
+const MEDIABUNNY_URL = "../vendor/mediabunny/mediabunny.min.mjs";
+const MEDIABUNNY_AC3_URL = "../vendor/mediabunny-ac3/mediabunny-ac3.min.mjs";
 const SUPPORTED_AUDIO_CODECS = new Set([
     "aac",
     "opus",

@@ -190,6 +190,7 @@
                 <section class="cinema-panel">
                     <div id="public-video-shell" class="video-shell">
                         <video id="public-video" data-testid="public-active-player" playsinline preload="metadata"></video>
+                        <canvas id="public-mediabunny-canvas" class="mediabunny-canvas" data-mediabunny-surface data-testid="public-mediabunny-canvas" hidden></canvas>
                         <div id="public-media-status" data-testid="public-media-status" class="public-media-status" hidden aria-live="polite"></div>
                         <div id="public-reaction-layer" data-testid="public-reaction-layer" class="reaction-layer" aria-live="polite"></div>
                         <div id="public-player-controls" data-testid="public-player-controls" class="public-player-controls" data-authority="guest">
@@ -357,6 +358,13 @@
     </dialog>
 
     <div id="toast" class="toast" hidden></div>
+    <script type="importmap">
+        {
+            "imports": {
+                "mediabunny": "../vendor/mediabunny/mediabunny.min.mjs"
+            }
+        }
+    </script>
     <script type="module" src="./js/public-app.js"></script>
 </body>
 </html>

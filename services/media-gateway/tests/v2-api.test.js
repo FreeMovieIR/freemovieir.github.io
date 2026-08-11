@@ -59,8 +59,8 @@ test("V2 API CORS preflight allows only configured production origin without aut
         assert.equal(await response.text(), "");
         assert.equal(response.headers.get("access-control-allow-origin"), PRODUCTION_ORIGIN);
         assert.equal(response.headers.get("vary"), "Origin");
-        assert.equal(response.headers.get("access-control-allow-headers"), "Authorization,Content-Type");
-        assert.equal(response.headers.get("access-control-allow-methods"), "GET,POST,DELETE,OPTIONS");
+        assert.equal(response.headers.get("access-control-allow-headers"), "Authorization,Content-Type,Range");
+        assert.equal(response.headers.get("access-control-allow-methods"), "GET,HEAD,POST,DELETE,OPTIONS");
         assert.equal(response.headers.get("access-control-max-age"), "600");
         assert.equal(verifierCalls, 0);
     } finally {

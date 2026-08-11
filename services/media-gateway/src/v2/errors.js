@@ -38,6 +38,8 @@ export function userSafeMessage(safeCode) {
             return "این لینک برای آماده‌سازی امن قابل استفاده نیست.";
         case SAFE_ERROR.SOURCE_UNAVAILABLE:
             return "لینک فیلم دیگر در دسترس نیست.";
+        case SAFE_ERROR.RANGE_UNSUPPORTED:
+            return "این سرور رسانه درخواست Range را پشتیبانی نمی‌کند.";
         case SAFE_ERROR.RATE_LIMITED:
             return "تعداد تلاش‌ها زیاد است. کمی بعد دوباره امتحان کنید.";
         case SAFE_ERROR.JOB_NOT_PLAYABLE:
@@ -72,7 +74,10 @@ export function safeLog(event, details = {}) {
         "processName",
         "exitCode",
         "timedOut",
-        "processCategory"
+        "processCategory",
+        "method",
+        "upstreamStatus",
+        "redirectCount"
     ]) {
         if (details[key] !== undefined) allowed[key] = details[key];
     }

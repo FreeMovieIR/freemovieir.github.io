@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>آزمایش محلی Mediabunny MKV</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #020617; color: #e5e7eb; }
+    main { width: min(980px, calc(100% - 32px)); margin: 32px auto; display: grid; gap: 16px; }
+    .shell { aspect-ratio: 16 / 9; background: #000; border: 1px solid #334155; border-radius: 14px; overflow: hidden; }
+    canvas, video { width: 100%; height: 100%; display: block; }
+    [hidden] { display: none !important; }
+    input, button { min-height: 42px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #e5e7eb; padding: 0 12px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    pre { direction: ltr; text-align: left; white-space: pre-wrap; background: #0f172a; border-radius: 12px; padding: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>آزمایش محلی Mediabunny MKV</h1>
+    <input id="url" type="url" placeholder="https://example.com/movie.mkv" aria-label="لینک MKV" data-testid="mkv-url">
+    <div class="row">
+      <label><input id="mode-direct" type="radio" name="mode" value="direct" checked> Direct</label>
+      <label><input id="mode-relay" type="radio" name="mode" value="relay"> Direct + relay fallback</label>
+    </div>
+    <input id="relayBaseUrl" type="url" placeholder="https://freemovieir-media-gateway.example.run.app" aria-label="Relay base URL" data-testid="relay-base-url">
+    <input id="idToken" type="password" placeholder="Development Firebase ID token" aria-label="Development Firebase ID token" data-testid="relay-id-token">
+    <div class="row">
+      <button id="load" type="button" data-testid="mkv-load">بارگذاری</button>
+      <button id="play" type="button" data-testid="mkv-play">پخش</button>
+      <button id="pause" type="button" data-testid="mkv-pause">مکث</button>
+      <button id="seek" type="button" data-testid="mkv-seek">پرش به ۳۰ ثانیه</button>
+    </div>
+    <div class="shell">
+      <video id="video" playsinline hidden></video>
+      <canvas id="canvas" data-testid="mkv-canvas"></canvas>
+    </div>
+    <pre id="diagnostics" data-testid="mkv-diagnostics">{}</pre>
+  </main>
+  <script type="importmap">
+    {
+      "imports": {
+        "mediabunny": "../vendor/mediabunny/mediabunny.min.mjs"
+      }
+    }
+  </script>
+  <script type="module" src="./mediabunny-harness.js"></script>
+</body>
+</html>

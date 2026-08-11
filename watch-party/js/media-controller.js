@@ -3,6 +3,8 @@ import { classifyMediaElementError, diagnoseMediaElement, MEDIA_ADAPTERS, MEDIA_
 import { MkvAudioCompanion } from "./mkv-audio.js";
 import { getDeviceMediaProfile } from "./device-media-profile.js";
 import { isGatewayConfigured, MediaGatewayClient } from "./media-gateway-client.js";
+import { MEDIABUNNY_ERROR_CATEGORY, MediabunnyMkvEngine } from "./mediabunny-mkv-engine.js";
+import { createMediabunnyRelayFetch } from "./mediabunny-relay-fetch.js";
 
 const HLS_VERSION = "1.5.13";
 const HLS_URL = `https://cdn.jsdelivr.net/npm/hls.js@${HLS_VERSION}/dist/hls.min.js`;
@@ -22,7 +24,16 @@ export class MediaController extends EventTarget {
         this.abortController = null;
         this.generation = 0;
         this.diagnostics = null;
-        this.gateway = new MediaGatewayClient(config, options.tokenProvider || config.mediaGatewayTokenProvider || null);
+        this.engineName = "native";
+        this.mkvEngine = null;
+        this.canvas = options.canvas || video?.parentElement?.querySelector?.("[data-mediabunny-surface]");
+        this.mediabunnyModules = options.mediabunnyModules || null;
+        this.tokenProvider = options.tokenProvider || config.mediaGatewayTokenProvider || null;
+        this.gateway = new MediaGatewayClient(config, this.tokenProvider);
+        this.relayFetch = options.relayFetch || createMediabunnyRelayFetch({
+            relayBaseUrl: config?.mediaGateway?.baseUrl,
+            tokenProvider: this.tokenProvider
+        });
         this.mkvAudio = new MkvAudioCompanion(video, config);
         this.mkvAudio.addEventListener("status", (event) => {
             this.updateDiagnostics(this.lastSelection, MEDIA_ADAPTERS.MKV, {
@@ -30,6 +41,7 @@ export class MediaController extends EventTarget {
             });
             this.dispatchEvent(new CustomEvent("audioStatus", { detail: event.detail }));
         });
+        this.forwardNativeEvents();
     }
 
     async load(url, startTime = 0, options = {}) {
@@ -47,6 +59,23 @@ export class MediaController extends EventTarget {
         if (selection.adapter === MEDIA_ADAPTERS.UNSUPPORTED) throw new Error(MESSAGES.invalidUrl);
         this.abortController = new AbortController();
         if (selection.adapter === MEDIA_ADAPTERS.MKV) {
+            const profile = getDeviceMediaProfile({ video: this.video, wrapper: this.video?.parentElement });
+            try {
+                await this.loadMediabunnyMkv(url, startTime, generation, selection);
+                return;
+            } catch (error) {
+                this.updateDiagnostics(selection, "mediabunny", {
+                    mediaState: "fallback",
+                    errorCategory: error?.category || "unknown"
+                });
+                if (shouldFallbackToGateway(error) && isGatewayConfigured(this.config)) {
+                    await this.loadViaGateway(url, startTime, generation, profile);
+                    return;
+                }
+                throw new Error(getMediabunnyUserMessage(error));
+            }
+        }
+        if (selection.adapter === MEDIA_ADAPTERS.MKV_LEGACY_UNUSED) {
             const profile = getDeviceMediaProfile({ video: this.video, wrapper: this.video?.parentElement });
             if (isMobileSafariMkvRisk(profile)) {
                 const detail = {
@@ -103,6 +132,7 @@ export class MediaController extends EventTarget {
     }
 
     async loadNative(url, startTime, generation, selection, adapter = MEDIA_ADAPTERS.NATIVE, options = {}) {
+        this.useNativeSurface();
         this.video.removeAttribute("crossorigin");
         this.video.preload = options.preload === "auto" ? "auto" : "metadata";
         const timeoutMs = Number(this.config.nativeMetadataTimeoutMs || 15000);
@@ -216,6 +246,45 @@ export class MediaController extends EventTarget {
         }));
     }
 
+    async loadMediabunnyMkv(url, startTime, generation, selection) {
+        this.engineName = "mediabunny";
+        this.mkvEngine = new MediabunnyMkvEngine({
+            video: this.video,
+            canvas: this.canvas,
+            config: this.config,
+            modules: this.mediabunnyModules,
+            relayFetch: this.relayFetch
+        });
+        this.bindMediabunnyEvents(this.mkvEngine, generation, selection);
+        await this.mkvEngine.load(url, startTime);
+        if (!this.isCurrent(generation)) return;
+        this.updateDiagnostics(selection, "mediabunny", this.mkvEngine.getSafeDiagnostics());
+    }
+
+    bindMediabunnyEvents(engine, generation, selection) {
+        for (const type of ["play", "pause", "seeked", "ratechange", "waiting", "playing", "timeupdate", "ended"]) {
+            engine.addEventListener(type, (event) => {
+                if (!this.isCurrent(generation)) return;
+                this.updateDiagnostics(selection, "mediabunny", event.detail || engine.getSafeDiagnostics());
+                this.dispatchEvent(new CustomEvent(type, { detail: { engine: "mediabunny" } }));
+            });
+        }
+        engine.addEventListener("metadata", (event) => {
+            if (!this.isCurrent(generation)) return;
+            this.updateDiagnostics(selection, "mediabunny", event.detail || engine.getSafeDiagnostics());
+            this.dispatchEvent(new CustomEvent("metadata", { detail: this.diagnostics }));
+        });
+        engine.addEventListener("ready", (event) => {
+            if (!this.isCurrent(generation)) return;
+            this.updateDiagnostics(selection, "mediabunny", event.detail || engine.getSafeDiagnostics());
+            this.dispatchEvent(new CustomEvent("ready", { detail: this.diagnostics }));
+        });
+        engine.addEventListener("error", (event) => {
+            if (!this.isCurrent(generation)) return;
+            this.dispatchEvent(new CustomEvent("error", { detail: getMediabunnyUserMessage(event.detail) }));
+        });
+    }
+
     ensureHlsScript() {
         if (window.Hls) return Promise.resolve();
         return new Promise((resolve, reject) => {
@@ -247,6 +316,9 @@ export class MediaController extends EventTarget {
         const generation = this.generation;
         this.abortController?.abort();
         this.abortController = null;
+        this.mkvEngine?.destroy();
+        this.mkvEngine = null;
+        this.engineName = "native";
         this.mkvAudio?.destroy();
         if (this.hls) {
             this.hls.destroy();
@@ -258,15 +330,24 @@ export class MediaController extends EventTarget {
             this.video.removeAttribute("crossorigin");
             this.video.load();
         } catch {}
+        this.useNativeSurface();
         return generation;
     }
 
     setMovieVolume(value) {
+        if (this.engineName === "mediabunny" && this.mkvEngine) {
+            this.mkvEngine.setVolume(value);
+            return;
+        }
         this.video.volume = Math.min(1, Math.max(0, Number(value)));
         this.mkvAudio?.setVolume(this.video.volume);
     }
 
     setMovieMuted(muted) {
+        if (this.engineName === "mediabunny" && this.mkvEngine) {
+            this.mkvEngine.setMuted(muted);
+            return;
+        }
         if (this.diagnostics?.adapter === MEDIA_ADAPTERS.MKV && this.mkvAudio?.status === "ready") {
             this.mkvAudio.setMuted(Boolean(muted));
             this.video.muted = true;
@@ -282,6 +363,93 @@ export class MediaController extends EventTarget {
     isCurrent(generation) {
         return generation === this.generation;
     }
+
+    play() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.play() : this.video.play();
+    }
+
+    pause() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.pause() : this.video.pause();
+    }
+
+    addTextTrack(...args) {
+        return this.video.addTextTrack?.(...args);
+    }
+
+    get currentTime() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.currentTime : this.video.currentTime;
+    }
+
+    set currentTime(value) {
+        if (this.engineName === "mediabunny" && this.mkvEngine) this.mkvEngine.currentTime = value;
+        else this.video.currentTime = value;
+    }
+
+    get duration() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.duration : this.video.duration;
+    }
+
+    get paused() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.paused : this.video.paused;
+    }
+
+    get playbackRate() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.playbackRate : this.video.playbackRate;
+    }
+
+    set playbackRate(value) {
+        if (this.engineName === "mediabunny" && this.mkvEngine) this.mkvEngine.setPlaybackRate(value);
+        else this.video.playbackRate = value;
+    }
+
+    get volume() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.volume : this.video.volume;
+    }
+
+    set volume(value) {
+        this.setMovieVolume(value);
+    }
+
+    get muted() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.muted : this.video.muted;
+    }
+
+    set muted(value) {
+        this.setMovieMuted(value);
+    }
+
+    get readyState() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.readyState : this.video.readyState;
+    }
+
+    get networkState() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.networkState : this.video.networkState;
+    }
+
+    get ended() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? this.mkvEngine.ended : this.video.ended;
+    }
+
+    get currentSrc() {
+        return this.engineName === "mediabunny" && this.mkvEngine ? "" : this.video.currentSrc;
+    }
+
+    useNativeSurface() {
+        this.engineName = "native";
+        if (this.canvas) this.canvas.hidden = true;
+        if (this.video) {
+            this.video.hidden = false;
+            this.video.removeAttribute?.("aria-hidden");
+        }
+    }
+
+    forwardNativeEvents() {
+        for (const type of ["play", "pause", "seeked", "ratechange", "waiting", "stalled", "canplay", "playing", "timeupdate", "ended"]) {
+            this.video?.addEventListener?.(type, () => {
+                if (this.engineName === "native") this.dispatchEvent(new CustomEvent(type, { detail: { engine: "native" } }));
+            });
+        }
+    }
 }
 
 function resolveGatewayPlaybackUrl(manifestUrl, baseUrl) {
@@ -295,6 +463,27 @@ function resolveGatewayPlaybackUrl(manifestUrl, baseUrl) {
 
 function isMobileSafariMkvRisk(profile = {}) {
     return profile.profile === "mobile" && profile.browserFamily === "safari" && !profile.directMkvLikely;
+}
+
+function shouldFallbackToGateway(error) {
+    if (!error?.category) return true;
+    return [
+        MEDIABUNNY_ERROR_CATEGORY.SOURCE_ACCESS,
+        MEDIABUNNY_ERROR_CATEGORY.UNSUPPORTED_VIDEO_CODEC,
+        MEDIABUNNY_ERROR_CATEGORY.UNSUPPORTED_AUDIO_CODEC,
+        MEDIABUNNY_ERROR_CATEGORY.DECODE,
+        MEDIABUNNY_ERROR_CATEGORY.AUDIO_CONTEXT,
+        MEDIABUNNY_ERROR_CATEGORY.UNKNOWN
+    ].includes(error?.category);
+}
+
+function getMediabunnyUserMessage(error) {
+    if (error?.category === MEDIABUNNY_ERROR_CATEGORY.SOURCE_ACCESS) return "مرورگر نتوانست فایل MKV را مستقیماً بخواند. دسترسی CORS یا Range را بررسی کنید.";
+    if (error?.category === MEDIABUNNY_ERROR_CATEGORY.UNSUPPORTED_VIDEO_CODEC) return "کدک ویدیوی این MKV در مرورگر پشتیبانی نمی‌شود.";
+    if (error?.category === MEDIABUNNY_ERROR_CATEGORY.UNSUPPORTED_AUDIO_CODEC) return "کدک صدای این MKV در مرورگر پشتیبانی نمی‌شود.";
+    if (error?.category === MEDIABUNNY_ERROR_CATEGORY.AUDIO_CONTEXT) return "برای شروع پخش صدا روی پخش بزنید.";
+    if (error?.category === MEDIABUNNY_ERROR_CATEGORY.ABORTED) return "";
+    return "پخش MKV در مرورگر انجام نشد.";
 }
 
 function makeMediaError(video, timeout = false) {

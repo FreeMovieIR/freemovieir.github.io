@@ -70,6 +70,7 @@ test("direct native media still becomes ready on loadedmetadata", async () => {
 
     assert.equal(readyEvents, 1);
     assert.equal(video.src, "https://cdn.example.test/movie.mp4");
+    assert.equal(video.preload, "metadata");
     controller.destroySource();
 });
 
@@ -165,6 +166,7 @@ test("Gateway native HLS loadedmetadata alone does not emit playable ready", asy
         );
         assert.equal(metadataEvents, 1);
         assert.equal(readyEvents, 0);
+        assert.equal(video.preload, "auto");
         assert.equal(video.duration, 100);
         assert.equal(video.currentTime, 0);
         controller.destroySource();
@@ -243,7 +245,7 @@ test("mobile Safari MKV with disabled gateway fails safely without starting a ga
             () => controller.load("https://cdn.example.test/movie.mkv"),
             new RegExp(`MKV|${"\\u0622\\u06cc\\u0641\\u0648\\u0646"}`)
         );
-        assert.equal(compatibilityEvents, 1);
+        assert.equal(compatibilityEvents, 0);
         assert.equal(fetchCount, 0);
         assert.equal(controller.gateway.enabled, false);
         controller.destroySource();
@@ -343,6 +345,7 @@ test("mobile Safari MKV routes through Gateway when enabled and configured", asy
         assert.equal(calls[0].url, "https://gateway.example.test/v2/jobs");
         assert.equal(calls[0].options.headers.authorization, "Bearer mobile-token");
         assert.equal(video.src, "https://gateway.example.test/playback/job1/index.m3u8");
+        assert.equal(video.preload, "auto");
         assert.equal(controller.diagnostics.adapter, "gateway-hls");
         controller.destroySource();
     } finally {

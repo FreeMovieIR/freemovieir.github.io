@@ -78,6 +78,10 @@ await assertReadable("index.html");
 await assertReadable("player/index.html");
 await assertReadable("watch-party/index.html");
 await assertReadable("watch-party/js/app.js");
+await assertReadable("watch-party/vendor/mediabunny/mediabunny.min.mjs");
+await assertReadable("watch-party/vendor/mediabunny-ac3/mediabunny-ac3.min.mjs");
+await assertNotPresent("watch-party/dev/mediabunny-harness.html");
+await assertNotPresent("watch-party/dev/mediabunny-harness.js");
 await assertReadable("watch-party/public/index.html");
 await assertReadable("watch-party/public/js/public-app.js");
 await assertReadable("watch-party/runtime-config.js");
@@ -110,6 +114,12 @@ for (const asset of ["watch-party/style.css", "watch-party/js/app.js"]) {
 }
 if (/firebase-config\.js/.test(wpHtml)) throw new Error("watch-party/index.html references firebase-config.js.");
 if (/firebase-config\.js/.test(publicHtml)) throw new Error("watch-party/public/index.html references firebase-config.js.");
+if (/https?:\/\/(?:esm\.sh|unpkg\.com|cdn\.jsdelivr\.net).*mediabunny/i.test(wpHtml + publicHtml)) {
+    throw new Error("Watch Party artifact must not load Mediabunny from a runtime CDN.");
+}
+if (files.some((file) => /^node_modules\//.test(file.path))) {
+    throw new Error("Pages artifact must not copy node_modules.");
+}
 
 const largestFiles = [...files].sort((a, b) => b.size - a.size).slice(0, 10);
 console.log(`[pages:test] artifact ok: ${files.length} files, ${totalBytes} bytes.`);
@@ -120,6 +130,12 @@ async function assertReadable(path) {
     await access(join(root, path), fsConstants.R_OK).catch(() => {
         throw new Error(`Required artifact file missing: ${path}`);
     });
+}
+
+async function assertNotPresent(path) {
+    await access(join(root, path), fsConstants.F_OK).then(() => {
+        throw new Error(`Development Mediabunny harness leaked into artifact: ${path}`);
+    }, () => {});
 }
 
 async function listFiles(dir, base = dir) {

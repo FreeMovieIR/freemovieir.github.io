@@ -187,6 +187,8 @@ async function assertRequiredFiles() {
         "watch-party/public/index.html",
         "watch-party/js/app.js",
         "watch-party/public/js/public-app.js",
+        "watch-party/vendor/mediabunny/mediabunny.min.mjs",
+        "watch-party/vendor/mediabunny-ac3/mediabunny-ac3.min.mjs",
         "watch-party/runtime-config.js",
         "movie/index.html",
         "series/index.html"

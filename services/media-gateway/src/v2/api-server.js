@@ -3,6 +3,7 @@ import { assertPublicHttpUrl } from "../security.js";
 import { JOB_STATUS, SAFE_ERROR } from "./constants.js";
 import { gatewayError, normalizeGatewayError, publicError, safeLog } from "./errors.js";
 import { hashSourceUrl, makeJobKey, makeProfileHash, normalizeDeviceProfile } from "./hash.js";
+import { handleRangeRelay } from "./range-relay.js";
 
 export function createMediaGatewayApi({
     jobStore,
@@ -27,6 +28,9 @@ export function createMediaGatewayApi({
             const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
             if (request.method === "POST" && url.pathname === "/v2/probe") {
                 return json(response, 200, await probeSource(request, { tokenVerifier, config }), cors);
+            }
+            if ((request.method === "GET" || request.method === "HEAD") && url.pathname === "/v3/range") {
+                return handleRangeRelay(request, response, { tokenVerifier, config, cors, url });
             }
             if (request.method === "POST" && url.pathname === "/v2/jobs") {
                 return json(response, 202, await createJob(request, { jobStore, executor, tokenVerifier, config, now }), cors);
@@ -207,8 +211,9 @@ function writePreflight(response, cors) {
     }
     response.writeHead(204, {
         ...corsHeaders(cors),
-        "access-control-allow-methods": "GET,POST,DELETE,OPTIONS",
-        "access-control-allow-headers": "Authorization,Content-Type",
+        "access-control-allow-methods": "GET,HEAD,POST,DELETE,OPTIONS",
+        "access-control-allow-headers": "Authorization,Content-Type,Range",
+        "access-control-expose-headers": "Content-Range,Accept-Ranges,Content-Length,Content-Type,ETag,Last-Modified",
         "access-control-max-age": "600",
         "cache-control": "no-store"
     });

@@ -277,6 +277,22 @@ function setupMediaInfrastructure() {
             updatePublicMediaDiagnostics();
             applyLatestGuestPlayback();
         });
+        for (const eventName of ["play", "playing", "pause", "waiting", "timeupdate", "seeked", "ratechange", "ended"]) {
+            state.mediaController.addEventListener(eventName, (event) => {
+                if (state.mediaController?.engineName !== "mediabunny") return;
+                if (eventName === "play") hostPlayback("play");
+                else if (eventName === "playing") handleMediaPlaying();
+                else if (eventName === "pause") {
+                    markPublicMediaEvent(state.mediaPlayback, "pause", state.mediaController);
+                    hostPlayback("pause");
+                }
+                else if (eventName === "seeked") hostPlayback("seek");
+                else if (eventName === "ratechange") hostPlayback("rate");
+                else if (eventName === "waiting") handleMediaWaiting();
+                else updatePlayerControls();
+                updatePublicMediaDiagnostics();
+            });
+        }
     }
     if (!state.fullscreenController && els.publicVideoShell && els.publicVideo) {
         state.fullscreenController = new FullscreenController({
@@ -801,7 +817,7 @@ function applyPlayback(playback, capabilities) {
     state.applyingRemote = true;
     const expected = expectedPublicPlaybackTime(playback);
     applyAuthoritativeGuestPlayback({
-        video: els.publicVideo,
+        video: getPlaybackTarget(),
         playback,
         mediaState: state.mediaPlayback,
         expectedTime: expected
@@ -819,14 +835,14 @@ function applyPlayback(playback, capabilities) {
 }
 
 function handleMediaMetadata() {
-    markPublicMediaEvent(state.mediaPlayback, "loadedmetadata", els.publicVideo);
+    markPublicMediaEvent(state.mediaPlayback, "loadedmetadata", getPlaybackTarget());
     updatePlayerControls();
     updatePublicMediaDiagnostics();
     applyLatestGuestPlayback();
 }
 
 function handleMediaPlayable(event) {
-    markPublicMediaEvent(state.mediaPlayback, event.type, els.publicVideo);
+    markPublicMediaEvent(state.mediaPlayback, event.type, getPlaybackTarget());
     setMediaStatus("", true);
     updatePlayerControls();
     updatePublicMediaDiagnostics();
@@ -834,7 +850,7 @@ function handleMediaPlayable(event) {
 
 function handleMediaWaiting() {
     state.mediaPlayback.lastMediaEvent = "waiting";
-    if (shouldShowPublicWaiting(state.mediaPlayback, state.currentRoom?.playback, els.publicVideo)) {
+    if (shouldShowPublicWaiting(state.mediaPlayback, state.currentRoom?.playback, getPlaybackTarget())) {
         state.mediaPlayback.mediaState = PUBLIC_LOCAL_MEDIA_STATE.BUFFERING;
         setMediaStatus("در حال دریافت ویدیو...", false);
     }
@@ -842,7 +858,7 @@ function handleMediaWaiting() {
 }
 
 function handleMediaPlaying() {
-    markPublicMediaEvent(state.mediaPlayback, "playing", els.publicVideo);
+    markPublicMediaEvent(state.mediaPlayback, "playing", getPlaybackTarget());
     setMediaStatus("", true);
     updatePlayerControls();
     updatePublicMediaDiagnostics();
@@ -854,7 +870,7 @@ function applyLatestGuestPlayback() {
     const expected = expectedPublicPlaybackTime(playback);
     state.applyingRemote = true;
     applyAuthoritativeGuestPlayback({
-        video: els.publicVideo,
+        video: getPlaybackTarget(),
         playback,
         mediaState: state.mediaPlayback,
         expectedTime: expected
@@ -897,7 +913,7 @@ function unlockGuestPlayback() {
     const playback = state.mediaPlayback.latestPlayback || state.currentRoom?.playback;
     if (!playback) return;
     playAuthoritativeGuestPlayback({
-        video: els.publicVideo,
+        video: getPlaybackTarget(),
         playback,
         mediaState: state.mediaPlayback,
         expectedTime: expectedPublicPlaybackTime(playback)
@@ -910,11 +926,12 @@ function unlockGuestPlayback() {
 
 function hostPlayback(action) {
     if (state.applyingRemote || state.role !== "host" || !state.currentRoom) return;
+    const target = getPlaybackTarget();
     state.service.updatePlayback({
         action,
-        paused: els.publicVideo.paused,
-        currentTime: els.publicVideo.currentTime,
-        playbackRate: els.publicVideo.playbackRate
+        paused: target.paused,
+        currentTime: target.currentTime,
+        playbackRate: target.playbackRate
     }).catch(showError);
 }
 
@@ -922,7 +939,7 @@ function updateControlAuthority(capabilities, room) {
     const model = getPublicPlayerControlModel({
         role: capabilities.canControlPlayback ? "host" : "guest",
         playback: room.playback,
-        duration: els.publicVideo.duration
+        duration: getPlaybackTarget().duration
     });
     els.publicPlayerControls.dataset.authority = model.canUseSharedPlayback ? "host" : "guest";
     els.publicHostPlaybackControls.hidden = !model.canUseSharedPlayback;
@@ -933,7 +950,7 @@ function updateControlAuthority(capabilities, room) {
 }
 
 function updatePlayerControls(playback = state.currentRoom?.playback || {}) {
-    const video = els.publicVideo;
+    const video = getPlaybackTarget();
     const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : state.lastDuration;
     const current = state.seekDragging ? Number(els.publicSeek.value || 0) : (video.currentTime || expectedPublicPlaybackTime(playback));
     state.lastDuration = duration || state.lastDuration || 0;
@@ -954,16 +971,18 @@ function updatePlayerControls(playback = state.currentRoom?.playback || {}) {
 
 function toggleHostPlayback() {
     if (state.role !== "host") return;
-    if (els.publicVideo.paused) {
-        els.publicVideo.play().catch(() => setMediaStatus("برای شروع پخش روی ویدیو بزنید.", false));
+    const target = getPlaybackTarget();
+    if (target.paused) {
+        target.play().catch(() => setMediaStatus("برای شروع پخش روی ویدیو بزنید.", false));
     } else {
-        els.publicVideo.pause();
+        target.pause();
     }
 }
 
 function hostSkip(delta) {
     if (state.role !== "host") return;
-    els.publicVideo.currentTime = clampPublicTime((els.publicVideo.currentTime || 0) + delta, els.publicVideo.duration);
+    const target = getPlaybackTarget();
+    target.currentTime = clampPublicTime((target.currentTime || 0) + delta, target.duration);
 }
 
 function previewSeek() {
@@ -976,19 +995,20 @@ function previewSeek() {
 function commitSeek() {
     if (state.role !== "host") return;
     state.seekDragging = false;
-    els.publicVideo.currentTime = clampPublicTime(Number(els.publicSeek.value || 0), els.publicVideo.duration);
+    getPlaybackTarget().currentTime = clampPublicTime(Number(els.publicSeek.value || 0), getPlaybackTarget().duration);
     revealControlsTemporarily();
 }
 
 function updateHostPlaybackRate() {
     if (state.role !== "host") return;
-    els.publicVideo.playbackRate = Number(els.publicPlaybackRate.value || 1);
+    getPlaybackTarget().playbackRate = Number(els.publicPlaybackRate.value || 1);
 }
 
 function toggleLocalMute() {
-    const muted = !(els.publicVideo.muted || els.publicVideo.volume === 0);
+    const target = getPlaybackTarget();
+    const muted = !(target.muted || target.volume === 0);
     state.mediaController?.setMovieMuted(muted);
-    els.publicVideo.muted = muted;
+    target.muted = muted;
     updatePlayerControls();
 }
 
@@ -996,10 +1016,10 @@ function updateLocalVolume() {
     clearTimeout(state.controlsHideTimer);
     const volume = Number(els.publicVolume.value || 0);
     state.mediaController?.setMovieVolume(volume);
-    els.publicVideo.volume = Math.min(1, Math.max(0, volume));
+    getPlaybackTarget().volume = Math.min(1, Math.max(0, volume));
     if (volume > 0) {
         state.mediaController?.setMovieMuted(false);
-        els.publicVideo.muted = false;
+        getPlaybackTarget().muted = false;
     }
     updatePlayerControls();
 }
@@ -1007,7 +1027,7 @@ function updateLocalVolume() {
 function revealControlsTemporarily() {
     setControlsVisible(true);
     clearTimeout(state.controlsHideTimer);
-    if (els.publicVideo.paused) return;
+    if (getPlaybackTarget().paused) return;
     state.controlsHideTimer = setTimeout(() => setControlsVisible(false), 2600);
 }
 
@@ -1069,11 +1089,16 @@ function setMediaStatus(message, ready, options = {}) {
 function updatePublicMediaDiagnostics() {
     const diagnostics = captureSafePublicMediaDiagnostics(els.publicVideo, state.mediaPlayback, {
         adapter: state.mediaController?.diagnostics?.adapter || "",
-        gatewayJobStatus: state.mediaPlayback.gatewayJobStatus
+        gatewayJobStatus: state.mediaPlayback.gatewayJobStatus,
+        ...(state.mediaController?.diagnostics || {})
     });
     if (location.hostname === "localhost" || location.hostname === "127.0.0.1" || new URLSearchParams(location.search).get("mediaDebug") === "1") {
         window.__publicMediaDiagnostics = diagnostics;
     }
+}
+
+function getPlaybackTarget() {
+    return state.mediaController || els.publicVideo;
 }
 
 function getGatewayStatusMessage(stage) {

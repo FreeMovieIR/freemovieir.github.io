@@ -56,8 +56,8 @@ export const watchPartyConfig = {
     chatLengthLimit: 500,
     maxChatMessages: 75,
     mediabunny: {
-        moduleUrl: "https://esm.sh/mediabunny@1.52.3",
-        ac3ModuleUrl: "https://esm.sh/@mediabunny/ac3@1.52.3"
+        moduleUrl: "./vendor/mediabunny/mediabunny.min.mjs",
+        ac3ModuleUrl: "./vendor/mediabunny-ac3/mediabunny-ac3.min.mjs"
     },
     sync: {
         heartbeatMs: 5000,

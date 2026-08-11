@@ -192,7 +192,20 @@ export function captureSafePublicMediaDiagnostics(video, mediaState, extra = {})
         videoErrorCode: Number(video?.error?.code || 0),
         lastMediaEvent: String(mediaState?.lastMediaEvent || ""),
         playRejectionName: String(mediaState?.playRejectionName || ""),
-        gatewayJobStatus: String(mediaState?.gatewayJobStatus || extra.gatewayJobStatus || "")
+        gatewayJobStatus: String(mediaState?.gatewayJobStatus || extra.gatewayJobStatus || ""),
+        engine: String(extra.engine || extra.adapter || ""),
+        container: String(extra.container || ""),
+        videoCodec: String(extra.videoCodec || ""),
+        audioCodec: String(extra.audioCodec || ""),
+        videoDecodable: Boolean(extra.videoDecodable),
+        audioDecodable: Boolean(extra.audioDecodable),
+        canvasActive: Boolean(extra.canvasActive),
+        audioContextState: String(extra.audioContextState || ""),
+        transport: String(extra.transport || ""),
+        relayStatus: String(extra.relayStatus || ""),
+        generation: Number(extra.generation || 0),
+        videoFramesQueued: Number(extra.videoFramesQueued || 0),
+        audioNodesQueued: Number(extra.audioNodesQueued || 0)
     };
 }
 

@@ -268,6 +268,7 @@ async function ensureFirebase() {
     if (firebase) return firebase;
     firebase = await createFirebaseClient(config, getServiceCheckOptions());
     mediaController = createPrivateMediaController(ui.els.video, config, firebase);
+    ui.setPlaybackTarget(mediaController);
     subtitleController = new SubtitleController(ui.els.video, ui.els.track, config);
     if (firebase.emulatorMode) ui.banner(MESSAGES.emulatorMode, true);
     return firebase;
@@ -698,7 +699,7 @@ function setupRoomControllers(code, isOwner, generation = null) {
     roomEventGeneration = generation;
     const inviteLink = `${location.origin}/watch-party/?room=${code}`;
     ui.enterLobby(code, inviteLink, isOwner);
-    syncController = new SyncController(ui.els.video, roomService, config);
+    syncController = new SyncController(mediaController, roomService, config);
     syncController.attach();
     voiceCall = new VoiceCall(roomService, config, ui.els.remoteAudio, localTestBridge?.getVoiceOptions?.());
     voiceCall.start().catch((error) => {
@@ -806,7 +807,7 @@ function bindRoomEvents(generation = null) {
     ui.addEventListener("ready", async () => roomService.setReady(true));
     ui.addEventListener("continue", async () => {
         ui.hideAutoplayOverlay();
-        try { await ui.els.video.play(); } catch {}
+        try { await mediaController.play(); } catch {}
     });
     ui.addEventListener("voiceUnlock", async () => {
         const ok = await voiceCall?.unlockRemoteAudio();
@@ -822,7 +823,7 @@ function bindRoomEvents(generation = null) {
         paused: true,
         pauseReason: "manual",
         currentTime: 0,
-        playbackRate: ui.els.video.playbackRate || 1,
+        playbackRate: mediaController.playbackRate || 1,
         action: "restart"
     }));
     ui.addEventListener("chat", async (event) => {
@@ -935,9 +936,11 @@ function bindVideoBuffering() {
         roomService.updateParticipant({ buffering: false }).catch(() => {});
         ui.banner("", false);
     };
-    ["waiting", "stalled"].forEach((event) => ui.els.video.addEventListener(event, waiting));
-    ["canplay", "playing"].forEach((event) => ui.els.video.addEventListener(event, ready));
+    const bufferTarget = mediaController || ui.els.video;
+    ["waiting", "stalled"].forEach((event) => bufferTarget.addEventListener(event, waiting));
+    ["canplay", "ready", "playing"].forEach((event) => bufferTarget.addEventListener(event, ready));
     ui.els.video.addEventListener("error", () => ui.toast(describeMediaError(ui.els.video), "error"));
+    mediaController?.addEventListener("error", (event) => ui.toast(event.detail || describeMediaError(ui.els.video), "error"));
 }
 
 function handleDeletedRoomSnapshot() {

@@ -302,6 +302,7 @@
                     <video id="party-video" data-testid="active-player" controls playsinline preload="metadata">
                         <track id="subtitle-track" kind="subtitles" srclang="fa" label="فارسی">
                     </video>
+                    <canvas id="party-mediabunny-canvas" class="mediabunny-canvas" data-mediabunny-surface data-testid="mediabunny-canvas" hidden></canvas>
                     <audio id="remote-audio" autoplay playsinline></audio>
                     <div id="reaction-layer" class="reaction-layer" aria-hidden="true"></div>
                     <div id="autoplay-overlay" class="autoplay-overlay" hidden>
@@ -519,6 +520,13 @@
     </div>
 
     <div id="toast-root" class="toast-root" aria-live="polite"></div>
+    <script type="importmap">
+        {
+            "imports": {
+                "mediabunny": "./vendor/mediabunny/mediabunny.min.mjs"
+            }
+        }
+    </script>
     <script type="module" src="./js/app.js"></script>
 </body>
 </html>

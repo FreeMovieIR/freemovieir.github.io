@@ -664,6 +664,25 @@ video {
     background: #000;
 }
 
+.video-shell [hidden] {
+    display: none !important;
+}
+
+.mediabunny-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+    object-fit: contain;
+}
+
+.video-shell.cinema-mode-active .mediabunny-canvas {
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100dvh;
+}
+
 video::cue {
     color: var(--wp-caption-color);
     background: var(--wp-caption-bg);

@@ -27,6 +27,86 @@ test("room PLAYING while media prepares keeps the latest authoritative playback"
     assert.equal(video.playCalls, 0);
 });
 
+test("host PLAYING after metadata initiates one play request before canplay", async () => {
+    const gate = deferred();
+    const video = makeVideo({ play: () => gate.promise });
+    video.src = "https://gateway.example.test/playback/job/index.m3u8";
+    const mediaState = createPublicMediaPlaybackState();
+    markPublicMediaEvent(mediaState, "loadedmetadata", video);
+
+    const pending = applyAuthoritativeGuestPlayback({
+        video,
+        playback: { paused: false, currentTime: 8, playbackRate: 1, revision: 1 },
+        mediaState,
+        expectedTime: 8
+    });
+
+    assert.equal(video.playCalls, 1);
+    assert.equal(mediaState.playAttemptInFlight, true);
+    assert.equal(mediaState.playableReady, false);
+    gate.resolve();
+    const result = await pending;
+    assert.equal(result.playing, true);
+    assert.equal(mediaState.mediaState, PUBLIC_LOCAL_MEDIA_STATE.PLAYING);
+});
+
+test("multiple snapshots while play is pending do not duplicate play and retain latest playback", async () => {
+    const gate = deferred();
+    const video = makeVideo({ play: () => gate.promise });
+    video.src = "https://gateway.example.test/playback/job/index.m3u8";
+    const mediaState = createPublicMediaPlaybackState();
+    markPublicMediaEvent(mediaState, "loadedmetadata", video);
+
+    const pending = applyAuthoritativeGuestPlayback({
+        video,
+        playback: { paused: false, currentTime: 10, playbackRate: 1, revision: 1 },
+        mediaState,
+        expectedTime: 10
+    });
+    const second = await applyAuthoritativeGuestPlayback({
+        video,
+        playback: { paused: false, currentTime: 20, playbackRate: 1.5, revision: 2 },
+        mediaState,
+        expectedTime: 20
+    });
+
+    assert.equal(video.playCalls, 1);
+    assert.equal(second.inFlight, true);
+    assert.equal(mediaState.latestPlayback.revision, 2);
+    gate.resolve();
+    await pending;
+    assert.equal(video.playbackRate, 1.5);
+});
+
+test("host pause while early play is pending wins over stale play resolution", async () => {
+    const gate = deferred();
+    const video = makeVideo({ play: () => gate.promise });
+    video.src = "https://gateway.example.test/playback/job/index.m3u8";
+    const mediaState = createPublicMediaPlaybackState();
+    markPublicMediaEvent(mediaState, "loadedmetadata", video);
+
+    const pending = applyAuthoritativeGuestPlayback({
+        video,
+        playback: { paused: false, currentTime: 10, playbackRate: 1, revision: 1 },
+        mediaState,
+        expectedTime: 10
+    });
+    const pause = await applyAuthoritativeGuestPlayback({
+        video,
+        playback: { paused: true, currentTime: 12, playbackRate: 1, revision: 2 },
+        mediaState,
+        expectedTime: 12
+    });
+
+    assert.equal(pause.paused, true);
+    assert.equal(video.paused, true);
+    gate.resolve();
+    const result = await pending;
+    assert.equal(result.stale, true);
+    assert.equal(mediaState.mediaState, PUBLIC_LOCAL_MEDIA_STATE.PAUSED);
+    assert.equal(video.paused, true);
+});
+
 test("once playable, latest authoritative expected time and rate are applied before play", async () => {
     const video = makeVideo();
     const mediaState = createPublicMediaPlaybackState();
@@ -69,6 +149,30 @@ test("video.play NotAllowedError becomes autoplayBlocked and is not overwritten 
     assert.equal(result.category, PUBLIC_PLAY_REJECTION.AUTOPLAY_BLOCKED);
     assert.equal(mediaState.mediaState, PUBLIC_LOCAL_MEDIA_STATE.AUTOPLAY_BLOCKED);
     assert.equal(shouldShowPublicWaiting(mediaState, { paused: false }, video), false);
+});
+
+test("early play NotAllowedError keeps local unlock behavior", async () => {
+    const video = makeVideo({
+        play: async () => {
+            const error = new Error("blocked");
+            error.name = "NotAllowedError";
+            throw error;
+        }
+    });
+    video.src = "https://gateway.example.test/playback/job/index.m3u8";
+    const mediaState = createPublicMediaPlaybackState();
+    markPublicMediaEvent(mediaState, "loadedmetadata", video);
+
+    const result = await applyAuthoritativeGuestPlayback({
+        video,
+        playback: { paused: false, currentTime: 5, playbackRate: 1, revision: 1 },
+        mediaState,
+        expectedTime: 5
+    });
+
+    assert.equal(result.category, PUBLIC_PLAY_REJECTION.AUTOPLAY_BLOCKED);
+    assert.equal(mediaState.mediaState, PUBLIC_LOCAL_MEDIA_STATE.AUTOPLAY_BLOCKED);
+    assert.equal(mediaState.playAttemptInFlight, false);
 });
 
 test("classifies play rejections without raw error exposure", () => {
@@ -158,16 +262,29 @@ test("safe diagnostics contain only local playback fields", () => {
 
     assert.deepEqual(Object.keys(diagnostics).sort(), [
         "adapter",
+        "audioCodec",
+        "audioContextState",
+        "audioDecodable",
+        "audioNodesQueued",
+        "canvasActive",
+        "container",
         "currentTime",
         "duration",
+        "engine",
         "gatewayJobStatus",
+        "generation",
         "lastMediaEvent",
         "mediaState",
         "networkState",
         "paused",
         "playRejectionName",
         "readyState",
-        "videoErrorCode"
+        "relayStatus",
+        "transport",
+        "videoCodec",
+        "videoDecodable",
+        "videoErrorCode",
+        "videoFramesQueued"
     ].sort());
     assert.equal(JSON.stringify(diagnostics).includes("https://"), false);
 });
@@ -177,6 +294,8 @@ function makeVideo({ play = null } = {}) {
         readyState: 2,
         networkState: 1,
         currentTime: 0,
+        src: "",
+        currentSrc: "",
         duration: 100,
         playbackRate: 1,
         paused: true,
@@ -194,4 +313,14 @@ function makeVideo({ play = null } = {}) {
             this.paused = true;
         }
     };
+}
+
+function deferred() {
+    let resolve;
+    let reject;
+    const promise = new Promise((resolvePromise, rejectPromise) => {
+        resolve = resolvePromise;
+        reject = rejectPromise;
+    });
+    return { promise, resolve, reject };
 }

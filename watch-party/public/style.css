@@ -694,6 +694,18 @@ video {
     background: #000;
 }
 
+.video-shell [hidden] {
+    display: none !important;
+}
+
+.mediabunny-canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    object-fit: contain;
+}
+
 #public-video {
     pointer-events: none;
 }

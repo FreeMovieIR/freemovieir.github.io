@@ -23,6 +23,7 @@ export class WatchPartyUI extends EventTarget {
         this.createSubmitLocked = false;
         this.joinSubmitLocked = false;
         this.els = this.collectElements();
+        this.playbackTarget = this.els.video;
         this.fullscreenController = new FullscreenController({
             wrapper: this.els.videoShell,
             video: this.els.video,
@@ -31,6 +32,13 @@ export class WatchPartyUI extends EventTarget {
         this.bindStaticEvents();
         this.setState(APP_STATES.WELCOME);
         this.updateChatComposer();
+    }
+
+    setPlaybackTarget(target) {
+        this.playbackTarget = target || this.els.video;
+        for (const eventName of ["timeupdate", "loadedmetadata", "durationchange", "play", "pause", "ratechange", "volumechange", "seeked"]) {
+            this.playbackTarget.addEventListener?.(eventName, () => this.updatePlayerControls());
+        }
     }
 
     collectElements() {
@@ -280,14 +288,14 @@ export class WatchPartyUI extends EventTarget {
         this.els.controlBack10.addEventListener("click", () => this.seekRelative(-10));
         this.els.controlForward10.addEventListener("click", () => this.seekRelative(10));
         this.els.controlRate.addEventListener("change", () => {
-            this.els.video.playbackRate = Number(this.els.controlRate.value || 1);
+            this.playbackTarget.playbackRate = Number(this.els.controlRate.value || 1);
         });
         this.els.controlSeek.addEventListener("input", () => {
             this.els.seekPreview.hidden = false;
             this.els.seekPreview.textContent = formatClock(Number(this.els.controlSeek.value || 0));
         });
         this.els.controlSeek.addEventListener("change", () => {
-            this.els.video.currentTime = Number(this.els.controlSeek.value || 0);
+            this.playbackTarget.currentTime = Number(this.els.controlSeek.value || 0);
             this.els.seekPreview.hidden = true;
         });
         this.els.controlSubtitleToggle.addEventListener("click", () => this.toggleSubtitleVisibility());
@@ -750,16 +758,16 @@ export class WatchPartyUI extends EventTarget {
     }
 
     togglePlayback() {
-        if (this.els.video.paused) {
-            this.els.video.play().catch(() => this.showAutoplayOverlay());
+        if (this.playbackTarget.paused) {
+            this.playbackTarget.play().catch(() => this.showAutoplayOverlay());
         } else {
-            this.els.video.pause();
+            this.playbackTarget.pause();
         }
     }
 
     seekRelative(seconds) {
-        const duration = Number.isFinite(this.els.video.duration) ? this.els.video.duration : Infinity;
-        this.els.video.currentTime = Math.max(0, Math.min(duration, (this.els.video.currentTime || 0) + seconds));
+        const duration = Number.isFinite(this.playbackTarget.duration) ? this.playbackTarget.duration : Infinity;
+        this.playbackTarget.currentTime = Math.max(0, Math.min(duration, (this.playbackTarget.currentTime || 0) + seconds));
     }
 
     toggleSubtitleVisibility() {
@@ -771,7 +779,7 @@ export class WatchPartyUI extends EventTarget {
     }
 
     updatePlayerControls() {
-        const video = this.els.video;
+        const video = this.playbackTarget || this.els.video;
         const duration = Number.isFinite(video.duration) ? video.duration : 0;
         const current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
         this.els.controlTime.textContent = `${formatClock(current)} / ${formatClock(duration)}`;
@@ -843,8 +851,8 @@ export class WatchPartyUI extends EventTarget {
         try {
             const movieVolume = Number(localStorage.getItem("watchPartyMovieVolume"));
             if (Number.isFinite(movieVolume)) {
-                this.els.video.volume = Math.min(1, Math.max(0, movieVolume));
-                this.els.controlMovieVolume.value = String(Math.round(this.els.video.volume * 100));
+                this.playbackTarget.volume = Math.min(1, Math.max(0, movieVolume));
+                this.els.controlMovieVolume.value = String(Math.round(this.playbackTarget.volume * 100));
             }
             const voiceVolume = Number(localStorage.getItem("watchPartyVoiceVolume"));
             if (Number.isFinite(voiceVolume)) this.els.controlVoiceVolume.value = String(Math.round(Math.min(1, Math.max(0, voiceVolume)) * 100));
@@ -865,15 +873,15 @@ export class WatchPartyUI extends EventTarget {
             this.seekRelative(event.shiftKey ? 10 : 5);
         } else if (event.key === "ArrowUp") {
             event.preventDefault();
-            this.els.video.volume = Math.min(1, (this.els.video.volume || 0) + 0.05);
-            this.dispatchEvent(new CustomEvent("movieVolume", { detail: this.els.video.volume }));
+            this.playbackTarget.volume = Math.min(1, (this.playbackTarget.volume || 0) + 0.05);
+            this.dispatchEvent(new CustomEvent("movieVolume", { detail: this.playbackTarget.volume }));
         } else if (event.key === "ArrowDown") {
             event.preventDefault();
-            this.els.video.volume = Math.max(0, (this.els.video.volume || 0) - 0.05);
-            this.dispatchEvent(new CustomEvent("movieVolume", { detail: this.els.video.volume }));
+            this.playbackTarget.volume = Math.max(0, (this.playbackTarget.volume || 0) - 0.05);
+            this.dispatchEvent(new CustomEvent("movieVolume", { detail: this.playbackTarget.volume }));
         } else if (key === "m") {
             event.preventDefault();
-            this.dispatchEvent(new CustomEvent("movieMute", { detail: !this.els.video.muted }));
+            this.dispatchEvent(new CustomEvent("movieMute", { detail: !this.playbackTarget.muted }));
         } else if (key === "c") {
             event.preventDefault();
             this.toggleSubtitleVisibility();
