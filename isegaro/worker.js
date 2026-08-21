@@ -3,53 +3,76 @@ addEventListener('fetch', event => {
 });
 
 async function handleRequest(request) {
-  // مدیریت درخواست‌های OPTIONS برای CORS
+  // Set CORS headers (will be applied to all responses)
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, Accept-Language',
+    'Access-Control-Max-Age': '86400',
+  };
+
+  // Handle CORS preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*', // اجازه دسترسی از همه دامنه‌ها
-        'Access-Control-Allow-Methods': 'POST, OPTIONS', // متدهای مجاز
-        'Access-Control-Allow-Headers': 'Content-Type', // هدرهای مجاز
-        'Access-Control-Max-Age': '86400', // مدت زمان کش کردن پاسخ preflight
-      },
+      headers: corsHeaders,
     });
   }
 
-  // فقط درخواست‌های POST را پردازش می‌کنیم
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
-  // پارامترهای درخواست را استخراج می‌کنیم
   const url = new URL(request.url);
-  const apiKey = url.searchParams.get('key');
-  const model = url.searchParams.get('model');
+  const targetUrl = url.searchParams.get('url');
 
-  if (!apiKey || !model) {
-    return new Response('Missing key or model parameter', { status: 400 });
+  if (!targetUrl) {
+    return new Response('Missing url parameter', {
+      status: 400,
+      headers: corsHeaders,
+    });
   }
 
-  // بدنه درخواست را می‌گیریم
-  const requestBody = await request.json();
+  let target;
+  try {
+    target = new URL(targetUrl);
+  } catch (err) {
+    return new Response('Invalid URL', {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
 
-  // درخواست را به API گوگل ارسال می‌کنیم
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
+  // Only allow http and https protocols
+  if (!['http:', 'https:'].includes(target.protocol)) {
+    return new Response('Only http and https protocols are allowed', {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
 
-  // پاسخ را به کلاینت برمی‌گردانیم
-  const responseBody = await response.text();
-  return new Response(responseBody, {
-    status: response.status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*', // اجازه دسترسی از همه دامنه‌ها
-    },
-  });
+  // Prepare the request to the target
+  const init = {
+    method: request.method,
+    headers: request.headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+    redirect: 'follow',
+  };
+
+  try {
+    // Fetch the target URL
+    const response = await fetch(target.toString(), init);
+
+    // Copy response headers and add CORS headers
+    const responseHeaders = new Headers(response.headers);
+    Object.keys(corsHeaders).forEach(key => responseHeaders.set(key, corsHeaders[key]));
+
+    // Return the proxied response
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+    });
+  } catch (err) {
+    return new Response('Proxy error: ' + err.message, {
+      status: 500,
+      headers: corsHeaders,
+    });
+  }
 }
