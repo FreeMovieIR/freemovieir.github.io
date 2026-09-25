@@ -383,7 +383,7 @@ async function updateDownloadLinks(imdbId, year, title) {
         { name: 'کمکی ۱', baseUrl: 'https://tokyo.saymyname.website' },
         { name: 'کمکی ۲', baseUrl: 'https://nairobi.saymyname.website' }
     ];
-    const downloadPath = `/Movies/${year}/${imdbShort}`;
+    const downloadPath = `/Movies/${year}/${imdbShort}/`;
 
     // ساخت URL گزارش لینک خراب به گیت‌هاب
     function buildBrokenReportUrl(serverName, url) {
@@ -398,6 +398,48 @@ async function updateDownloadLinks(imdbId, year, title) {
             `صفحه: ${window.location.href}`
         ].join('\n');
         return `https://github.com/FreeMovieIR/freemovieir.github.io/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+    }
+
+    // بررسی سلامت واقعی لینک از طریق المان آزمایشی
+    function checkServerAlive(url, timeoutMs = 4000) {
+        return new Promise((resolve) => {
+            const obj = document.createElement('object');
+            obj.style.width = '0px';
+            obj.style.height = '0px';
+            obj.style.position = 'absolute';
+            obj.style.visibility = 'hidden';
+            obj.style.pointerEvents = 'none';
+
+            let done = false;
+            const timer = setTimeout(() => {
+                if (!done) {
+                    done = true;
+                    obj.remove();
+                    resolve(false);
+                }
+            }, timeoutMs);
+
+            obj.onload = () => {
+                if (!done) {
+                    done = true;
+                    clearTimeout(timer);
+                    obj.remove();
+                    resolve(true);
+                }
+            };
+
+            obj.onerror = () => {
+                if (!done) {
+                    done = true;
+                    clearTimeout(timer);
+                    obj.remove();
+                    resolve(false);
+                }
+            };
+
+            obj.data = url;
+            document.body.appendChild(obj);
+        });
     }
 
     // نمایش loading اولیه
@@ -417,46 +459,48 @@ async function updateDownloadLinks(imdbId, year, title) {
     const serverStatuses = await Promise.all(
         servers.map(async (server) => {
             const url = `${server.baseUrl}${downloadPath}`;
-            try {
-                const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), 7000);
-                await fetch(url, { method: 'HEAD', signal: controller.signal, mode: 'no-cors' });
-                clearTimeout(timer);
-                return { ...server, url, alive: true };
-            } catch (e) {
-                return { ...server, url, alive: false };
-            }
+            const alive = await checkServerAlive(url);
+            return { ...server, url, alive };
         })
     );
 
-    // رندر لینک‌ها با وضعیت هر سرور
-    let downloadLinksHtml = serverStatuses.map(server => {
-        const reportUrl = buildBrokenReportUrl(server.name, server.url);
-        const statusBadge = server.alive
-            ? `<span class="inline-block bg-green-700 text-green-100 text-xs rounded px-1.5 py-0.5 mr-1">✓ فعال</span>`
-            : `<span class="inline-block bg-red-800 text-red-200 text-xs rounded px-1.5 py-0.5 mr-1">✗ ناپایدار</span>`;
+    const availableServers = serverStatuses.filter(s => s.alive);
 
-        return `
-            <div class="flex items-center gap-1">
-                <a href="${server.url}"
-                   class="bg-blue-600 text-white px-3 py-1.5 rounded-r hover:bg-blue-700 transition duration-200 text-sm font-medium flex items-center gap-1"
-                   rel="nofollow noopener" target="_blank">
-                    ${statusBadge}
-                    <span>دانلود (${server.name})</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                </a>
-                <a href="${reportUrl}"
-                   class="bg-red-800 hover:bg-red-700 text-red-100 text-xs px-2 py-1.5 rounded-l transition duration-200 flex items-center"
-                   rel="nofollow noopener" target="_blank" title="گزارش لینک خراب">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </a>
+    // رندر لینک‌ها فقط در صورتی که سرور زنده و سالم باشد
+    let downloadLinksHtml = '';
+
+    if (availableServers.length > 0) {
+        downloadLinksHtml = availableServers.map(server => {
+            const reportUrl = buildBrokenReportUrl(server.name, server.url);
+            return `
+                <div class="flex items-center gap-1">
+                    <a href="${server.url}"
+                       class="bg-blue-600 text-white px-3 py-1.5 rounded-r hover:bg-blue-700 transition duration-200 text-sm font-medium flex items-center gap-1"
+                       rel="nofollow noopener" target="_blank">
+                        <span class="inline-block bg-green-700 text-green-100 text-xs rounded px-1.5 py-0.5 mr-1">✓ فعال</span>
+                        <span>دانلود (${server.name})</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </a>
+                    <a href="${reportUrl}"
+                       class="bg-red-800 hover:bg-red-700 text-red-100 text-xs px-2 py-1.5 rounded-l transition duration-200 flex items-center"
+                       rel="nofollow noopener" target="_blank" title="گزارش لینک خراب">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </a>
+                </div>
+            `;
+        }).join('');
+    } else {
+        downloadLinksHtml = `
+            <div class="w-full text-center py-3 px-4 bg-yellow-900/30 border border-yellow-700/50 rounded-xl text-yellow-200 text-sm">
+                <div class="font-medium mb-1">هنوز لینک دانلودی برای این فیلم بر روی سرورها قرار نگرفته است.</div>
+                <div class="text-xs text-yellow-300/70">به محض انتشار فایل در سرورها، لینک دانلود به صورت خودکار فعال می‌شود.</div>
             </div>
         `;
-    }).join('');
+    }
 
     downloadLinksHtml += `
         <a href="${subtitleLink}"
