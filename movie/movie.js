@@ -2,7 +2,7 @@
 // --- Configuration Constants ---
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // TMDb API key (Replace with your key)
 const language = 'fa-IR';
-const baseImageUrl = 'https://image.tmdb.org/t/p/'; // Base URL for TMDB images
+const baseImageUrl = 'https://wsrv.nl/?url=image.tmdb.org/t/p/'; // Base URL for TMDB images via proxy
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie.png'; // Default poster fallback
 const defaultBackdrop = 'https://freemovieir.github.io/images/default-freemovie.png'; // Default backdrop fallback
 const movieId = new URLSearchParams(window.location.search).get('id');
@@ -28,14 +28,14 @@ async function initializeSwitcher() {
 
 // Assuming fetchOmdbPoster is defined elsewhere (like in the previous script)
 // If not, include its definition here:
-async function fetchOmdbPoster(imdbId) {
+async function fetchOmdbPoster(imdbId, fallbackPoster = defaultPoster) {
     if (!imdbId) {
         console.warn("Skipping OMDb fetch: No IMDb ID provided.");
-        return defaultPoster;
+        return fallbackPoster;
     }
     if (!apiKeySwitcher) {
         console.error("Cannot fetch OMDb poster: apiKeySwitcher is not initialized.");
-        return defaultPoster;
+        return fallbackPoster;
     }
     try {
         console.log(`Workspaceing OMDb poster for IMDb ID: ${imdbId}`);
@@ -47,11 +47,11 @@ async function fetchOmdbPoster(imdbId) {
             return omdbData.Poster.replace(/_SX300\.jpg$|_@_SX300\.jpg$/i, '.jpg');
         } else {
             console.warn(`OMDb response indicates no poster found for ${imdbId}. Response:`, omdbData?.Error || "No poster data");
-            return defaultPoster;
+            return fallbackPoster;
         }
     } catch (error) {
         console.error(`Error fetching OMDb poster for ${imdbId}:`, error.message);
-        return defaultPoster;
+        return fallbackPoster;
     }
 }
 
@@ -600,7 +600,8 @@ async function getMovieDetails() {
 
         console.log(`Fetching OMDb poster for ${imdbId || 'N/A'}...`);
         console.time("OMDb Poster Fetch");
-        const finalPosterUrl = await fetchOmdbPoster(imdbId);
+        const tmdbPosterFallback = movieData.poster_path ? `${baseImageUrl}w500${movieData.poster_path}` : defaultPoster;
+        const finalPosterUrl = await fetchOmdbPoster(imdbId, tmdbPosterFallback);
         console.timeEnd("OMDb Poster Fetch");
 
         console.log("All data fetched. Updating DOM...");

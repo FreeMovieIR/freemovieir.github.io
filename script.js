@@ -3,7 +3,7 @@ const defaultApiKey = '1dc4cbf81f0accf4fa108820d551dafc'; // کلید پیش‌�
 const userTmdbToken = localStorage.getItem('userTmdbToken'); // توکن کاربر
 const apiKey = userTmdbToken || defaultApiKey; // اولویت با توکن کاربر
 const language = 'fa';
-const baseImageUrl = 'https://image.tmdb.org/t/p/w500';
+const baseImageUrl = 'https://wsrv.nl/?url=image.tmdb.org/t/p/w500';
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 const apiClient = window.FreeMovieApi;
 
@@ -230,12 +230,12 @@ const [movieRes, tvRes] = await Promise.all([
                 const overview = item.overview ? item.overview.slice(0, 120) + '…' : 'توضیحات موجود نیست';
                 const link = `/${type === 'movie' ? 'movie' : 'series'}/index.html?id=${item.id}`;
 
-                // پوستر مستقیم از TMDB (سریع و پایدار) با fallback به پروکسی و سپس تصویر پیش‌فرض
-                const tmdbPoster = item.poster_path ? `${baseImageUrl}${item.poster_path}` : '';
-                const proxiedPoster = tmdbPoster && window.FreeMovieApi ? window.FreeMovieApi.proxify(tmdbPoster) : '';
-                const initialPoster = tmdbPoster || defaultPoster;
-                const fallback1 = (proxiedPoster && proxiedPoster !== initialPoster) ? proxiedPoster : defaultPoster;
-                const onError = `if(this.dataset.s==='2'){this.onerror=null;return;}if(this.dataset.s==='1'){this.dataset.s='2';this.src='${defaultPoster}';return;}this.dataset.s='1';this.src='${fallback1}';`;
+                // استفاده از پروکسی پایدار تصویر برای دور زدن فیلترینگ و تحریم TMDB با چند لایه Fallback
+                const posterPath = item.poster_path;
+                const initialPoster = posterPath ? `https://wsrv.nl/?url=image.tmdb.org/t/p/w500${posterPath}` : defaultPoster;
+                const fallbackWeserv = posterPath ? `https://images.weserv.nl/?url=image.tmdb.org/t/p/w500${posterPath}` : defaultPoster;
+                const fallbackDirect = posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : defaultPoster;
+                const onError = `if(this.dataset.s==='3'){this.onerror=null;return;}if(this.dataset.s==='2'){this.dataset.s='3';this.src='${defaultPoster}';return;}if(this.dataset.s==='1'){this.dataset.s='2';this.src='${fallbackDirect}';return;}this.dataset.s='1';this.src='${fallbackWeserv}';`;
 
                 const homeStatusBadge = await buildHomepageStatusBadge(item, type);
 

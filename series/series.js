@@ -1,6 +1,6 @@
 const apiKey = '1dc4cbf81f0accf4fa108820d551dafc';
 const language = 'fa-IR';
-const baseImageUrl = 'https://image.tmdb.org/t/p/';
+const baseImageUrl = 'https://wsrv.nl/?url=image.tmdb.org/t/p/';
 const defaultPoster = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 const defaultBackdrop = 'https://freemovieir.github.io/images/default-freemovie-300.png';
 const seriesId = new URLSearchParams(window.location.search).get('id');
