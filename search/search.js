@@ -125,10 +125,12 @@ function createResultCard(item, itemType) {
     const date = itemType === 'movie' ? item.release_date : item.first_air_date;
     const year = date ? date.substring(0, 4) : 'نامشخص';
     const encodedTitle = title.replace(/"/g, '&quot;');
+    const posterUrl = item.poster_path ? `https://wsrv.nl/?url=image.tmdb.org/t/p/w500${item.poster_path}` : defaultPoster;
+    const fallbackWeserv = item.poster_path ? `https://images.weserv.nl/?url=image.tmdb.org/t/p/w500${item.poster_path}` : defaultPoster;
 
     return `
          <div class="group relative overflow-hidden rounded-lg shadow-lg bg-gray-800" data-item-id="${id}">
-             <img src="${defaultPoster}" alt="پوستر ${encodedTitle}" class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="this.onerror=null; this.src='${defaultPoster}';">
+             <img src="${posterUrl}" alt="پوستر ${encodedTitle}" class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="if(this.dataset.s==='1'){this.onerror=null;this.src='${defaultPoster}';return;}this.dataset.s='1';this.src='${fallbackWeserv}';">
              <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-100 group-hover:opacity-100 transition-opacity duration-300"></div>
              <div class="absolute inset-0 bg-black bg-opacity-70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end items-center text-center p-3">
                  <h3 class="text-base sm:text-lg font-bold text-white mb-1">${title}</h3>
@@ -238,13 +240,13 @@ async function searchMedia(query, searchType) {
         // Display initial results with default posters
         if (searchType === 'movie' || searchType === 'all') {
             displayInitialResults(movieResultsContainer, movieSection, movieTitleElement, movieItems, 'movie', cleanedQuery, 'فیلمی با این مشخصات یافت نشد.');
-            // Fetch and set posters asynchronously
-            movieItems.forEach(movie => fetchAndSetPoster(movie, 'movie'));
+            // فقط آیتم‌های فاقد پوستر از OMDb استعلام شوند
+            movieItems.filter(m => !m.poster_path).forEach(movie => fetchAndSetPoster(movie, 'movie'));
         }
         if (searchType === 'tv' || searchType === 'all') {
             displayInitialResults(tvResultsContainer, tvSection, tvTitleElement, tvItems, 'tv', cleanedQuery, 'سریالی با این مشخصات یافت نشد.');
-            // Fetch and set posters asynchronously
-            tvItems.forEach(tv => fetchAndSetPoster(tv, 'tv'));
+            // فقط آیتم‌های فاقد پوستر از OMDb استعلام شوند
+            tvItems.filter(t => !t.poster_path).forEach(tv => fetchAndSetPoster(tv, 'tv'));
         }
 
         if (searchType === 'all' && movieItems.length === 0 && tvItems.length === 0) {

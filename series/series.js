@@ -141,33 +141,58 @@ function updateDomWithSeriesDetails(seriesData, posterUrl, imdbId) {
     document.getElementById('series-schema').textContent = JSON.stringify(schema);
 }
 
-function updateDownloadLinks(imdbId, numberOfSeasons) {
+function updateDownloadLinks(imdbId, numberOfSeasons, title, seriesId) {
     const downloadLinksContainer = document.getElementById('download-links');
     if (!downloadLinksContainer) return;
 
     let downloadHtml = '';
-    // بررسی کنید imdbId معتبر است و تعداد فصول بزرگتر از 0 است
+    const encodedTitle = encodeURIComponent(title || '');
+    const subtitleLink = imdbId ? `http://subtitlestar.com/go-to.php?imdb-id=${imdbId}&movie-name=${encodedTitle}` : '';
+
     if (imdbId && numberOfSeasons && numberOfSeasons > 0) {
         console.log(`Generating download links for ${numberOfSeasons} seasons (IMDb: ${imdbId})`);
         for (let season = 1; season <= numberOfSeasons; season++) {
-            // ایجاد لینک دانلود برای هر فصل و کیفیت
-            downloadHtml += `<div class="season-downloads mt-4 p-4 bg-gray-800 rounded">`; // استایل بهتر برای هر فصل
-            downloadHtml += `<h3 class="text-xl font-bold mb-3 text-yellow-400">فصل ${season}</h3>`; // عنوان فصل با استایل
-            // لینک‌های کیفیت‌های مختلف
-            for (let quality = 1; quality <= 4; quality++) { // فرض بر 4 کیفیت
-                // ایجاد لینک دانلود
+            downloadHtml += `<div class="season-downloads mt-4 p-4 bg-gray-800 rounded-lg">`;
+            downloadHtml += `<h3 class="text-xl font-bold mb-3 text-yellow-400">فصل ${season}</h3><div class="flex flex-wrap gap-2">`;
+            for (let quality = 1; quality <= 4; quality++) {
                 const downloadLink = `https://subtitle.saymyname.website/DL/filmgir/?i=${imdbId}&f=${season}&q=${quality}`;
+                const reportTitle = encodeURIComponent(`گزارش لینک خراب سریال: ${title} - فصل ${season} کیفیت ${quality}`);
+                const reportBody = encodeURIComponent(`سریال: ${title}\nIMDb: ${imdbId}\nTMDb: ${seriesId}\nفصل: ${season}\nکیفیت: ${quality}\nلینک: ${downloadLink}`);
+                const reportUrl = `https://github.com/FreeMovieIR/freemovieir.github.io/issues/new?title=${reportTitle}&body=${reportBody}`;
+
                 downloadHtml += `
-                    <a href="${downloadLink}" target="_blank" rel="nofollow noopener" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200 mx-1 my-1 inline-block text-sm">
-                        کیفیت ${quality} <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    </a>`;
+                    <div class="inline-flex items-center gap-1">
+                        <a href="${downloadLink}" target="_blank" rel="nofollow noopener" class="bg-blue-600 text-white px-3 py-1.5 rounded-r hover:bg-blue-700 transition duration-200 text-sm font-medium flex items-center gap-1">
+                            <span>کیفیت ${quality}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </a>
+                        <a href="${reportUrl}" target="_blank" rel="nofollow noopener" class="bg-red-800 hover:bg-red-700 text-red-100 text-xs px-2 py-1.5 rounded-l transition duration-200 flex items-center" title="گزارش لینک خراب">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </a>
+                    </div>`;
             }
-            downloadHtml += `</div>`; // پایان div فصل
+            downloadHtml += `</div></div>`;
         }
     } else {
-        console.warn("Cannot generate download links: Missing IMDb ID or number of seasons.");
-        downloadHtml = '<p class="text-yellow-500">لینک‌های دانلود در حال حاضر در دسترس نیستند.</p>';
+        downloadHtml = `
+            <div class="w-full text-center py-4 px-4 bg-yellow-900/30 border border-yellow-700/50 rounded-xl text-yellow-200 text-sm">
+                <div class="font-medium mb-1">هنوز لینک دانلودی برای این سریال ثبت نشده است.</div>
+                <div class="text-xs text-yellow-300/70">به محض انتشار در سرورها، لینک‌ها به صورت خودکار اضافه می‌شوند.</div>
+            </div>
+        `;
     }
+
+    if (subtitleLink) {
+        downloadHtml += `
+            <div class="mt-4 flex justify-center">
+                <a href="${subtitleLink}" target="_blank" rel="nofollow noopener" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-200 text-sm font-medium flex items-center gap-1">
+                    <span>دریافت زیرنویس فارسی</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
+                </a>
+            </div>
+        `;
+    }
+
     downloadLinksContainer.innerHTML = downloadHtml;
 }
 
@@ -259,7 +284,7 @@ async function getSeriesDetails() {
         // 3. به‌روزرسانی DOM با تمام اطلاعات جمع‌آوری شده
         console.log("Updating DOM with all fetched data...");
         updateDomWithSeriesDetails(seriesData, posterUrl, imdbId); // به‌روزرسانی اطلاعات اصلی، پوستر، تریلر، متا، schema
-        updateDownloadLinks(imdbId, numberOfSeasons); // به‌روزرسانی لینک‌های دانلود
+        updateDownloadLinks(imdbId, numberOfSeasons, title, seriesId); // به‌روزرسانی لینک‌های دانلود
         setupWatchlistButton(seriesId, title); // تنظیم دکمه واچ‌لیست
 
         // قرار دادن HTML سریال‌های مشابه در DOM
