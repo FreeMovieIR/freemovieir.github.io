@@ -22,9 +22,6 @@
     <meta name="twitter:image" content="https://freemovieir.github.io/images/tweet2.png">
     <!-- پایان تغییرات سئو -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = { darkMode: 'class' };
-    </script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/style.css">
@@ -77,18 +74,27 @@
     </section>
 
     <main class="flex-1">
+    <!-- اسلایدر عناوین جدید دارای لینک دانلود -->
+    <section class="container mx-auto px-4 pt-6 pb-2">
+        <div class="section-head mb-3">
+            <h2 class="section-title"><i class="fas fa-compact-disc text-emerald-400"></i> عناوین جدید با لینک دانلود فعال</h2>
+            <span class="text-xs text-slate-400 hidden sm:inline">بررسی شده بر روی سرورهای پرسرعت</span>
+        </div>
+        <div id="featured-slider-container"></div>
+    </section>
+
     <!-- اطلاعیه‌ها -->
-    <div class="container mx-auto px-4 pt-6 space-y-3">
+    <div class="container mx-auto px-4 pt-4 space-y-3">
         <div id="disclaimer-notice" class="notice notice-info">
             <p>
-                📢 <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی میزبانی نمی‌کند. لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" rel="nofollow">الماس مووی</a> است. <a href="/disclaimer">جزئیات بیشتر</a>.
+                <i class="fas fa-bullhorn text-amber-400 ml-1"></i> <strong>سلب مسئولیت:</strong> این وب‌سایت فقط اطلاعات فیلم و سریال را نمایش می‌دهد و هیچ محتوایی میزبانی نمی‌کند. لینک‌های دانلود از <a href="https://almasmovie.website/" target="_blank" rel="nofollow">الماس مووی</a> است. <a href="/disclaimer">جزئیات بیشتر</a>.
             </p>
             <button id="close-disclaimer" class="notice-close" aria-label="بستن"><i class="fas fa-times"></i></button>
         </div>
 
         <div id="availability-notice" class="notice notice-warn">
             <p>
-                📢 <strong>اطلاعیه:</strong> ممکن است جدیدترین فیلم‌ها هنوز قابل دانلود نباشند. پیشنهاد می‌کنیم فیلم‌هایی را <a href="https://freemovieir.github.io/search/index.html" target="_blank">جستجو</a> کنید که مطمئن هستید موجودند. درخواست افزودن فیلم از <a href="https://freemovieir.github.io/issues/new" target="_blank">این لینک</a>.
+                <i class="fas fa-info-circle text-sky-400 ml-1"></i> <strong>اطلاعیه:</strong> ممکن است جدیدترین فیلم‌ها هنوز قابل دانلود نباشند. پیشنهاد می‌کنیم فیلم‌هایی را <a href="https://freemovieir.github.io/search/index.html" target="_blank">جستجو</a> کنید که مطمئن هستید موجودند. درخواست افزودن فیلم از <a href="https://freemovieir.github.io/issues/new" target="_blank">این لینک</a>.
             </p>
             <button id="close-availability" class="notice-close" aria-label="بستن اطلاعیه"><i class="fas fa-times"></i></button>
         </div>
@@ -158,11 +164,11 @@
     </div>
 
     <!-- فوتر -->
-    <footer class="site-footer mt-auto">
+    <footer id="site-footer" class="site-footer mt-auto">
         <div class="container mx-auto text-center px-4 py-8">
             <img src="https://freemovieir.github.io/logo.png" alt="لوگوی فیری مووی" class="h-10 mx-auto mb-3 opacity-90">
             <p class="text-slate-400 text-sm mb-3">
-                فیری مووی - ساخته شده با 🤍
+                فیری مووی - مرجع اطلاعات و دانلود فیلم و سریال
                 <br>
                 استفاده از فونت <a href="https://rastikerdar.github.io/vazirmatn/" class="footer-link">وزیرمتن</a> به یاد صابر راستی کردار
             </p>
@@ -192,5 +198,7 @@
     <script src="js/apiClient.js" defer></script>
     <script src="apiKeySwitcher.js" defer></script>
     <script src="script.js" defer></script>
+    <script src="js/slider.js" defer></script>
+    <script src="js/layout.js" defer></script>
 </body>
 </html>

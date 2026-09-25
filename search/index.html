@@ -44,6 +44,7 @@
       content="https://freemovieir.github.io/logo.png"
     />
 
+    <link rel="stylesheet" href="/style.css" />
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -147,30 +148,22 @@
     </style>
   </head>
   <body class="bg-gray-900 text-white min-h-screen flex flex-col">
-    <header class="bg-gray-800 p-4 shadow-md">
-      <div class="container mx-auto flex flex-row justify-between items-center">
-        <!-- Navigation -->
-        <nav class="flex items-center space-x-4">
-          <a href="https://freemovieir.github.io/" class="hover:text-gray-300 p-4"
-            ><i class="fas fa-home"></i
-          ></a>
-          <a href="/watchlist" class="hover:text-gray-300"
-            ><i class="fas fa-bookmark"></i
-          ></a>
-          <a href="/search" class="hover:text-gray-300"
-            ><i class="fas fa-search"></i
-          ></a>
+    <header id="site-header" class="site-header">
+      <div class="container mx-auto flex items-center justify-between gap-2 px-3 sm:px-4 h-16">
+        <a href="/" class="flex items-center gap-2 shrink-0 select-none">
+          <img src="/logo.png" alt="لوگوی فیری مووی" class="h-9 w-auto" />
+          <span class="font-extrabold text-base sm:text-lg text-white">فیری مووی</span>
+        </a>
+        <nav class="flex items-center gap-1 sm:gap-2">
+          <a href="/" class="nav-link" aria-label="خانه" title="خانه"><i class="fas fa-home"></i></a>
+          <a href="/genres/" class="nav-link" aria-label="ژانرها" title="ژانرها"><i class="fas fa-layer-group"></i></a>
+          <a href="/series/" class="nav-link" aria-label="سریال‌ها" title="سریال‌ها"><i class="fas fa-tv"></i></a>
+          <a href="/watchlist/" class="nav-link" aria-label="واچ‌لیست" title="واچ‌لیست"><i class="fas fa-bookmark"></i></a>
+          <a href="/search/" class="nav-link" aria-label="جستجو" title="جستجو"><i class="fas fa-search"></i></a>
+          <a href="/watch-party/" class="nav-link" aria-label="تماشای دونفره" title="تماشای دونفره"><i class="fas fa-users-viewfinder"></i></a>
+          <a href="/settings/" class="nav-link" aria-label="تنظیمات" title="تنظیمات"><i class="fas fa-cog"></i></a>
+          <button id="theme-toggle" class="nav-link" aria-label="تغییر تم" title="تغییر تم" type="button"><i class="fas fa-sun"></i></button>
         </nav>
-        <!-- Logo -->
-        <div>
-          <a href="https://freemovieir.github.io/">
-            <img
-              src="https://freemovieir.github.io/logo.png"
-              alt="لوگو"
-              class="h-10"
-            />
-          </a>
-        </div>
       </div>
     </header>
 
@@ -245,19 +238,30 @@
         </section>
       </div>
     </main>
-    <footer class="bg-gray-800 p-4 mt-auto">
-      <div class="container mx-auto text-center">
-        <p>
-          فیری مووی - ساخته شده با 🤍
-          <br>
-          استفاده از فونت <a href="https://rastikerdar.github.io/vazir-font/" class="hover:text-gray-300">وزیرمتن</a> به یاد صابر راستی کردار<br>
+    <footer id="site-footer" class="site-footer mt-auto">
+      <div class="container mx-auto text-center px-4 py-8">
+        <a href="/" class="inline-block mb-3">
+          <img src="/logo.png" alt="لوگوی فیری مووی" class="h-10 mx-auto opacity-90" />
+        </a>
+        <p class="text-slate-400 text-sm mb-3">
+          فیری مووی - مرجع اطلاعات و دانلود رایگان فیلم و سریال
+          <br />
+          استفاده از فونت <a href="https://rastikerdar.github.io/vazirmatn/" class="footer-link" target="_blank" rel="noopener">وزیرمتن</a> به یاد صابر راستی کردار
         </p>
-        <a href="/developer">توسعه‌دهندگان</a> | <a href="/about-freemovie">درباره فیری مووی</a>
-        <br>
-        <a href="/disclaimer">سلب مسئولیت</a> | <a href="/disclaimer/index-en.html">DMCA</a>
-        <div class="social-icons mb-2">
-          <a class="github-button" href="https://freemovieir.github.io" data-icon="octicon-star" data-show-count="true" aria-label="ستاره دادن به فیری مووی در گیت‌هاب">Star</a>
-          <script async defer src="https://buttons.github.io/buttons.js"></script>
+        <nav class="flex flex-wrap justify-center gap-x-3 gap-y-1 text-sm mb-4">
+          <a href="/developer/" class="footer-link">توسعه‌دهندگان</a>
+          <span class="text-slate-600">|</span>
+          <a href="/about-freemovie/" class="footer-link">درباره فیری مووی</a>
+          <span class="text-slate-600">|</span>
+          <a href="/watch-party/" class="footer-link">تماشای دونفره</a>
+          <span class="text-slate-600">|</span>
+          <a href="/disclaimer/" class="footer-link">سلب مسئولیت</a>
+          <span class="text-slate-600">|</span>
+          <a href="/disclaimer/index-en.html" class="footer-link">DMCA</a>
+        </nav>
+        <div class="flex justify-center gap-4 text-xl mt-2">
+          <a href="https://twitter.com/freemovie_ir" target="_blank" rel="noopener" class="footer-link" aria-label="توییتر"><i class="fab fa-twitter"></i></a>
+          <a href="https://instagram.com/freemovie_ir" target="_blank" rel="noopener" class="footer-link" aria-label="اینستاگرام"><i class="fab fa-instagram"></i></a>
         </div>
       </div>
     </footer>
@@ -265,5 +269,6 @@
     <script src="../js/apiClient.js"></script>
     <script src="../apiKeySwitcher.js"></script>
     <script src="./search.js"></script>
+    <script src="/js/layout.js" defer></script>
   </body>
 </html>

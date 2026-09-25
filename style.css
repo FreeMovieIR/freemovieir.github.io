@@ -336,3 +336,28 @@ a { text-decoration: none; }
 
 .footer-link { color: var(--text-muted); transition: color 0.2s; }
 .footer-link:hover { color: var(--accent-2); }
+
+/* ===== اسلایدر برگزیده ===== */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.slider-slide {
+    will-change: opacity;
+}
+
+.slider-dot.active,
+.slider-dot.bg-amber-400 {
+    width: 1.5rem;
+}
+
