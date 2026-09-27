@@ -529,82 +529,36 @@ async function updateDownloadLinks(imdbId, year, title) {
  * @param {string} title - The title of the movie for messages.
  */
 function setupWatchlistButton(currentMovieId, title) {
-    // Re-use the exact same function from the series details script if it's shared
-    // Or copy its logic here, adapted for movies:
     const watchlistButton = document.getElementById('add-to-watchlist');
-    if (!watchlistButton) {
-        console.warn("Watchlist button element not found after generating links.");
-        return;
-    }
+    if (!watchlistButton) return;
 
-    const storageKey = 'watchlist';
-    let watchlist = { movies: [], series: [] };
-    const normalizedMovieId = String(currentMovieId);
+    const normalizedMovieId = Number(currentMovieId) || currentMovieId;
 
-    try {
-        const storedWatchlist = localStorage.getItem(storageKey);
-        if (storedWatchlist) {
-            watchlist = JSON.parse(storedWatchlist);
-            if (!Array.isArray(watchlist.movies)) watchlist.movies = [];
-            if (!Array.isArray(watchlist.series)) watchlist.series = [];
+    function renderState() {
+        const isInWatchlist = window.WatchlistStore
+            ? window.WatchlistStore.has(normalizedMovieId, 'movie')
+            : false;
+
+        const span = watchlistButton.querySelector('span');
+        if (span) span.textContent = isInWatchlist ? 'در واچ‌لیست' : 'افزودن به واچ‌لیست';
+        watchlistButton.classList.toggle('opacity-75', isInWatchlist);
+
+        const iconSvg = watchlistButton.querySelector('svg');
+        if (iconSvg) {
+            iconSvg.innerHTML = isInWatchlist
+                ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />'
+                : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />';
         }
-    } catch (error) {
-        console.error("Error reading watchlist from localStorage:", error);
-        watchlist = { movies: [], series: [] };
     }
 
-    const isInWatchlist = watchlist.movies.includes(normalizedMovieId);
+    renderState();
 
-    // Update button appearance and state
-    watchlistButton.disabled = isInWatchlist;
-    watchlistButton.classList.toggle('opacity-50', isInWatchlist);
-    watchlistButton.classList.toggle('cursor-not-allowed', isInWatchlist);
-    watchlistButton.querySelector('span').textContent = isInWatchlist ? 'در واچ‌لیست' : 'افزودن به واچ‌لیست';
-    // Change icon based on state (optional)
-    const iconSvg = watchlistButton.querySelector('svg');
-    if (iconSvg) {
-        iconSvg.innerHTML = isInWatchlist
-            ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />' // Checkmark icon
-            : '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />'; // Plus icon
-    }
-
-
-    if (!isInWatchlist) {
-        watchlistButton.addEventListener('click', () => {
-            try {
-                let currentWatchlist = { movies: [], series: [] };
-                const storedWatchlist = localStorage.getItem(storageKey);
-                if (storedWatchlist) {
-                    currentWatchlist = JSON.parse(storedWatchlist);
-                    if (!Array.isArray(currentWatchlist.movies)) currentWatchlist.movies = [];
-                    if (!Array.isArray(currentWatchlist.series)) currentWatchlist.series = [];
-                }
-
-                if (!currentWatchlist.movies.includes(normalizedMovieId)) {
-                    currentWatchlist.movies.push(normalizedMovieId);
-                    localStorage.setItem(storageKey, JSON.stringify(currentWatchlist));
-                    alert(`"${title}" با موفقیت به واچ‌لیست اضافه شد!`);
-
-                    // Update button state immediately after adding
-                    watchlistButton.disabled = true;
-                    watchlistButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    watchlistButton.querySelector('span').textContent = 'در واچ‌لیست';
-                    if(iconSvg) iconSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
-
-                } else {
-                    alert(`"${title}" از قبل در واچ‌لیست شما وجود دارد.`);
-                    watchlistButton.disabled = true; // Ensure it's disabled
-                    watchlistButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    watchlistButton.querySelector('span').textContent = 'در واچ‌لیست';
-                    if(iconSvg) iconSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
-                }
-            } catch (error) {
-                console.error("Error saving to watchlist:", error);
-                alert("خطا در ذخیره واچ‌لیست.");
-            }
-        }, { once: true }); // Listener runs only once
-    }
-    console.log(`Watchlist button setup complete. Is in watchlist: ${isInWatchlist}`);
+    watchlistButton.addEventListener('click', () => {
+        if (!window.WatchlistStore) return;
+        const added = window.WatchlistStore.toggle(normalizedMovieId, 'movie');
+        renderState();
+        alert(added ? `"${title}" به واچ‌لیست اضافه شد.` : `"${title}" از واچ‌لیست حذف شد.`);
+    });
 }
 
 

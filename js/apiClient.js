@@ -135,13 +135,22 @@
         getFromCache,
         saveToCache,
         tmdbUrl(path, params = {}) {
+            const userKey = localStorage.getItem('userTmdbToken');
             const searchParams = new URLSearchParams({
-                api_key: config.tmdbApiKey,
-                language: config.defaultLanguage,
+                api_key: userKey || config.tmdbApiKey,
+                language: config.defaultLanguage || 'fa',
                 ...params
             });
 
             return `https://api.themoviedb.org/3/${path.replace(/^\/+/, '')}?${searchParams.toString()}`;
+        },
+        omdbUrl(params = {}) {
+            const userToken = localStorage.getItem('userOmdbToken');
+            const searchParams = new URLSearchParams({
+                apikey: userToken || 'e5454641',
+                ...params
+            });
+            return `https://www.omdbapi.com/?${searchParams.toString()}`;
         }
     };
 })(window);

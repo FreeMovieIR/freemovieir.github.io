@@ -120,6 +120,20 @@ function hideLoading() {
  * @returns {string} - The HTML string for the result card.
  */
 function createResultCard(item, itemType) {
+    if (window.FreeMovieUI) {
+        const card = window.FreeMovieUI.createMediaCard({
+            id: item.id,
+            title: itemType === 'movie' ? (item.title || 'نامشخص') : (item.name || 'نامشخص'),
+            posterPath: item.poster_path,
+            rating: item.vote_average,
+            year: (itemType === 'movie' ? item.release_date : item.first_air_date || '').slice(0, 4),
+            type: itemType === 'tv' || itemType === 'series' ? 'series' : 'movie',
+            customBadge: itemType === 'movie' ? 'فیلم' : 'سریال'
+        });
+        card.setAttribute('data-item-id', item.id);
+        return card.outerHTML;
+    }
+
     const id = item.id;
     const title = itemType === 'movie' ? (item.title || 'نامشخص') : (item.name || 'نامشخص');
     const date = itemType === 'movie' ? item.release_date : item.first_air_date;

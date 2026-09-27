@@ -200,41 +200,27 @@ function setupWatchlistButton(currentSeriesId, title) {
     const watchlistButton = document.getElementById('add-to-watchlist');
     if (!watchlistButton) return;
 
-    watchlistButton.addEventListener('click', () => {
-        try {
-            let watchlist = JSON.parse(localStorage.getItem('watchlist')) || { movies: [], series: [] };
-            // اطمینان از اینکه سریال با فرمت رشته ذخیره می‌شود
-            const normalizedSeriesId = String(currentSeriesId);
-
-            // بررسی اینکه آیا سریال از قبل در لیست سریال‌ها وجود دارد یا نه
-            if (!watchlist.series.some(id => id === normalizedSeriesId)) {
-                watchlist.series.push(normalizedSeriesId);
-                localStorage.setItem('watchlist', JSON.stringify(watchlist));
-                // ارائه بازخورد بهتر به کاربر
-                alert(`"${title}" با موفقیت به واچ‌لیست اضافه شد!`);
-                // شاید بخواهید متن یا ظاهر دکمه را تغییر دهید
-                watchlistButton.textContent = 'در واچ‌لیست';
-                watchlistButton.disabled = true; // غیرفعال کردن دکمه پس از افزودن
-            } else {
-                alert(`"${title}" قبلاً به واچ‌لیست اضافه شده است.`);
-            }
-        } catch (error) {
-            console.error("Error managing watchlist:", error);
-            alert("خطا در ذخیره واچ‌لیست. لطفا حافظه محلی مرورگر خود را بررسی کنید.");
-        }
-    });
-
-    // بررسی وضعیت اولیه دکمه هنگام بارگذاری صفحه
-    try {
-        let watchlist = JSON.parse(localStorage.getItem('watchlist')) || { movies: [], series: [] };
-        const normalizedSeriesId = String(currentSeriesId);
-        if (watchlist.series.some(id => id === normalizedSeriesId)) {
+    function updateBtn() {
+        const inList = window.WatchlistStore
+            ? window.WatchlistStore.has(currentSeriesId, 'series')
+            : false;
+        if (inList) {
             watchlistButton.textContent = 'در واچ‌لیست';
-            watchlistButton.disabled = true;
+            watchlistButton.classList.add('opacity-75');
+        } else {
+            watchlistButton.textContent = 'افزودن به واچ‌لیست';
+            watchlistButton.classList.remove('opacity-75');
         }
-    } catch (error) {
-        console.error("Error checking initial watchlist state:", error);
     }
+
+    updateBtn();
+
+    watchlistButton.addEventListener('click', () => {
+        if (!window.WatchlistStore) return;
+        const added = window.WatchlistStore.toggle(currentSeriesId, 'series');
+        updateBtn();
+        alert(added ? `"${title}" به واچ‌لیست اضافه شد.` : `"${title}" از واچ‌لیست حذف شد.`);
+    });
 }
 
 // --- Main Function ---
