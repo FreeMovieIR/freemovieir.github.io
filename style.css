@@ -189,21 +189,26 @@ a { text-decoration: none; }
 @media (min-width: 768px) { .cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 1100px) { .cards-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.25rem; } }
 
-/* ===== کارت فیلم/سریال ===== */
+/* ===== استایل کارت‌های پیشرفته ===== */
+.movie-card, .group.relative {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
 .movie-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 0.9rem;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
 }
 
 .movie-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(245, 158, 11, 0.5);
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    transform: translateY(-6px) scale(1.01);
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.15);
 }
 
 .poster-wrap {
@@ -220,10 +225,19 @@ a { text-decoration: none; }
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.4s ease;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.movie-card:hover .poster-img { transform: scale(1.05); }
+.movie-card:hover .poster-img { transform: scale(1.06); }
+
+/* نئون و سایه ملایم دکمه‌ها */
+.btn-glow {
+    position: relative;
+    transition: all 0.3s ease;
+}
+.btn-glow:hover {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
 
 /* overlay فقط روی دستگاه‌های دارای hover (دسکتاپ) */
 .poster-overlay {
@@ -314,18 +328,27 @@ a { text-decoration: none; }
     color: #1a1a2e;
 }
 
-/* ===== اسکلتون لودینگ ===== */
-.skeleton-card {
-    aspect-ratio: 2 / 3;
-    border-radius: 0.9rem;
-    background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 50%, var(--surface) 70%);
-    background-size: 200% 100%;
-    animation: skeleton-shimmer 1.4s infinite;
+/* ===== اسکلتون لودینگ پیشرفته با شاین متحرک ===== */
+.skeleton-card, .skeleton {
+    border-radius: 1rem;
+    position: relative;
+    overflow: hidden;
+    background: #1e293b;
 }
 
-@keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+.skeleton-card::after, .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(-100%);
+    }
 }
 
 /* ===== فوتر ===== */

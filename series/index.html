@@ -147,26 +147,37 @@
         </div>
     </header>
 
-    <main class="container mx-auto flex-1 py-12 bg-poster" id="series-bg">
-        <article class="series-card flex flex-col md:flex-row gap-6">
-            <img id="poster" src="https://via.placeholder.com/500" alt="پوستر سریال" class="w-full md:w-1/3 rounded-lg shadow-lg object-cover" loading="lazy">
-            <div class="flex-1 text-center md:text-right">
-                <h1 id="title" class="text-center">عنوان سریال</h1>
-                <div id="imdb-link" class="mt-2 text-center"></div> <!-- محل قرارگیری لینک IMDb -->
-                <br>
-                <p id="genre" class="text-gray-200"><strong>ژانر:</strong> درام، معمایی</p>
-                <p id="year" class="text-gray-200"><strong>سال تولید:</strong> ۲۰۲۲</p>
-                <p id="rating" class="text-gray-200"><strong>امتیاز:</strong> ۹.۰/۱۰</p>
-                <br>
-                <br>
-                <p id="overview" class="text-gray-300 mb-4">خلاصه داستان سریال اینجا قرار می‌گیرد.</p>
-                <button id="add-to-watchlist" class="btn-modern mt-6">افزودن به واچ لیست</button>
+    <main class="container mx-auto flex-1 py-8 px-4" id="series-bg">
+        <article class="relative overflow-hidden rounded-2xl bg-gray-800/80 backdrop-blur-xl border border-gray-700/60 p-6 md:p-8 shadow-2xl">
+            <div class="flex flex-col md:flex-row gap-8 items-start">
+                <div class="w-full md:w-80 shrink-0">
+                    <img id="poster" src="https://freemovieir.github.io/images/default-freemovie-300.png" alt="پوستر سریال" class="w-full aspect-[2/3] object-cover rounded-xl shadow-2xl border border-white/10" loading="lazy">
+                </div>
+                <div class="flex-1 w-full flex flex-col">
+                    <h1 id="title" class="text-2xl md:text-4xl font-black text-white leading-tight mb-2">عنوان سریال</h1>
+                    <div id="imdb-link" class="mb-4"></div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-300 bg-gray-900/50 p-4 rounded-xl border border-gray-700/30 mb-6">
+                        <p id="genre"><strong>ژانر:</strong> <span class="text-amber-400">درام، معمایی</span></p>
+                        <p id="year"><strong>سال تولید:</strong> <span class="text-white">۲۰۲۲</span></p>
+                        <p id="rating"><strong>امتیاز:</strong> <span class="text-amber-400 font-bold">۹.۰/۱۰</span></p>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="text-base font-bold text-gray-200 mb-2">خلاصه داستان</h3>
+                        <p id="overview" class="text-gray-300 leading-relaxed text-sm md:text-base">خلاصه داستان سریال اینجا قرار می‌گیرد.</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button id="add-to-watchlist" class="btn-modern">افزودن به واچ لیست</button>
+                    </div>
+                </div>
             </div>
         </article>
 
-        <section class="mt-12">
-            <h2 class="text-center">تریلر</h2>
-            <div id="trailer" class="mt-4 flex justify-center"></div>
+        <section class="mt-8">
+            <h2 class="text-xl font-bold mb-4">تریلر رسمی</h2>
+            <div id="trailer" class="flex justify-center"></div>
         </section>
 
         <section class="series-card mt-12">
