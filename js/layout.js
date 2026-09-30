@@ -115,9 +115,14 @@
                     <span class="text-slate-600">|</span>
                     <a href="/disclaimer/index-en.html" class="footer-link">DMCA</a>
                 </nav>
-                <div class="flex justify-center gap-4 text-xl mt-2">
+                <div class="flex justify-center gap-4 text-xl mt-2 mb-4">
                     <a href="https://twitter.com/freemovie_ir" target="_blank" rel="noopener" class="footer-link" aria-label="توییتر"><i class="fab fa-twitter"></i></a>
                     <a href="https://instagram.com/freemovie_ir" target="_blank" rel="noopener" class="footer-link" aria-label="اینستاگرام"><i class="fab fa-instagram"></i></a>
+                </div>
+                <div class="flex justify-center items-center mt-3">
+                    <a href="https://devsponsors.github.io" target="_blank" rel="noopener" class="inline-block transition hover:opacity-80" title="حمایت شده توسط DevSponsors">
+                        <img src="https://devsponsors.github.io/assets/badges/sponsor.svg" alt="DevSponsors Badge" class="h-6 mx-auto">
+                    </a>
                 </div>
             </div>
         `;
